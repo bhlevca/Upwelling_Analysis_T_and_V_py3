@@ -15,7 +15,8 @@ path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo
 path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed'
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/Exports'
 path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed'
-
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo-TRCA/2012'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo-TRCA/2012/csv_processed'
 # export to date file
 def write_datefile(writer, depth, dateTime):
     idx = 0
@@ -29,9 +30,20 @@ def write_datefile(writer, depth, dateTime):
         # This settingis needed to deal with the loacale usingAM/PM Python bug
         locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
         # dt = datetime.strptime(strg, "%d/%m/%Y %I:%M:%S %p")
-        dt = datetime.strptime(strg, "%m/%d/%y %I:%M:%S %p")
+
+        # Nick Lapointe Format
+        # dt = datetime.strptime(strg, "%m/%d/%y %I:%M:%S %p")
+
         # dt = datetime.strptime(dateTime[idx], "%d/%m/%y %I:%M:%S %p")
+
         # dt = datetime.strptime(dateTime[idx], "%m/%d/%y %H:%M:%S")
+
+        # TRCA Format
+        try:
+            dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
+        except :
+            continue
+
         dn = date2num(dt)
         if prev > dn:
             print "Next value lower!"
@@ -61,7 +73,10 @@ def read_stringdatefile(reader):
 
         # Save header row.
         strg = row[0]
+        print "strg :%s" % strg
         # if rownum == 1 and strg[:4] != 'Plot') or rownum == 1:
+        if strg == "":
+            continue
         if rownum == 1 or strg[0] == '#':
             header = row
         else:
@@ -91,7 +106,9 @@ def read_stringdatefile(reader):
 def read_files():
     dirList = os.listdir(path)
     for fname in dirList:
-        read_file(fname)
+        print "Fname %s" % fname
+        if os.path.isdir(path + "/" + fname) == False:
+            read_file(fname)
 
 def read_file(fname, fout = None):
     ifile = open(path + '/' + fname, 'rb')

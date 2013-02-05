@@ -160,7 +160,12 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
         if difflines:
             ax.plot(dateTime[1:], reversed_temp[1:], linestyle = ls[i], linewidth = 1.0 + 0.2 * i)
         else:
-            ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 0.8)
+            try:
+                if len(dateTime) > 0:
+                    ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 0.8)
+            except:
+                continue
+
         if fnames == None:
             lg = 'Sensor %s' % k[i][1]
         else:
@@ -189,8 +194,8 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
         title = ' Temperature Profiles'
 
     else:
-        title = 'Data Profiles'
-        ylabel = ' Sensor Data Values - Normalized'
+        title = ' %s Profiles' % custom
+        ylabel = custom
 
     plt.ylabel(ylabel).set_fontsize(16)
 

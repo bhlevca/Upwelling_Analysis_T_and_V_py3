@@ -203,7 +203,10 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
         ppath = rpath
     else:
         ppath = path
-    ifile = open(ppath + '/' + filename, 'rb')
+    if os.path.isdir(ppath + "/" + filename) == False:
+        ifile = open(ppath + '/' + filename, 'rb')
+    else:
+        return
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
     [dateTime, temp] = read_data(reader, timeinterv)
 
@@ -268,6 +271,9 @@ def read_files(span, window, timeinterv = None, rpath = None):
     i = 0
     for fname in dirList:
         print "Reading file %s" % fname
+        if os.path.isdir(ppath + "/" + fname):
+            continue
+
         dateTime, temp, results = get_data_from_file(fname, span, window, timeinterv, ppath)
 
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
