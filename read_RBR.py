@@ -31,6 +31,15 @@ COMMENT: 19518
 Memory type: 6 AT45DB642D_LP
 '''
 
+
+windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
+window_default = 1
+window_hour = 900  # every 4sec
+window_6hour = window_hour * 6
+
+window_day = window_hour * 24
+window_half_day = window_hour * 12
+
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR'
 
 def hms_to_seconds(t):
@@ -156,16 +165,13 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     return [dateTime, temp, results['smoothed']]
 
 
-def read_files(path):
-    windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
-    window_default = 1
-    window_hour = 900  # every 4sec
-    window_6hour = window_hour * 6
+def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
 
-    window_day = window_hour * 24
-    window_half_day = window_hour * 12
-    dirs = numpy.array(os.listdir(path))
-    dirList = dirs[dirs.argsort()]
+
+    base, dirs, files = iter(os.walk(path)).next()
+
+    dirList = sorted(files, key = lambda x: x.split('.')[0])
+
     dateTimeArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
     tempArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
     resultsArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
@@ -175,15 +181,16 @@ def read_files(path):
     dirNo = 0
     for fname in dirList:
         # skip dirs
-        if os.path.isdir(path + '/' + fname):
-            dirNo += 1
-            continue
+        # if os.path.isdir(rpath + '/' + fname):
+        #    dirNo += 1
+        #    continue
         fNameArr[i] = fname
         print "Reading file %s" % fname
-        dateTime, temp, results = get_data_from_file(fname, window_hour, windows[1])
+        dateTime, temp, results = get_data_from_file(fname, span, window, dateinterval, rpath)
         # index is specific to the files read and needs to be modified for other readings
-        minidx = 50000
-        maxidx = 2500000  # 30000
+        minidx = idxinterv[0]
+        maxidx = idxinterv[1]
+
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime[minidx:maxidx])
         resultsArr[i] = numpy.append(resultsArr[i], results[minidx:maxidx])
         tempArr[i] = numpy.append(tempArr[i], temp[minidx:maxidx])
@@ -193,7 +200,8 @@ def read_files(path):
 
     revert = True
 
-    display_data.display_temperatures(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], fNameArr[:-dirNo], revert)
+    # display_data.display_temperatures(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], fNameArr[:-dirNo], revert)
+    display_data.display_temperatures(dateTimeArr, tempArr, resultsArr, k, fNameArr, revert)
 
     t11 = ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20']
     t12 = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0]
@@ -201,18 +209,56 @@ def read_files(path):
     maxdepth = 20
     firstlogdepth = 4
     maxtemp = 25
-    display_data.display_img_temperatures(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], tick, maxdepth, firstlogdepth, maxtemp, revert)
+    # display_data.display_img_temperatures(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], tick, maxdepth, firstlogdepth, maxtemp, revert)
+    display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, revert)
 
     # profile is specific to the files read and needs to be modified for other readings
     profiles = [80000, 120000, 350000, 540000, 730000, 920000, 1110000, 1300000]
     legendpos = 2  # upper left
-    display_data.display_vertical_temperature_profiles(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], firstlogdepth, profiles, revert, legendpos)
+    # display_data.display_vertical_temperature_profiles(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], firstlogdepth, profiles, revert, legendpos)
+    display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles, revert, legendpos)
+
+
+def read_files(span, window, dateinterval, path):
+
+    # dirs = numpy.array(os.listdir(path))
+    # Separate directories from files
+    base, dirs, files = iter(os.walk(path)).next()
+
+    fileList = sorted(files, key = lambda x: x.split('.')[0])
+
+    dateTimeArr = numpy.zeros(len(fileList), dtype = numpy.ndarray)
+    tempArr = numpy.zeros(len(fileList), dtype = numpy.ndarray)
+    resultsArr = numpy.zeros(len(fileList), dtype = numpy.ndarray)
+    k = numpy.zeros(len(fileList), dtype = numpy.ndarray)
+    fNameArr = numpy.zeros(len(fileList), dtype = numpy.ndarray)
+    i = 0
+    dirNo = 0
+    for fname in fileList:
+        fNameArr[i] = fname
+        print "Reading file %s" % fname
+        dateTime, temp, results = get_data_from_file(fname, span, window, dateinterval, path)
+        # index is specific to the files read and needs to be modified for other readings
+        dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
+        resultsArr[i] = numpy.append(resultsArr[i], results)
+        tempArr[i] = numpy.append(tempArr[i], temp)
+        k[i] = numpy.append(k[i], i)
+        i += 1
+    # end for
+    return [dateTimeArr, tempArr, resultsArr, k, fNameArr]
+
+
 
 
 # main
 
 if __name__ == '__main__':
-
+    windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
+    window_6hour = 30 * 6
+    window_hour = 30
+    window_day = 30 * 24
+    window_half_day = 30 * 12
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    read_files(path)
+
+    read_files_and_display(span = window_hour, window = windows[1], dateinterval = None, idxinterv = [50000, 2500000], rpath = path)
     print "Done!"

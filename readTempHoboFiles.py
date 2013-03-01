@@ -84,7 +84,34 @@ def read_data(reader, timeinterv = None):
             pass
     return [dateTime, temp]
 
+def read_stats_data(reader, timeinterv = None):
+    rownum = 0
+    avgtemp = []
+    maxtemp = []
+    mintemp = []
+    dateTime = []
+    printHeaderVal = False
 
+    if timeinterv != None:
+        startt = timeinterv[0]
+        endt = timeinterv[1]
+
+
+    for row in reader:
+        try:
+            time = float(row[2])
+            if timeinterv != None:
+                if time < startt or time > endt:
+                    continue
+
+            dateTime.append(time)
+            avgtemp.append(float(row[3]))
+            maxtemp.append(float(row[4]))
+            mintemp.append(float(row[5]))
+            # end if
+        except:
+            pass
+    return [dateTime, avgtemp, maxtemp, mintemp]
 
 
 def splinefit(x, y, degree):
@@ -217,6 +244,40 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     ifile.close()
     return [dateTime, temp, results['smoothed']]
 
+def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type):
+    if rpath != None:
+        ppath = rpath
+    else:
+        ppath = path
+    if os.path.isdir(ppath + "/" + fname) == False:
+        ifile = open(ppath + '/' + fname, 'rb')
+    else:
+        return
+    reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
+    [dateTime, avgtemp, maxtemp, mintemp] = read_stats_data(reader, timeinterv)
+
+    if type == 'min':
+        temp = mintemp
+    elif type == 'max':
+        temp = maxtemp
+    elif type == 'avg':
+        temp = avgtemp
+    else:
+        print "data type must be 'min', 'max' or 'avg'"
+
+    if len(dateTime) != len(temp):
+        pass
+    else:
+        print "len temp %d" % len(temp)
+
+    results = smooth.smoothfit(dateTime, temp, span, window)
+
+    # print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
+    # writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
+    ifile.close()
+    return [dateTime, temp, results['smoothed']]
+
+
 def read_files_and_display(rpath = None):
     if rpath != None:
         ppath = rpath
@@ -263,18 +324,58 @@ def read_files(span, window, timeinterv = None, rpath = None):
         ppath = path
 
     dirList = os.listdir(ppath)
-    dateTimeArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
-    tempArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
-    resultsArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
-    k = numpy.zeros(len(dirList), dtype = numpy.ndarray)
-    fnames = numpy.zeros(len(dirList), dtype = numpy.chararray)
+
+    # Separate directories from files
+    base, dirs, files = iter(os.walk(ppath)).next()
+
+    sorted_files = sorted(files, key = lambda x: x.split('.')[0])
+
+    dateTimeArr = numpy.zeros(len(files), dtype = numpy.ndarray)
+    tempArr = numpy.zeros(len(files), dtype = numpy.ndarray)
+    resultsArr = numpy.zeros(len(files), dtype = numpy.ndarray)
+    k = numpy.zeros(len(files), dtype = numpy.ndarray)
+    fnames = numpy.zeros(len(files), dtype = numpy.chararray)
+    i = 0
+    for fname in sorted_files:  # dirList:
+        print "Reading file %s" % fname
+        if os.path.isdir(ppath + "/" + fname):
+            continue
+
+        dateTime, temp, results = get_data_from_file(fname, span, window, timeinterv, ppath)
+
+        dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
+        resultsArr[i] = numpy.append(resultsArr[i], results)
+        tempArr[i] = numpy.append(tempArr[i], temp)
+        k[i] = numpy.append(k[i], i)
+        fnames[i] = fname
+        i += 1
+    # end for
+    return [dateTimeArr, tempArr, resultsArr, k, fnames]
+
+def read_stat_files(span, window, timeinterv, rpath, type):
+    if rpath != None:
+        ppath = rpath
+    else:
+        ppath = path
+
+    dirList = os.listdir(ppath)
+
+    # Separate directories from files
+    base, dirs, files = iter(os.walk(ppath)).next()
+
+
+    dateTimeArr = numpy.zeros(len(files), dtype = numpy.ndarray)
+    tempArr = numpy.zeros(len(files), dtype = numpy.ndarray)
+    resultsArr = numpy.zeros(len(files), dtype = numpy.ndarray)
+    k = numpy.zeros(len(files), dtype = numpy.ndarray)
+    fnames = numpy.zeros(len(files), dtype = numpy.chararray)
     i = 0
     for fname in dirList:
         print "Reading file %s" % fname
         if os.path.isdir(ppath + "/" + fname):
             continue
 
-        dateTime, temp, results = get_data_from_file(fname, span, window, timeinterv, ppath)
+        dateTime, temp, results = get_data_from_stats_file(fname, span, window, timeinterv, ppath, type)
 
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
         resultsArr[i] = numpy.append(resultsArr[i], results)
@@ -299,9 +400,9 @@ def plot_upwelling_multiple_locations():
     file21 = '9678892_Stn_21_03-11-11.csv'
     file32 = '1020953_Stn_32_04-11-11.csv'
     file1 = '9678895_Stn_01_03-11-11.csv'
-    dateTime1, temp1, results1 = get_data_from_file(file21, window_half_day, windows[1])
-    dateTime2, temp2, results2 = get_data_from_file(file32, window_half_day, windows[1])
-    dateTime3, temp3, results3 = get_data_from_file(file1, window_half_day, windows[1])
+    dateTime1, temp1, results1 = get_data_from_file(file21, window_half_day, windows[1], rpath = path)
+    dateTime2, temp2, results2 = get_data_from_file(file32, window_half_day, windows[1], rpath = path)
+    dateTime3, temp3, results3 = get_data_from_file(file1, window_half_day, windows[1], rpath = path)
 
     '''
     results = [results1, results2, results3]
@@ -328,7 +429,7 @@ def plot_upwelling_multiple_locations():
 
 if __name__ == '__main__':
     # select_data()
-    plot_upwelling_multiple_locations()
-    # read_files_and_display()
+    # plot_upwelling_multiple_locations()
+    read_files_and_display()
     print "Done!"
 

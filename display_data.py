@@ -4,7 +4,7 @@ from datetime import datetime
 from matplotlib.dates import date2num, num2date
 from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
-import time, os, datetime
+import time, os, datetime, math
 
 years = matplotlib.dates.YearLocator()  # every year
 months = matplotlib.dates.MonthLocator()  # every month
@@ -141,7 +141,7 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
     fig.autofmt_xdate()
     plt.show()
 
-def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = False, difflines = False, custom = None):
+def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = False, difflines = False, custom = None, maxdepth = None, tick = None, firstlog = None):
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
     i = 0
@@ -163,14 +163,18 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
             try:
                 if len(dateTime) > 0:
                     ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 0.8)
-            except:
+            except Exception as e:
+                print "Error %s" % e
                 continue
 
         if fnames == None:
             lg = 'Sensor %s' % k[i][1]
         else:
-            fileName, fileExtension = os.path.splitext(fnames[i])
-            lg = '%s' % fileName
+            if fnames[i].rfind('.') == -1:
+                lg = "%s" % (fnames[i])
+            else:
+                fileName, fileExtension = os.path.splitext(fnames[i])
+                lg = '%s' % fileName
 
         legend.append(lg)
         ax.set_xlim(xmax = dateTime[len(dateTime) - 1])
@@ -189,12 +193,17 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
     # ax.xaxis.grid(True, 'major')
     ax.xaxis.grid(True, 'minor')
     ax.grid(True)
+
+    if tick != None:
+       ax.set_yticks(tick[1])
+       ax.set_yticklabels(tick[0])
+
     if custom == None:
         ylabel = ' Temp. ($^\circ$C)'
         title = ' Temperature Profiles'
 
     else:
-        title = ' %s Profiles' % custom
+        title = ' Profiles: %s' % custom
         ylabel = custom
 
     plt.ylabel(ylabel).set_fontsize(16)
@@ -209,13 +218,34 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
     plt.show()
 
 
-def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, revert = False, custom = None):
+def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, revert = False, custom = None, \
+                                 maxdepth = None, tick = None, firstlog = None, yday = None, delay = None):
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     format = 100 * len(dateTimes) + 10
     matplotlib.rcParams['legend.fancybox'] = True
 
-    i = 0
+    if delay != None and yday == None:
+        raise BasicException("delay needs yday=True")
+
+
+
     # ls = ['-', '--', ':', '-.', '-', '--', ':', '-.']
+
+    if yday != None and delay != None:
+        minx = 10000000.
+        maxx = 0.
+
+        # find maxx and minX of the X axis
+        for k in range(0, len(dateTimes)):
+            d = dateTimes[k]
+            dmax = num2date(d[len(d) - 1])
+            maxx = max(maxx, (dmax.timetuple().tm_yday + dmax.timetuple().tm_hour / 24. + dmax.timetuple().tm_min / (24. * 60) + dmax.timetuple().tm_sec / (24. * 3600)))
+
+            dmin = num2date(d[0])
+            minx = min(minx, (dmin.timetuple().tm_yday + dmin.timetuple().tm_hour / 24. + dmin.timetuple().tm_min / (24. * 60) + dmin.timetuple().tm_sec / (24. * 3600) - delay[k]))
+
+
+    i = 0
     ax = numpy.zeros(len(dateTimes), dtype = matplotlib.axes.Subplot)
     for dateTime in dateTimes:
         ax[i] = fig.add_subplot(format + i + 1)
@@ -230,12 +260,129 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
             reversed_coef = coef
 
         if fnames == None:
-            lg = 'Sensor %s' % k[i][1]
+            lg = "Sensor %s" % k[i][1]
         else:
-            fileName, fileExtension = os.path.splitext(fnames[i])
-            lg = '%s' % fileName
+            if fnames[i].rfind('.') == -1:
+                lg = "%s" % (fnames[i])
+            else:
+                fileName, fileExtension = os.path.splitext(fnames[i])
+                lg = '%s' % fileName
 
-        lplt = ax[i].plot(dateTime[1:], reversed_temp[1:], linewidth = 0.6, label = lg)
+
+        if yday == None:
+            lplt = ax[i].plot(dateTime[1:], reversed_temp[1:], linewidth = 0.6, label = lg)
+        else:
+            dofy = numpy.zeros(len(dateTime))
+            # dates = [datetime.fromordinal(d) for d in dataTime]
+            # dofy = [d.tordinal() - datetime.date(d.year, 1, 1).toordinal() + 1 for d in dates]
+            for j in range(0, len(dateTime)) :
+                d = num2date(dateTime[j])
+
+                dely = delay[i] if delay != None else 0.0
+
+                dofy[j] = d.timetuple().tm_yday + d.timetuple().tm_hour / 24. + d.timetuple().tm_min / (24. * 60) + d.timetuple().tm_sec / (24. * 3600) - dely
+
+            lplt = ax[i].plot(dofy[1:], reversed_temp[1:], linewidth = 0.6, label = lg)
+
+        # LEGEND
+        # blue_proxy = plt.Rectangle((0, 0), 1, 1, fc = "b")
+        # ax[i].legend([blue_proxy], ['cars'])
+        ax[i].legend(shadow = True, fancybox = True)
+
+
+        # X-AXIS -Time
+        # format the ticks
+        if yday == None:
+            formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
+            # formatter = matplotlib.dates.DateFormatter('`%y')
+
+            ax[i].xaxis.set_major_formatter(formatter)
+            # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+            ax[i].xaxis.set_minor_locator(mondays)
+
+        # ax.xaxis.grid(True, 'major')
+        ax[i].xaxis.grid(True, 'minor')
+        ax[i].grid(True)
+        if custom == None:
+            ylabel = ' Temp. ($^\circ$C)'
+            ax[i].set_ylabel(ylabel).set_fontsize(16)
+            title = ' Temperature Profiles - %s' % lg
+        else:
+            title = ' Profile: %s' % custom[i]
+            ax[i].set_ylabel(custom[i])
+
+        ax[i].set_title(title).set_fontsize(18)
+        if yday == None:
+            ax[i].set_xlim(xmax = dateTime[len(dateTime) - 1])
+            ax[i].set_xlabel("Time").set_fontsize(16)
+        else:
+            if delay != None:
+                ax[i].set_xlim(xmin = minx, xmax = maxx)
+                # ax[i].set_xlim(xmin = 150 , xmax = 400)
+
+            ax[i].set_xlabel("day of the year").set_fontsize(16)
+
+        if maxdepth != None:
+            if firstlog != None:
+                mindepth = firstlog
+            else:
+                mindepth = 0
+            ax[i].set_ylim(mindepth, maxdepth[i])
+
+        # ax[i].legend(lplt, title = lg, shadow = True, fancybox = True)
+        if tick != None:
+           ax[i].set_yticks(tick[i][1])
+           ax[i].set_yticklabels(tick[i][0])
+
+        # set labels visibility
+        plt.setp(ax[i].get_xticklabels(), visible = True)
+
+        i += 1
+
+    # end for
+
+    # rotates and right aligns the x labels, and moves the bottom of the
+    # axes up to make room for them
+    fig.autofmt_xdate()
+
+    # new seting to make room for labels
+    plt.tight_layout()
+
+    plt.draw()
+    plt.show()
+
+
+def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, revert = True, tick = None, custom = None, firstlog = None):
+    fig = plt.figure(facecolor = 'w', edgecolor = 'k')
+    format = 100 * len(dateTimes) + 10
+    matplotlib.rcParams['legend.fancybox'] = True
+
+    i = 0
+    # ls = ['-', '--', ':', '-.', '-', '--', ':', '-.']
+    ax = numpy.zeros(len(dateTimes), dtype = matplotlib.axes.Subplot)
+    for dateTime in dateTimes:
+        ax[i] = fig.add_subplot(format + i + 1)
+        depth = depths[i]
+        # ax.plot(dateTime[1:], coef[1:])
+        if (revert == True and tick == None) or (revert == None and tick != None):
+            raise IOError('Both revert and tick must be defined')
+
+        if revert == True:
+            reversed_depth = maxdepth[i] - depth
+        else:
+            reversed_depth = depth
+
+        if fnames == None:
+            lg = "Sensor %s" % k[i][1]
+        else:
+            if fnames[i].rfind('.') == -1:
+                lg = "%s" % (fnames[i])
+            else:
+                fileName, fileExtension = os.path.splitext(fnames[i])
+                lg = '%s' % fileName
+
+
+        lplt = ax[i].plot(dateTime[1:], reversed_depth[1:], linewidth = 0.6, label = lg)
 
         # LEGEND
         # blue_proxy = plt.Rectangle((0, 0), 1, 1, fc = "b")
@@ -256,16 +403,29 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
         ax[i].xaxis.grid(True, 'minor')
         ax[i].grid(True)
         if custom == None:
-            ylabel = ' Temp. ($^\circ$C)'
+            ylabel = ' Depth. (m)'
             ax[i].set_ylabel(ylabel).set_fontsize(16)
-            title = ' Temperature Profiles - %s' % lg
+            title = '  Profiles - %s' % lg
         else:
-            title = ' %s Profiles' % custom[i]
+            title = ' Profile: %s' % custom[i]
             ax[i].set_ylabel(custom[i])
 
         ax[i].set_title(title).set_fontsize(18)
         ax[i].set_xlim(xmax = dateTime[len(dateTime) - 1])
+
+        if maxdepth != None:
+            if firstlog != None:
+                mindepth = firstlog
+            else:
+                mindepth = 0
+            ax[i].set_ylim(mindepth, maxdepth[i])
+
         # ax[i].legend(lplt, title = lg, shadow = True, fancybox = True)
+        if tick != None:
+           ax[i].set_yticks(tick[i][1])
+           ax[i].set_yticklabels(tick[i][0])
+
+
         i += 1
 
     # end for
