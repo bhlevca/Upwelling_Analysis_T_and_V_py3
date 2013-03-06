@@ -84,7 +84,7 @@ def read_data(reader, timeinterv = None):
             pass
     return [dateTime, temp]
 
-def read_stats_data(reader, timeinterv = None):
+def read_stats_data(reader, timeinterv = None, all = False):
     rownum = 0
     avgtemp = []
     maxtemp = []
@@ -96,18 +96,28 @@ def read_stats_data(reader, timeinterv = None):
         startt = timeinterv[0]
         endt = timeinterv[1]
 
+    if all == False:
+        timeidx = 2
+        avgidx = 3
+        maxidx = 4
+        minidx = 5
+    else:
+        timeidx = 1
+        avgidx = 2
+        maxidx = 3
+        minidx = 4
 
     for row in reader:
         try:
-            time = float(row[2])
+            time = float(row[timeidx])
             if timeinterv != None:
                 if time < startt or time > endt:
                     continue
 
             dateTime.append(time)
-            avgtemp.append(float(row[3]))
-            maxtemp.append(float(row[4]))
-            mintemp.append(float(row[5]))
+            avgtemp.append(float(row[avgidx]))
+            maxtemp.append(float(row[maxidx]))
+            mintemp.append(float(row[minidx]))
             # end if
         except:
             pass
@@ -244,7 +254,7 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     ifile.close()
     return [dateTime, temp, results['smoothed']]
 
-def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type):
+def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type, all = False):
     if rpath != None:
         ppath = rpath
     else:
@@ -254,7 +264,7 @@ def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type):
     else:
         return
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
-    [dateTime, avgtemp, maxtemp, mintemp] = read_stats_data(reader, timeinterv)
+    [dateTime, avgtemp, maxtemp, mintemp] = read_stats_data(reader, timeinterv, all = all)
 
     if type == 'min':
         temp = mintemp
@@ -352,7 +362,7 @@ def read_files(span, window, timeinterv = None, rpath = None):
     # end for
     return [dateTimeArr, tempArr, resultsArr, k, fnames]
 
-def read_stat_files(span, window, timeinterv, rpath, type):
+def read_stat_files(span, window, timeinterv, rpath, type, all = False):
     if rpath != None:
         ppath = rpath
     else:
@@ -375,7 +385,7 @@ def read_stat_files(span, window, timeinterv, rpath, type):
         if os.path.isdir(ppath + "/" + fname):
             continue
 
-        dateTime, temp, results = get_data_from_stats_file(fname, span, window, timeinterv, ppath, type)
+        dateTime, temp, results = get_data_from_stats_file(fname, span, window, timeinterv, ppath, type, all = all)
 
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
         resultsArr[i] = numpy.append(resultsArr[i], results)

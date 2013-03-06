@@ -1,5 +1,6 @@
 import csv
 import numpy
+import scipy
 import matplotlib.pyplot as plt
 from datetime import datetime
 from matplotlib.dates import date2num, num2date
@@ -14,6 +15,7 @@ import env_can_weather_data_processing as envir
 
 sys.path.insert(0, '/software/SAGEwork/Seiches')
 import fft.filters as filters
+import fft.fft_utils as fft_utils
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
 window_6hour = 30 * 6
@@ -77,18 +79,36 @@ def read_LOntario_files(paths, fnames, dateinterval):
     legend1 = ["Hobo-10m-filter-17h", "RBR-10m-filter-17h"]
     btype = 'band'
 
+
+    yday = True
+    debug = True
+    order = None
+    gpass = 9
+    astop = 32
+    recurse = True
+
     fs1 = 1.0 / ((HOBOdateTimeArr[1] - HOBOdateTimeArr[0]) * factor)
     # data1 = filters.fft_bandpassfilter(HOBOtempArr, fs1, lowcut, highcut)
-    data1, w, h, N, delay1 = filters.butterworth(HOBOtempArr, btype, lowcut, highcut, fs1, output = 'zpk')
+    data1, w, h, N, delay1 = filters.butterworth(HOBOtempArr, btype, lowcut, highcut, fs1, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+    if len(data1) != len(HOBOdateTimeArr):
+        HOBOdateTimeArr_res1 = sp.signal.resample(HOBOdateTimeArr, len(data1))
+    else :
+        HOBOdateTimeArr_res1 = HOBOdateTimeArr
+
+
     # data1, w, h, N, delay1 = filters.firwin(HOBOtempArr, btype, lowcut, highcut, fs1, output = 'ba')
 
     fs2 = 1.0 / ((RBRdateTimeArr[1] - RBRdateTimeArr[0]) * factor)
     # data2 = filters.fft_bandpassfilter(RBRtempArr, fs2, lowcut, highcut)
-    data2, w, h, N, delay2 = filters.butterworth(RBRtempArr, btype, lowcut, highcut, fs2, output = 'zpk')
+    data2, w, h, N, delay2 = filters.butterworth(RBRtempArr, btype, lowcut, highcut, fs2, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+    if len(data2) != len(RBRdateTimeArr):
+        RBRdateTimeArr_res2 = scipy.signal.resample(RBRdateTimeArr, len(data2))
+    else :
+        RBRdateTimeArr_res2 = RBRdateTimeArr
     # data2, w, h, N, delay2 = filters.firwin(RBRtempArr, btype, lowcut, highcut, fs2, output = 'ba')
 
-    display_data.display_temperatures_subplot([HOBOdateTimeArr, RBRdateTimeArr], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1, yday = True, delay = [delay1, delay2])
-    display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr, delay1), numpy.subtract(RBRdateTimeArr, delay2)], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1)
+    display_data.display_temperatures_subplot([HOBOdateTimeArr_res1, RBRdateTimeArr_res2], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1, yday = yday, delay = [delay1, delay2])
+    display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2)], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1)
 
 
     # Kelvin?
@@ -97,26 +117,36 @@ def read_LOntario_files(paths, fnames, dateinterval):
     legend2 = ["Hobo-10m-filter-3-10 days", "RBR-10m-filter-3-10 days"]
     fs3 = 1.0 / ((HOBOdateTimeArr[1] - HOBOdateTimeArr[0]) * factor)
     # data3 = filters.fft_bandpassfilter(HOBOtempArr, fs3, lowcut, highcut)
-    data3, w, h, N, delay3 = filters.butterworth(HOBOtempArr, btype, lowcut, highcut, fs3, output = 'zpk')
+    data3, w, h, N, delay3 = filters.butterworth(HOBOtempArr, btype, lowcut, highcut, fs3, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+    if len(data3) != len(HOBOdateTimeArr):
+        HOBOdateTimeArr_res3 = sp.signal.resample(HOBOdateTimeArr, len(data3))
+    else :
+        HOBOdateTimeArr_res3 = HOBOdateTimeArr
+
     # data3, w, h, N, delay3 = filters.firwin(HOBOtempArr, btype, lowcut, highcut, fs3, output = 'ba')
 
     fs4 = 1 / ((RBRdateTimeArr[1] - RBRdateTimeArr[0]) * factor)
     # data4 = filters.fft_bandpassfilter(RBRtempArr, fs4, lowcut, highcut)
-    data4, w, h, N, delay4 = filters.butterworth(RBRtempArr, btype, lowcut, highcut, fs4, output = 'zpk')
+    data4, w, h, N, delay4 = filters.butterworth(RBRtempArr, btype, lowcut, highcut, fs4, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+    if len(data4) != len(RBRdateTimeArr):
+        RBRdateTimeArr_res4 = scipy.signal.resample(RBRdateTimeArr, len(data4))
+    else :
+        RBRdateTimeArr_res4 = RBRdateTimeArr
+
     # data4, w, h, N, delay4 = filters.firwin(RBRtempArr, btype, lowcut, highcut, fs4, output = 'ba')
 
-    display_data.display_temperatures_subplot([HOBOdateTimeArr, RBRdateTimeArr], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2, yday = True, delay = [delay3, delay4])
-    display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr, delay3), numpy.subtract(RBRdateTimeArr, delay4)], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2)
+    display_data.display_temperatures_subplot([HOBOdateTimeArr_res3, RBRdateTimeArr_res4], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2, yday = yday, delay = [delay3, delay4])
+    display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2)
 
 
 
     Data = [data1, data2, data3, data4]
     Result = [HOBOresultsArr, RBRresultsArr, HOBOresultsArr, RBRresultsArr]
     legend = [legend1[0], legend1[1], legend2[0], legend2[1]]
-    timeint_subplot = [HOBOdateTimeArr, RBRdateTimeArr, HOBOdateTimeArr, RBRdateTimeArr]
-    timeint = [numpy.subtract(HOBOdateTimeArr, delay1), numpy.subtract(RBRdateTimeArr, delay2), numpy.subtract(HOBOdateTimeArr, delay3), numpy.subtract(RBRdateTimeArr, delay4)]
+    # timeint_subplot = [HOBOdateTimeArr_res, RBRdateTimeArr_res, HOBOdateTimeArr_res, RBRdateTimeArr_res]
+    timeint = [numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2), numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)]
 
-    display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = True, delay = [delay1, delay2, delay3, delay4])
+    display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay1, delay2, delay3, delay4])
     display_data.display_temperatures(timeint, Data, Result, k, fnames = legend)
 
 
@@ -581,17 +611,20 @@ def calculate_statistics(arr):
     max = numpy.max(arr)
     return  [avg, max, min]
 
-def write_statistics(writer, station, day, unixtime, avg, max, min):
+def write_statistics(writer, station, day, unixtime, avg, max, min, all = False):
     idx = 0
     numdat = []
     prev = 0
     prevtxt = ''
     # print "len(depth) :%d, len(dateTime):%d" % (len(depth), len(dateTime))
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    writer.writerow([station, day, unixtime, avg, max, min])
+    if all:
+        writer.writerow([day, unixtime, avg, max, min])
+    else:
+        writer.writerow([station, day, unixtime, avg, max, min])
 
 
-def harbour_statistics(path, path_out, timeinterv):
+def calculate_harbour_statistics(path, path_out, timeinterv, all = False):
     '''
     calculate avg, min, max /day/sensor
     '''
@@ -606,46 +639,114 @@ def harbour_statistics(path, path_out, timeinterv):
 
 
 
-    for i in range(0, len(HOBOdateTimeArr)):
+
+
+    if all == False:
+        for i in range(0, len(HOBOdateTimeArr)):
+            dayOfTheYear = 0
+            OlddayOfTheYear = 0
+            daytemps = []
+
+            station = fnames[i]
+            print "Stats for %s" % station
+            ofile = open(path_out + '/' + station, "wb")
+            writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+            write_statistics(writer, "Station", "Date", "Timestamp", "Avg Temp", "Max Temp", "Min Temp")
+
+            dateTime = HOBOdateTimeArr[i][1:]
+            temp = HOBOtempArr[i][1:]
+
+            for j in range(0, len(dateTime)):
+                datet = num2date(dateTime[j])
+                dayOfTheYear = datet.timetuple().tm_yday
+                daytemps.append(temp[j])
+
+                if dayOfTheYear != OlddayOfTheYear and j != 0:
+                    day = num2date(dateTime[j - 1])
+                    daystr = day.strftime("%d %B %Y")
+
+                    # calculate stats
+                    [savg, smax, smin] = calculate_statistics(numpy.array(daytemps))
+                    # insert in a spreadsheet
+                    write_statistics(writer, station, daystr, dateTime[j], savg, smax, smin)
+
+                    # clear the array
+                    OlddayOfTheYear = dayOfTheYear
+                    daytemps = []
+                elif j == 0:
+                    OlddayOfTheYear = dayOfTheYear
+            # END FOR
+            ofile.close()
+        # end for
+    else:
+        g_ofile = open(path_out + '/' + 'all_stations.csv', "wb")
+        gwriter = csv.writer(g_ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+        write_statistics(gwriter, "Station", "Date", "Timestamp", "Avg Temp", "Max Temp", "Min Temp", all = all)
+
         dayOfTheYear = 0
         OlddayOfTheYear = 0
-        daytemps = []
+        gdaytemps = numpy.zeros(366, numpy.ndarray)  # days in a year
+        for k in range(0, 366):
+            gdaytemps[k] = []
+        maxlen = 0
+        for k in range(0, len(HOBOdateTimeArr)):
+            maxlen = max(maxlen, len(HOBOdateTimeArr[k]))
 
-        station = fnames[i]
-        print "Stats for %s" % station
-        ofile = open(path_out + '/' + station, "wb")
-        writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
-        write_statistics(writer, "Station", "Date", "Timestamp", "Avg Temp", "Max Temp", "Min Temp")
+        for j in range(1, maxlen):  # loop over time
+            try:
+                datet = num2date(HOBOdateTimeArr[0][j])
+            except IndexError:
+                # this is expected as not all recoreds have the same length
+                continue
+            except Exception:
+                print "This is not expected error"
 
-        dateTime = HOBOdateTimeArr[i][1:]
-        temp = HOBOtempArr[i][1:]
-
-        for j in range(0, len(dateTime)):
-            datet = num2date(dateTime[j])
             dayOfTheYear = datet.timetuple().tm_yday
-            daytemps.append(temp[j])
 
-            if dayOfTheYear != OlddayOfTheYear and j != 0:
-                day = num2date(dateTime[j - 1])
+
+            if dayOfTheYear != OlddayOfTheYear and j != 1:
+                day = num2date(HOBOdateTimeArr[0][j - 1])
                 daystr = day.strftime("%d %B %Y")
 
+                datet = num2date(HOBOdateTimeArr[0][j])
+                dayOfTheYear = datet.timetuple().tm_yday
+
                 # calculate stats
-                [avg, max, min] = calculate_statistics(numpy.array(daytemps))
+                [gavg, gmax, gmin] = calculate_statistics(numpy.array(gdaytemps[OlddayOfTheYear]))
+
                 # insert in a spreadsheet
-                write_statistics(writer, station, daystr, dateTime[j], avg, max, min)
+                write_statistics(gwriter, j, daystr, HOBOdateTimeArr[0][j], gavg, gmax, gmin, all = all)
 
                 # clear the array
                 OlddayOfTheYear = dayOfTheYear
-                daytemps = []
-            elif j == 0:
+                # gdaytemps = []
+            elif j == 1:
                 OlddayOfTheYear = dayOfTheYear
 
-        # END FOR
-        ofile.close()
-    # end for
+            try:
+                for i in range(0, len(HOBOdateTimeArr)):  # loop over all stations
+                    station = fnames[i]
+
+                    # eliminate faulty data
+                    if HOBOtempArr[i][j] > 13 and (dayOfTheYear > 270 or dayOfTheYear < 150):
+                        day = num2date(HOBOdateTimeArr[i][j])
+                        daystr = day.strftime("%d %B %Y")
+                        print "* Faulty station : %s: temp:%f, date:%s" % (station, HOBOtempArr[i][j], daystr)
+                    else:  # add data
+                        gdaytemps[dayOfTheYear].append(HOBOtempArr[i][j])
+            except Exception as e:
+                # print "** Bad series : %s" % (station)
+                # print 'Exception error is: %s' % e
+                pass
+            # end for i
+
+        # end for
+        g_ofile.close()
+    # end if all == False
+
 # end harbour_statistics
 
-def draw_harbour_statistics(path, timeinterv, selector):
+def draw_harbour_statistics(path, timeinterv, selector, all = False):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
@@ -653,7 +754,8 @@ def draw_harbour_statistics(path, timeinterv, selector):
 
         type = selector[i]
 
-        dateTime, temp, result, k, fnames = readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type)
+        dateTime, temp, result, k, fnames = readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
+
         HOBOdateTimeArr = dateTime
         HOBOtempArr = temp
         HOBOresultsArr = result
@@ -665,12 +767,49 @@ def draw_harbour_statistics(path, timeinterv, selector):
         difflines = False
 
         custom = "%s - Temperature " % type
-        display_data.display_temperatures(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, difflines = difflines, custom = custom)
+        dof = fft_utils.dof(HOBOtempArr[0])
+        (x05, x95) = fft_utils.confidence_interval(HOBOtempArr, dof, 0.95)
+
+        display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0], HOBOdateTimeArr[0], HOBOdateTimeArr[0]]), numpy.array([HOBOtempArr[0], x05[0], x95[0]]), \
+                                          numpy.array([HOBOresultsArr[0], HOBOresultsArr[0], HOBOresultsArr[0]]), k, fnames = [ type, '5%', '95%'], difflines = difflines, custom = custom)
+
+
+def harbour_statistics(all = False):
+    #---------------------------------------------------------
+    # Simple statititics for the NSERC Files
+    #---------------------------------------------------------
+    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed'
+    path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/stats'
+    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed'
+    if all == False:
+        path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/stats'
+    else:
+        path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/allstats'
+    # path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/stats/sample'
+
+    startdate = '11/02/01 00:00:00'
+    enddate = '12/10/24 00:00:00'
+    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+    start_num = date2num(dt)
+    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+    end_num = date2num(dt)
+
+    #-----------------------------------------------------------------
+    # Calculate statitics
+    calculate_harbour_statistics(path, path_out, [start_num, end_num], all = all)
+    # draw some graphs
+    #-------------------------------------------------------------------
+    draw_harbour_statistics(path_out, [start_num, end_num], ['max', 'avg', 'min'], all = all)
+    print "Done!"
 
 
 
 if __name__ == '__main__':
 
+    all = True
+    harbour_statistics(all)
+    print "Done!"
+    os.abort()
 
     #---------------------------------
     # Set the start and end date-time
@@ -695,8 +834,6 @@ if __name__ == '__main__':
     fnames = ['18_2393005.csv', '019513.dat']
     read_LOntario_files(paths, fnames, [start_num, end_num])
 
-    print "Done!"
-    os.abort()
 
 
      # draw the isotherm oscillations
@@ -741,27 +878,4 @@ if __name__ == '__main__':
     end_num = date2num(dt)
     poincare_wave_in_harbour(period_hours, [start_num, end_num], paths)
 
-    #---------------------------------------------------------
-    # Simple statititics for the NSERC Files
-    #---------------------------------------------------------
-    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed'
-    path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/stats'
-    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed'
-    path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/stats'
-    # path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/stats/sample'
-
-    startdate = '11/02/01 00:00:00'
-    enddate = '12/10/24 00:00:00'
-    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
-    start_num = date2num(dt)
-    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
-    end_num = date2num(dt)
-
-    #-----------------------------------------------------------------
-    # Calculate statitics
-    # harbour_statistics(path, path_out, [start_num, end_num])
-    # draw some graphs
-    #-------------------------------------------------------------------
-    draw_harbour_statistics(path_out, [start_num, end_num], ['max', 'avg', 'min'])
-    print "Done!"
 

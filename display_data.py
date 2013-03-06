@@ -224,8 +224,8 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
     format = 100 * len(dateTimes) + 10
     matplotlib.rcParams['legend.fancybox'] = True
 
-    if delay != None and yday == None:
-        raise BasicException("delay needs yday=True")
+    # if delay != None and yday == None:
+    #    raise BasicException("delay needs yday=True")
 
 
 
