@@ -31,14 +31,16 @@ COMMENT: 19518
 Memory type: 6 AT45DB642D_LP
 '''
 
-
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
-window_default = 1
-window_hour = 900  # every 4sec
-window_6hour = window_hour * 6
+window_6hour = "window_6hour"  # window_hour * 6
+window_hour = "window_hour"  #  900  # every 4sec
+window_day = "window_day"  # window_hour * 24
+window_half_day = "window_half_day"  # window_hour * 12
 
-window_day = window_hour * 24
-window_half_day = window_hour * 12
+# window_hour = 900  # every 4sec
+# window_6hour = window_hour * 6
+# window_day = window_hour * 24
+# window_half_day = window_hour * 12
 
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR'
 
@@ -157,12 +159,24 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
     [dateTime, temp] = read_data(reader, timeinterv)
 
-    results = smooth.smoothfit(dateTime, temp, span, window)
+     # check if span is correct
+    dt = dateTime[2] - dateTime[1]  # usually days
+    if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
+        nspan = 6. / (dt * 24)
+    elif span == "window_hour":  # 30 for a 2 minute sampling - 900 for a 4 sec sampling frequency.
+        nspan = 1. / (dt * 24)
+    elif span == "window_day":  # 30 * 24 for a 2 minute sampling
+        nspan = 24. / (dt * 24)
+    elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
+        nspan = 12. / (dt * 24)
+
+    # results = smooth.smoothfit(dateTime, temp, nspan, window)
 
     # print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
     # writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
     ifile.close()
-    return [dateTime, temp, results['smoothed']]
+    # return [dateTime, temp, results['smoothed']]
+    return [dateTime, temp, temp]
 
 
 def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
@@ -253,11 +267,6 @@ def read_files(span, window, dateinterval, path):
 # main
 
 if __name__ == '__main__':
-    windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
-    window_6hour = 30 * 6
-    window_hour = 30
-    window_day = 30 * 24
-    window_half_day = 30 * 12
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     read_files_and_display(span = window_hour, window = windows[1], dateinterval = None, idxinterv = [50000, 2500000], rpath = path)

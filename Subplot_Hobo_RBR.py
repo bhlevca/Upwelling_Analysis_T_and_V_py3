@@ -11,17 +11,24 @@ from scipy.interpolate import UnivariateSpline
 import display_data
 import read_RBR
 import readTempHoboFiles
+# import scikits.bootstrap as bootstrap
 import env_can_weather_data_processing as envir
+from matplotlib import rcParams
 
 sys.path.insert(0, '/software/SAGEwork/Seiches')
 import fft.filters as filters
 import fft.fft_utils as fft_utils
+import spectral_analysis
+
+sys.path.insert(0, '/software/SAGEwork/Pressure_analysis')
+import utils.hdf_tools as hdf
+
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
-window_6hour = 30 * 6
-window_hour = 30
-window_day = 30 * 24
-window_half_day = 30 * 12
+window_6hour = "window_6hour"  # 30 * 6 for a 2 minute sampling
+window_hour = "window_hour"  # 30
+window_day = "window_day"  # 30 * 24
+window_half_day = "window_half_day"  # 30 * 12
 
 
 '''
@@ -38,6 +45,7 @@ import smooth
 def read_LOntario_files(paths, fnames, dateinterval):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+    print "Start read_LOntario_files()"
 
     # get hobo file
     hobofilename = fnames[0]  # '18_2393005.csv'
@@ -81,7 +89,7 @@ def read_LOntario_files(paths, fnames, dateinterval):
 
 
     yday = True
-    debug = True
+    debug = False
     order = None
     gpass = 9
     astop = 32
@@ -105,7 +113,6 @@ def read_LOntario_files(paths, fnames, dateinterval):
         RBRdateTimeArr_res2 = scipy.signal.resample(RBRdateTimeArr, len(data2))
     else :
         RBRdateTimeArr_res2 = RBRdateTimeArr
-    # data2, w, h, N, delay2 = filters.firwin(RBRtempArr, btype, lowcut, highcut, fs2, output = 'ba')
 
     display_data.display_temperatures_subplot([HOBOdateTimeArr_res1, RBRdateTimeArr_res2], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1, yday = yday, delay = [delay1, delay2])
     display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2)], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1)
@@ -123,7 +130,6 @@ def read_LOntario_files(paths, fnames, dateinterval):
     else :
         HOBOdateTimeArr_res3 = HOBOdateTimeArr
 
-    # data3, w, h, N, delay3 = filters.firwin(HOBOtempArr, btype, lowcut, highcut, fs3, output = 'ba')
 
     fs4 = 1 / ((RBRdateTimeArr[1] - RBRdateTimeArr[0]) * factor)
     # data4 = filters.fft_bandpassfilter(RBRtempArr, fs4, lowcut, highcut)
@@ -133,8 +139,6 @@ def read_LOntario_files(paths, fnames, dateinterval):
     else :
         RBRdateTimeArr_res4 = RBRdateTimeArr
 
-    # data4, w, h, N, delay4 = filters.firwin(RBRtempArr, btype, lowcut, highcut, fs4, output = 'ba')
-
     display_data.display_temperatures_subplot([HOBOdateTimeArr_res3, RBRdateTimeArr_res4], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2, yday = yday, delay = [delay3, delay4])
     display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2)
 
@@ -143,7 +147,6 @@ def read_LOntario_files(paths, fnames, dateinterval):
     Data = [data1, data2, data3, data4]
     Result = [HOBOresultsArr, RBRresultsArr, HOBOresultsArr, RBRresultsArr]
     legend = [legend1[0], legend1[1], legend2[0], legend2[1]]
-    # timeint_subplot = [HOBOdateTimeArr_res, RBRdateTimeArr_res, HOBOdateTimeArr_res, RBRdateTimeArr_res]
     timeint = [numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2), numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)]
 
     display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay1, delay2, delay3, delay4])
@@ -153,6 +156,7 @@ def read_LOntario_files(paths, fnames, dateinterval):
 def read_Tor_Harbour_files():
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
+    print "Start read_Tor_Harbour_files()"
     startdate = '12/07/19 00:00:00'
     enddate = '12/10/24 00:00:00'
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
@@ -180,7 +184,6 @@ def read_Tor_Harbour_files():
         lowcut = 1.0 / (24 * 10) / 3600
         highcut = 1.0 / (24 * 3) / 3600
         tunits = 'day'
-
         if tunits == 'day':
             factor = 86400
         elif tunits == 'hour':
@@ -188,13 +191,25 @@ def read_Tor_Harbour_files():
         else:
             factor = 1
 
+        yday = True
+        debug = False
+        order = None
+        gpass = 9
+        astop = 32
+        recurse = True
+
         Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+        delay = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
         i = 0
         btype = 'band'
         for data in HOBOdateTimeArr:
             fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
-            # Filtered_data[i] = filters.fft_bandpassfilter(HOBOtempArr[i], fs, lowcut, highcut)
-            Filtered_data[i], w, h, N = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs)
+            Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+            if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
+                HOBOdateTimeArr_res = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+            else :
+                HOBOdateTimeArr_res = HOBOdateTimeArr[i]
+
             i += 1
 
 
@@ -220,14 +235,99 @@ def read_Tor_Harbour_files():
 
         btype = 'band'
         # Filtered_data[len(HOBOresultsArr) - 1] = filters.fft_bandpassfilter(temp, fs, lowcut, highcut)
-        Filtered_data[len(HOBOresultsArr) - 1], w, h, N = filters.butterworth(temp, btype, lowcut, highcut, fs)
+        Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay[len(HOBOresultsArr) - 1] = filters.butterworth(temp, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+        if len(Filtered_data[len(HOBOresultsArr) - 1]) != len(HOBOdateTimeArr[len(HOBOdateTimeArr) - 1]):
+            HOBOdateTimeArr[len(HOBOresultsArr) - 1] = sp.signal.resample(HOBOdateTimeArr[len(HOBOresultsArr) - 1], len(Filtered_data[len(HOBOresultsArr) - 1]))
 
 
         print "Start display"
-        display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames)
-
+        display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
+        display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, HOBOresultsArr, k, fnames = fnames, difflines = difflines)
+    # end for path
+
+def read_TRCA_files(paths):
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+
+    print "Start read_TRCA_files()"
+    startdate = '12/05/29 00:00:00'
+    enddate = '12/10/04 00:00:00'
+    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+    start_num = date2num(dt)
+    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+    end_num = date2num(dt)
+
+
+    for path in paths:
+        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], [start_num, end_num], path)
+        HOBOdateTimeArr = dateTime
+        HOBOresultsArr = results
+        HOBOtempArr = temp
+
+        # Kelvin?
+        lowcut = 1.0 / (24 * 10) / 3600
+        highcut = 1.0 / (24 * 3) / 3600
+        tunits = 'day'
+        if tunits == 'day':
+            factor = 86400
+        elif tunits == 'hour':
+            factor = 3600
+        else:
+            factor = 1
+
+        yday = True
+        debug = False
+        order = None
+        gpass = 9
+        astop = 32
+        recurse = True
+
+        Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+        delay = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+        i = 0
+        btype = 'band'
+        for data in HOBOdateTimeArr:
+            fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
+            Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+            if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
+                HOBOdateTimeArr_res = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+            else :
+                HOBOdateTimeArr_res = HOBOdateTimeArr[i]
+
+            i += 1
+
+        # get hobo file
+        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
+        hobofilename = '18_2393005.csv'
+        print "Reading file %s" % hobofilename
+        dateTime, temp, results = readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
+
+        HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
+        HOBOresultsArr = numpy.resize(HOBOresultsArr, len(HOBOresultsArr) + 1)
+        HOBOtempArr = numpy.resize(HOBOtempArr, len(HOBOtempArr) + 1)
+
+        HOBOdateTimeArr[len(HOBOdateTimeArr) - 1] = dateTime
+        HOBOresultsArr[len(HOBOresultsArr) - 1] = results
+        HOBOtempArr[len(HOBOtempArr) - 1] = temp
+
+
+        fnames = numpy.append(fnames, hobofilename)
+
+        fs = 1.0 / ((dateTime[2] - dateTime[1]) * factor)
+
+        btype = 'band'
+        # Filtered_data[len(HOBOresultsArr) - 1] = filters.fft_bandpassfilter(temp, fs, lowcut, highcut)
+        Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay[len(HOBOresultsArr) - 1] = filters.butterworth(temp, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+        if len(Filtered_data[len(HOBOresultsArr) - 1]) != len(HOBOdateTimeArr[len(HOBOdateTimeArr) - 1]):
+            HOBOdateTimeArr[len(HOBOresultsArr) - 1] = sp.signal.resample(HOBOdateTimeArr[len(HOBOresultsArr) - 1], len(Filtered_data[len(HOBOresultsArr) - 1]))
+
+
+        print "Start display"
+        if len(HOBOdateTimeArr) <= 9:
+            display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
+        # superimposed filtered data for 1-3 days oscillation freq
+        difflines = False
         display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, HOBOresultsArr, k, fnames = fnames, difflines = difflines)
     # end for path
 
@@ -235,6 +335,7 @@ def read_Tor_Harbour_files():
 def wind_airpress_airtemp_water_temp():
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
+    print "Start wind_airpress_airtemp_water_temp()"
     startdate = '12/07/19 00:00:00'
     enddate = '12/10/24 00:00:00'
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
@@ -271,7 +372,36 @@ def wind_airpress_airtemp_water_temp():
 
     dataArray = numpy.array([iwtemp, iwindDir, iwindSpd, iPress, HOBOtempArr])
     timeArray = numpy.array([iwdateTime, iwdateTime, iwdateTime, iwdateTime, HOBOdateTimeArr])
+    names = numpy.array(["Air Temp", "Wind Dir", "Wind spd", "Atm press", "Water temp"])
+    labels = numpy.array(["Air Temp ($^\circ$C)", "Wind Dir ($^\circ$)", "Wind spd (m/s)", "Atm press (hPa)", "Water Temp ($^\circ$C)"])
+    Time = numpy.zeros(len(dataArray), dtype = numpy.ndarray)
+    y = numpy.zeros(len(dataArray), dtype = numpy.ndarray)
+    x05 = numpy.zeros(len(dataArray), dtype = numpy.ndarray)
+    x95 = numpy.zeros(len(dataArray), dtype = numpy.ndarray)
 
+    # Frequency domain analysis
+    # Todo: Add cospectogram for:air press, wind spd, wind dir, air temp, LW radiation and SW radiation
+    i = 0
+    numseg = 1
+    draw = False
+    # funits = "Hz"
+    funits = "cph"
+    # tunits = "sec"
+    tunits = "day"
+    title = "Lake Ontario Scarborough Bluffs"
+    for data in dataArray:
+        dat = [timeArray[i], data]
+
+        [Time[i], y[i], x05[i], x95[i]] = spectral_analysis.doSpectralAnalysis(dat, names[i], labels[i], title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False)
+        i += 1
+
+    water_temp = dataArray[len(dataArray) - 1]
+    # do cospectral of water temp with each of the weather data
+    for i in range(0, len(dataArray) - 2):
+        spectral_analysis.doCospectralAnalysis(y[i], water_temp)
+
+
+    # Time domanin analysis
     lowcut = 1.0 / (24 * 10) / 3600
     highcut = 1.0 / (24 * 3) / 3600
     tunits = 'day'
@@ -284,27 +414,59 @@ def wind_airpress_airtemp_water_temp():
         factor = 1
 
     Filtered_data = numpy.zeros(len(dataArray), dtype = numpy.ndarray)
+    delay = numpy.zeros(len(dataArray) + 1, dtype = numpy.ndarray)
     fnames = numpy.array(['air temp', 'wind dir', 'wind spd', 'air press', 'water temp 10 m'])
     k = [1, 2, 3, 4, 5]
 
 
     i = 0
     btype = 'band'
+    yday = True
+    debug = False
+    order = None
+    gpass = 9
+    astop = 32
+    recurse = True
+
     for data in dataArray:
         fs = 1.0 / ((timeArray[i][2] - timeArray[i][1]) * factor)
         # Filtered_data[i] = filters.fft_bandpassfilter(data, fs, lowcut, highcut)
-        Filtered_data[i], w, h, N = filters.butterworth(data, btype, lowcut, highcut, fs)
 
+        Filtered_data[i], w, h, N, delay[i] = filters.butterworth(data, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+        if len(Filtered_data[i]) != len(timeArray[i]):
+            timeArray[i] = sp.signal.resample(timeArray[i], len(Filtered_data[i]))
         i += 1
 
-
-    custom = numpy.array(['Air temp.($^\circ$C)', 'Wind dir.', 'Wind speed (m/s)', 'Air pres. (hPa)', 'Water temp.($^\circ$C)'])
-    print "Start display"
+    # rcParams['text.usetex'] = True
+    custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', 'Wind spd(m/s)', 'Air p(hPa)', 'Water T($^\circ$C)'])
+    # ToDO: Add short and long radiation
+    print "Start display wind_airpress_airtemp_water_temp subplots "
     display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
 
     # superimposed filtered data for 1-3 days oscillation freq
     difflines = True
-    display_data.display_temperatures(timeArray, Filtered_data, Filtered_data, k, fnames = fnames, difflines = difflines, custom = custom)
+    print "Start display wind_airpress_airtemp_water_temp plot "
+    display_data.display_temperatures(timeArray, Filtered_data, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
+
+
+    print "Start display  Atmospheric radiation "
+    path = "/home/bogdan/Documents/UofT/PhD/Data_Files/CloudData/Toronto-Jan-Dec-2012/HDF"
+    startdate = '12/07/19 00:00:00'
+    enddate = '12/10/24 00:00:00'
+    var1 = 'swgnt'
+    var2 = 'lwgnt'
+    var3 = 'cldtot'
+    ix = 0
+    iy = 1
+    timeidx = [0, 23]
+    dateTime1, results1 = hdf.read_hdf_dir(path, var1, ix, iy, timeidx, startdate, enddate)
+    dateTime2, results2 = hdf.read_hdf_dir(path, var2, ix, iy, timeidx, startdate, enddate)
+    dateTime3, results3 = hdf.read_hdf_dir(path, var3, ix, iy, timeidx, startdate, enddate)
+
+
+    display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [results1, results2, results3 * 100], [],
+                                      fnames = [var1, var2, var3], difflines = None, custom = "Radiation data (W/m$^2$)")
+
 
 
 def find_depthoftemp(isotemp, waterdepth, top_log_depth, delta_L, dateTimeArr, tempArr, revert = False, name = "default"):
@@ -387,7 +549,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
     '''
     start_num, end_num = dateinterval
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-
+    print "Start isoterm_oscillation()"
 
     # get hobo files
     print "Reading path %s" % paths[0]
@@ -417,12 +579,14 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
 
 
     k = [[0, 0], [0, 1]]
-    print "Start display: isoterm_oscillation"
+    print "Start : isoterm_oscillation"
     fname1 = "Hobo-%d ($^\circ$C)" % isotemp
     fname2 = "RBR-%d ($^\circ$C)" % isotemp
     fnames = [fname1, fname2]
 
     if filter != None:
+        print "Start filtering: isoterm_oscillation"
+
         tunits = 'day'
 
         if tunits == 'day':
@@ -438,16 +602,46 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
         lowcut = 1.0 / filt_lo / 3600
         fnames = ["Hobo-10m-filter-17h", "RBR-10m-filter-17h"]
 
+
+        debug = False
+        order = None
+        gpass = 9
+        astop = 32
+        recurse = True
+
+
         btype = 'band'
-        fs1 = 1.0 / ((HOBOdateTimeArr[1] - HOBOdateTimeArr[0]) * factor)
+        fs1 = 1.0 / ((HOBOdateTimeArr[0][2] - HOBOdateTimeArr[0][1]) * factor)
         # HOBODepthArr = filters.fft_bandpassfilter(HOBODepthArr, fs1, lowcut, highcut)
-        HOBODepthArr, w, h, N = filters.butterworth(HOBODepthArr, btype, lowcut, highcut, fs1)
+        HOBODepthArr, w, h, N, delay = filters.butterworth(HOBODepthArr, btype, lowcut, highcut, fs1, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
 
-        fs2 = 1 / ((RBRdateTimeArr[1] - RBRdateTimeArr[0]) * factor)
+        if len(HOBODepthArr) != len(HOBOdateTimeArr[0]):
+            HOBOdateTimeArr_res = scipy.signal.resample(HOBOdateTimeArr[0], len(HOBODepthArr))
+        else :
+            HOBOdateTimeArr_res = HOBOdateTimeArr[0]
+
+
+        fs2 = 1 / ((RBRdateTimeArr[0][2] - RBRdateTimeArr[0][1]) * factor)
         # RBRDepthArr = filters.fft_bandpassfilter(RBRDepthArr, fs2, lowcut, highcut)
-        RBRDepthArr, w, h, N = filters.butterworth(RBRDepthArr, btype, lowcut, highcut, fs2)
+        RBRDepthArr, w, h, N, delay = filters.butterworth(RBRDepthArr, btype, lowcut, highcut, fs2, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
 
-    # end filter
+        if len(RBRDepthArr) != len(RBRdateTimeArr[0]):
+            RBRdateTimeArr_res = scipy.signal.resample(RBRdateTimeArr[0], len(HOBODepthArr))
+        else :
+            RBRdateTimeArr_res = RBRdateTimeArr[0]
+
+
+        print "End filtering: isoterm_oscillation"
+     # end filter
+
+    else:
+        HOBOdateTimeArr_res = HOBOdateTimeArr[0]
+        RBRdateTimeArr_res = RBRdateTimeArr[0]
+
+
+
+
+
     custom1 = "Isotherme %d ($^\circ$C) depth (m)" % isotemp
     custom2 = "Isotherme %d ($^\circ$C) depth (m)" % isotemp
     custom = [custom1, custom2]
@@ -462,26 +656,29 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
     tick1 = [t01, t02]
     tick2 = [t11, t12]
     tick = [tick1, tick2]
+
     revert = True
+    yday = True
 
+    print "Start display: isoterm_oscillation"
 
-    display_data.display_depths_subplot([HOBOdateTimeArr[0][1:], RBRdateTimeArr[0][1:]], [HOBODepthArr[1:], RBRDepthArr[1:]], maxdepth = wdepths, \
-                                       fnames = fnames, revert = revert, tick = tick, custom = custom, firstlog = None)
+    display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [HOBODepthArr[1:], RBRDepthArr[1:]], maxdepth = wdepths, \
+                                       fnames = fnames, yday = yday, revert = revert, tick = tick, custom = custom, firstlog = None)
 
 
     tick = [tick1]
-    revert_y = True  # this will revern only depths tick on the y axis
+    revert_y = True  # this will revert only depths tick on the y axis
 
-    display_data.display_depths_subplot([HOBOdateTimeArr[0][1:]], [HOBODepthArr[1:]], maxdepth = [wdepths[0]], \
-                                         fnames = [fnames[0]], revert = revert_y, tick = tick, custom = [custom[0]], firstlog = None)
+    display_data.display_depths_subplot([HOBOdateTimeArr_res[1:]], [HOBODepthArr[1:]], maxdepth = [wdepths[0]], \
+                                         fnames = [fnames[0]], yday = yday, revert = revert_y, tick = tick, custom = [custom[0]], firstlog = None)
 
 
     tick = [tick2]
     revert_y = True
 
 
-    display_data.display_depths_subplot([RBRdateTimeArr[0][1:]], [RBRDepthArr[1:]], maxdepth = [wdepths[1]], \
-                                         fnames = [fnames[1]], revert = revert_y, tick = tick, custom = [custom[1]], firstlog = None)
+    display_data.display_depths_subplot([RBRdateTimeArr_res[1:]], [RBRDepthArr[1:]], maxdepth = [wdepths[1]], \
+                                         fnames = [fnames[1]], yday = yday, revert = revert_y, tick = tick, custom = [custom[1]], firstlog = None)
 
     return [ [HOBOdateTimeArr[0][1:], HOBODepthArr[1:]], [RBRdateTimeArr[0][1:], RBRDepthArr[1:]] ]
 
@@ -490,15 +687,15 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
 def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isotemp):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-
+    print "Start poincare_wave_in_lontario()"
     HOBOdateTimeArr = data[0][0]
     HOBODepthArr = data[0][1]
     RBRdateTimeArr = data[1][0]
     RBRDepthArr = data[1][1]
 
     # Poincare Waves
-    highcut = 1.0 / period / 3600
-    lowcut = 1.0 / (period + 0.2) / 3600
+    highcut = 1.0 / (period - 0.5) / 3600
+    lowcut = 1.0 / (period + 0.5) / 3600
     tunits = 'day'
 
     if tunits == 'day':
@@ -508,13 +705,33 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
     else:
         factor = 1
 
-    Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.float)
-    fs = 1.0 / ((HOBOdateTimeArr[2] - HOBOdateTimeArr[1]) * factor)
-    Filtered_data, w, h, N = filters.butterworth(HOBODepthArr, 'band', lowcut, highcut, fs, debug = 'False')
 
-    Filtered_data_rbr = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.float)
-    fs2 = 1.0 / ((RBRdateTimeArr[2] - RBRdateTimeArr[1]) * factor)
-    Filtered_data_rbt, w, h, N = filters.butterworth(RBRDepthArr, 'band', lowcut, highcut, fs2, debug = 'False')
+
+    yday = True
+    debug = False
+    order = None
+    gpass = 9
+    astop = 32
+    recurse = True
+
+
+    btype = 'band'
+    fs1 = 1.0 / ((HOBOdateTimeArr[2] - HOBOdateTimeArr[1]) * factor)
+    Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.float)
+    Filtered_data, w, h, N, delay = filters.butterworth(HOBODepthArr, btype, lowcut, highcut, fs1, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
+    if len(Filtered_data) != len(HOBOdateTimeArr):
+        HOBOdateTimeArr_res = scipy.signal.resample(HOBOdateTimeArr, len(Filtered_data))
+    else :
+        HOBOdateTimeArr_res = HOBOdateTimeArr
+
+
+    fs2 = 1 / ((RBRdateTimeArr[2] - RBRdateTimeArr[1]) * factor)
+    Filtered_data_rbr, w, h, N, delay = filters.butterworth(RBRDepthArr, btype, lowcut, highcut, fs2, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
+    if len(Filtered_data_rbr) != len(RBRdateTimeArr):
+        RBRdateTimeArr_res = scipy.signal.resample(RBRdateTimeArr, len(Filtered_data_rbr))
+    else :
+        RBRdateTimeArr_res = RBRdateTimeArr
+
 
     print "Start display: poincare_wave_in_lontario"
 
@@ -531,21 +748,23 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
     tick = [tick1, tick2]
     revert_y = True
 
-    display_data.display_depths_subplot([HOBOdateTimeArr[1:], RBRdateTimeArr[1:]], [Filtered_data[1:], Filtered_data_rbt[1:]], maxdepth = None, \
-                                       fnames = [fnames[0]], revert = False, tick = None, custom = custom, firstlog = None)
+
+
+    display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [Filtered_data[1:], Filtered_data_rbr[1:]], maxdepth = None, \
+                                       fnames = fnames, yday = yday, revert = False, tick = None, custom = custom, firstlog = None)
 
     debug = False;
     if debug:
         # tick = [tick1]
         revert_y = True  # this will revert only depths tick on the y axis
 
-        display_data.display_depths_subplot([HOBOdateTimeArr[1:], HOBOdateTimeArr[1:]], [HOBODepthArr[1:], Filtered_data[1:]], maxdepth = None, \
-                                             fnames = fnames, revert = False, tick = None, custom = [custom1, "FFT"], firstlog = None)
+        display_data.display_depths_subplot([HOBOdateTimeArr[1:], HOBOdateTimeArr_res[1:]], [HOBODepthArr[1:], Filtered_data[1:]], maxdepth = None, \
+                                             fnames = fnames, yday = yday, revert = False, tick = None, custom = [custom1, "FFT"], firstlog = None)
 
 def poincare_wave_in_harbour(period, dateinterval, paths):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-
+    print "Start poincare_wave_in_harbour()"
     for path in paths:
         dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], dateinterval, path)
         HOBOdateTimeArr = dateTime
@@ -566,16 +785,24 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
 
         Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
         i = 0
+        yday = True
+        debug = False
+        order = None
+        gpass = 9
+        astop = 32
+        recurse = True
+
+
         btype = 'band'
+
         for data in HOBOdateTimeArr:
-            fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
-            # Filtered_data[i] = filters.fft_bandpassfilter(HOBOtempArr[i], fs, lowcut, highcut)
-            Filtered_data[i], w, h, N = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs)
+            fs1 = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
+            Filtered_data[i], w, h, N, delay = filters.butterworth(HOBODepthArr, btype, lowcut, highcut, fs1, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
             i += 1
 
         # get hobo file from the lake
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
-        hobofilename = '18_2393005.csv'
+        hobofilename = '18_2393005.csv'  # 10m deep sensor
         print "Reading file %s" % hobofilename
         dateTime, temp, results = readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
 
@@ -591,12 +818,12 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
         fnames = numpy.append(fnames, hobofilename)
 
         fs = 1.0 / ((dateTime[2] - dateTime[1]) * factor)
-        # Filtered_data[len(HOBOresultsArr) - 1] = filters.fft_bandpassfilter(temp, fs, lowcut, highcut)
-        Filtered_data[len(HOBOresultsArr) - 1], w, h, N = filters.butterworth(temp, btype, lowcut, highcut, fs)
+        Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay = filters.butterworth(temp, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
 
 
-        print "Start display"
-        display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames)
+        print "Start display ####### SHOULD BE display_depths??????? "
+        # SHOULD BE display_depths ?????
+        display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday)
 
         # superimposed filtered data for the period oscillation freq
         difflines = True
@@ -609,37 +836,46 @@ def calculate_statistics(arr):
     avg = numpy.average(arr)
     min = numpy.min(arr)
     max = numpy.max(arr)
-    return  [avg, max, min]
 
-def write_statistics(writer, station, day, unixtime, avg, max, min, all = False):
+    dof = fft_utils.dof(arr)
+    out = scipy.stats.bayes_mvs(arr, alpha = 0.95)
+
+    # take the median as that is what we are interested in
+    avgidx = 0
+    (x05, x95) = out[avgidx][1]
+
+    # test with other method
+    # CImean = bootstrap.ci(data = arr, statfunction = scipy.mean)
+    # print "Bootstrapped 95% confidence intervals  MEAN\nLow:", CImean[0], "\nHigh:", CImean[1]
+
+
+
+    return  [avg, max, min, x05, x95]
+
+def write_statistics(writer, station, day, unixtime, avg, max, min, x05 = None, x95 = None, all = False):
     idx = 0
     numdat = []
     prev = 0
     prevtxt = ''
     # print "len(depth) :%d, len(dateTime):%d" % (len(depth), len(dateTime))
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    if all:
+    if all == False:
         writer.writerow([day, unixtime, avg, max, min])
     else:
-        writer.writerow([station, day, unixtime, avg, max, min])
+        writer.writerow([day, unixtime, avg, max, min, x05, x95])
 
 
-def calculate_harbour_statistics(path, path_out, timeinterv, all = False):
+def calculate_harbour_statistics(path, path_out, timeinterv, all = False, NOVAPRIL = None):
     '''
-    calculate avg, min, max /day/sensor
+    calculate avg, min, max /day/sensor-
     '''
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-
 
     dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], timeinterv, path)
     HOBOdateTimeArr = dateTime
     HOBOresultsArr = results
     HOBOtempArr = temp
-
-
-
-
 
     if all == False:
         for i in range(0, len(HOBOdateTimeArr)):
@@ -681,7 +917,7 @@ def calculate_harbour_statistics(path, path_out, timeinterv, all = False):
     else:
         g_ofile = open(path_out + '/' + 'all_stations.csv', "wb")
         gwriter = csv.writer(g_ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
-        write_statistics(gwriter, "Station", "Date", "Timestamp", "Avg Temp", "Max Temp", "Min Temp", all = all)
+        write_statistics(gwriter, "Station", "Date", "Timestamp", "Avg Temp", "Max Temp", "Min Temp", "Con. lev 5%", "Conf lev 95%", all = all)
 
         dayOfTheYear = 0
         OlddayOfTheYear = 0
@@ -712,10 +948,10 @@ def calculate_harbour_statistics(path, path_out, timeinterv, all = False):
                 dayOfTheYear = datet.timetuple().tm_yday
 
                 # calculate stats
-                [gavg, gmax, gmin] = calculate_statistics(numpy.array(gdaytemps[OlddayOfTheYear]))
+                [gavg, gmax, gmin, x05, x95] = calculate_statistics(numpy.array(gdaytemps[OlddayOfTheYear]))
 
                 # insert in a spreadsheet
-                write_statistics(gwriter, j, daystr, HOBOdateTimeArr[0][j], gavg, gmax, gmin, all = all)
+                write_statistics(gwriter, j, daystr, HOBOdateTimeArr[0][j], gavg, gmax, gmin, x05, x95, all = all)
 
                 # clear the array
                 OlddayOfTheYear = dayOfTheYear
@@ -728,11 +964,14 @@ def calculate_harbour_statistics(path, path_out, timeinterv, all = False):
                     station = fnames[i]
 
                     # eliminate faulty data
-                    if HOBOtempArr[i][j] > 13 and (dayOfTheYear > 270 or dayOfTheYear < 150):
-                        day = num2date(HOBOdateTimeArr[i][j])
-                        daystr = day.strftime("%d %B %Y")
-                        print "* Faulty station : %s: temp:%f, date:%s" % (station, HOBOtempArr[i][j], daystr)
-                    else:  # add data
+                    if NOVAPRIL != None:
+                        if HOBOtempArr[i][j] > 13 and (dayOfTheYear > 270 or dayOfTheYear < 150):
+                            day = num2date(HOBOdateTimeArr[i][j])
+                            daystr = day.strftime("%d %B %Y")
+                            print "* Faulty station : %s: temp:%f, date:%s" % (station, HOBOtempArr[i][j], daystr)
+                        else:  # add data
+                            gdaytemps[dayOfTheYear].append(HOBOtempArr[i][j])
+                    else:
                         gdaytemps[dayOfTheYear].append(HOBOtempArr[i][j])
             except Exception as e:
                 # print "** Bad series : %s" % (station)
@@ -750,29 +989,42 @@ def draw_harbour_statistics(path, timeinterv, selector, all = False):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
+
+
     for i in range(0, len(selector)):
 
         type = selector[i]
 
-        dateTime, temp, result, k, fnames = readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
+        if all:
+            dateTime, temp, result, k, fnames, x05, x95 = readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
+        else:
+            dateTime, temp, result, k, fnames = readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
 
-        HOBOdateTimeArr = dateTime
-        HOBOtempArr = temp
-        HOBOresultsArr = result
-        print "Start display %s" % type
+        if all:
+            difflines = False
+            custom = "%s - Temperature " % type
+            display_data.display_temperatures(numpy.array([dateTime[1:]]), numpy.array([temp[1:]]), \
+                                              numpy.array([result[1:]]), k, fnames = [ type], difflines = difflines, custom = custom)
 
-        # display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames)
+        else:
+            HOBOdateTimeArr = dateTime
+            HOBOtempArr = temp
+            HOBOresultsArr = result
+            print "Start display %s" % type
 
-        # superimposed filtered data for he period oscillation freq
-        difflines = False
+            # display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames)
 
-        custom = "%s - Temperature " % type
-        dof = fft_utils.dof(HOBOtempArr[0])
-        (x05, x95) = fft_utils.confidence_interval(HOBOtempArr, dof, 0.95)
+            # superimposed filtered data for he period oscillation freq
+            difflines = False
 
-        display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0], HOBOdateTimeArr[0], HOBOdateTimeArr[0]]), numpy.array([HOBOtempArr[0], x05[0], x95[0]]), \
-                                          numpy.array([HOBOresultsArr[0], HOBOresultsArr[0], HOBOresultsArr[0]]), k, fnames = [ type, '5%', '95%'], difflines = difflines, custom = custom)
+            custom = "%s - Temperature " % type
 
+            if type == 'avg':
+                display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0][1:], HOBOdateTimeArr[0][1:], HOBOdateTimeArr[0][1:]]), numpy.array([HOBOtempArr[0][1:], x05, x95]), \
+                                              numpy.array([HOBOresultsArr[0][1:], HOBOresultsArr[0][1:], HOBOresultsArr[0][1:]]), k, fnames = [ type, '5%', '95%'], difflines = difflines, custom = custom)
+            else:
+                display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0][1:]]), numpy.array([HOBOtempArr[0][1:]]), \
+                                              numpy.array([HOBOresultsArr[0][1:]]), k, fnames = [ type], difflines = difflines, custom = custom)
 
 def harbour_statistics(all = False):
     #---------------------------------------------------------
@@ -780,15 +1032,18 @@ def harbour_statistics(all = False):
     #---------------------------------------------------------
     path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed'
     path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/stats'
-    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed'
-    if all == False:
-        path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/stats'
-    else:
-        path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/allstats'
+    # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed'
+    # if all == False:
+    #    path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/stats'
+    # else:
+    #    path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/allstats'
     # path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed/stats/sample'
 
-    startdate = '11/02/01 00:00:00'
+    # startdate = '11/02/01 00:00:00'
+    # enddate = '12/10/24 00:00:00'
+    startdate = '12/04/21 00:00:00'
     enddate = '12/10/24 00:00:00'
+
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
     start_num = date2num(dt)
     dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
@@ -803,13 +1058,88 @@ def harbour_statistics(all = False):
     print "Done!"
 
 
+def read_Upwelling_files(ppath):
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+
+    print "Start read_Upwelling_files()"
+    startdate = '12/07/19 00:00:00'
+    enddate = '12/10/24 00:00:00'
+    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+    start_num = date2num(dt)
+    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+    end_num = date2num(dt)
+
+    # Separate directories from files
+    base, dirs, files = iter(os.walk(ppath)).next()
+
+    for path in dirs:
+        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], [start_num, end_num], ppath + '/' + path)
+        HOBOdateTimeArr = dateTime
+        HOBOresultsArr = results
+        HOBOtempArr = temp
+
+        # Kelvin?
+        lowcut = 1.0 / (24 * 10) / 3600
+        highcut = 1.0 / (24 * 3) / 3600
+        tunits = 'day'
+        if tunits == 'day':
+            factor = 86400
+        elif tunits == 'hour':
+            factor = 3600
+        else:
+            factor = 1
+
+        yday = True
+        debug = False
+        order = None
+        gpass = 9
+        astop = 32
+        recurse = True
+
+        Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+        delay = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+        i = 0
+        btype = 'band'
+        for data in HOBOdateTimeArr:
+            fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
+            Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+            if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
+                HOBOdateTimeArr_res = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+            else :
+                HOBOdateTimeArr_res = HOBOdateTimeArr[i]
+
+            i += 1
+
+        print "Start display unfiltered & filetered data"
+        if len(HOBOdateTimeArr) <= 9:
+            display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
+        # superimposed filtered data for 1-3 days oscillation freq
+        difflines = False
+        display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, HOBOresultsArr, k, fnames = fnames, difflines = difflines)
+    # end for path
+
 
 if __name__ == '__main__':
 
-    all = True
-    harbour_statistics(all)
-    print "Done!"
-    os.abort()
+
+    harbour_stats = False  # 0
+    LO_hobot_rbrt_10m = False  # 1
+    LO_isotherm = False  # 2
+    Toronto_harbour = False  # 3
+    atm_correlation = False  # 4
+    Toronto_harb_filter = False  # 5
+    TRCA_data = False  # 6
+    Upwelling_zone = True  # 7
+
+    exit_if = [True, False, False, True, False, False, True]
+
+    if harbour_stats:
+        all = True
+        harbour_statistics(all)
+        print "Done!harbour_stats "
+        if exit_if[0]:
+            "Exit!"
+            os.abort()
 
     #---------------------------------
     # Set the start and end date-time
@@ -822,60 +1152,102 @@ if __name__ == '__main__':
     end_num = date2num(dt)
 
 
-    #-----------------------------------------------------------
-    # Set the paths and sepcific data for the isotherm locations
-    #-----------------------------------------------------------
-    paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed',
-             '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR']
-    waterdepths = [27, 20]  # water depths at the location
-    top_log_depths = [3, 4]
-    delta_ls = [1, 1]  # loggers interval
+    if LO_hobot_rbrt_10m:
+        #-----------------------------------------------------------
+        # Set the paths and sepcific data for the isotherm locations
+        #-----------------------------------------------------------
+        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed',
+                 '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR']
+        waterdepths = [27, 20]  # water depths at the location
+        top_log_depths = [3, 4]
+        delta_ls = [1, 1]  # loggers interval
 
-    fnames = ['18_2393005.csv', '019513.dat']
-    read_LOntario_files(paths, fnames, [start_num, end_num])
+        fnames = ['18_2393005.csv', '019513.dat']
+        read_LOntario_files(paths, fnames, [start_num, end_num])
+        if exit_if[1]:
+            print "Done! LO_hobot_rbrt_10m"
+            os.abort()
+
+    if LO_isotherm:
+        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed',
+                 '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR']
+
+        waterdepths = [27, 20]  # water depths at the location
+        top_log_depths = [3, 4]
+        delta_ls = [1, 1]  # loggers interval
+        # draw the isotherm oscillations
+        temp = 13.0
+        # Filter in [ lo period, hi period] = > [Hi freq, lo freq]
+        filter = None  # [16.5, 17.5]
+
+        [hobo, rbr] = isoterm_oscillation(temp, paths, waterdepths, top_log_depths, delta_ls, [start_num, end_num], filter)
+        period_hours = 17
+        startdate = '12/07/19 00:00:00'
+        enddate = '12/10/24 00:00:00'
+        dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+        start_num = date2num(dt)
+        dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+        end_num = date2num(dt)
+        fnames = ['Hobo t-Chain', 'RBR t-Chain']
+        poincare_wave_in_lontario(period_hours, [start_num, end_num], [hobo, rbr], fnames, waterdepths, temp)
+
+        print "Done! LO_isotherm"
+        if exit_if[2]:
+            print "Exit! "
+            os.abort()
+
+    if Toronto_harbour:
+        #---------------------------------------------------
+        # Read all files in Toronto Harbour for temperature
+        #----------------------------------------------------
+        read_Tor_Harbour_files()  # this can filter too and  exhibit poincare waves
+        print "Done! Toronto harbour"
+        if exit_if[3]:
+            print "Exit! "
+            os.abort()
+
+    if atm_correlation:
+        #---------------------------------------------------
+        # Correlate with meteorologic data
+        #---------------------------------------------------
+        wind_airpress_airtemp_water_temp()
+        print "Done! atm_correlation"
+        if exit_if[4]:
+            print "Exit! "
+            os.abort()
+
+    if Toronto_harb_filter:
+        period_hours = 24
+        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-10-37-38',
+                '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-17-2',
+                ]
+
+        startdate = '12/07/19 00:00:00'
+        enddate = '12/10/24 00:00:00'
+        dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+        start_num = date2num(dt)
+        dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+        end_num = date2num(dt)
+        poincare_wave_in_harbour(period_hours, [start_num, end_num], paths)
+
+        print "Done! Toronto_harb_filter"
+        if exit_if[4]:
+            print "Exit!"
+            os.abort()
+    if TRCA_data:
+        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo-TRCA/2012/csv_processed/selected']
+        read_TRCA_files(paths)
+        if exit_if[5]:
+            print "Exit!"
+            os.abort()
+
+    if Upwelling_zone:
+        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones'
+        read_Upwelling_files(path)
+        if exit_if[5]:
+            print "Exit!"
+            os.abort()
 
 
-
-     # draw the isotherm oscillations
-    temp = 13.0
-    # Filter in [Hi freq, lo freq} = > [ lo period, hi period]
-    filter = None  # [16.8, 17.2]
-
-    [hobo, rbr] = isoterm_oscillation(temp, paths, waterdepths, top_log_depths, delta_ls, [start_num, end_num], filter)
-    period_hours = 17
-    startdate = '12/07/19 00:00:00'
-    enddate = '12/10/24 00:00:00'
-    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
-    start_num = date2num(dt)
-    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
-    end_num = date2num(dt)
-    fnames = ['Hobo t-Chain', 'RBR t-Chain']
-    poincare_wave_in_lontario(period_hours, [start_num, end_num], [hobo, rbr], fnames, waterdepths, temp)
-    print "Done!"
-    os.abort()
-
-    #---------------------------------------------------
-    # Read all files in Toronto Harbour for temperature
-    #----------------------------------------------------
-    read_Tor_Harbour_files()  # this can filter too and  exhibit poincare waves
-
-
-    #---------------------------------------------------
-    # Correlate with meteorologic data
-    #---------------------------------------------------
-    wind_airpress_airtemp_water_temp()
-
-    period_hours = 24
-    paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-10-37-38',
-            '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-17-2',
-            ]
-
-    startdate = '12/07/19 00:00:00'
-    enddate = '12/10/24 00:00:00'
-    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
-    start_num = date2num(dt)
-    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
-    end_num = date2num(dt)
-    poincare_wave_in_harbour(period_hours, [start_num, end_num], paths)
-
+    print "Done! Script"
 

@@ -16,6 +16,13 @@ warnings.simplefilter('ignore', numpy.RankWarning)
 import smooth
 
 
+
+windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
+window_6hour = "window_6hour"  # 30 * 6 for a 2 minute sampling
+window_hour = "window_hour"  # 30
+window_day = "window_day"  # 30 * 24
+window_half_day = "window_half_day"  # 30 * 12
+
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2011/csv_processed'
 path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2011/csv_processed/out'
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
@@ -43,6 +50,9 @@ filelist = {2:'1020769_Stn_02_03-11-11.csv', \
             44:'9674468_Stn_44_13-12-11.csv'
 
             }
+
+
+
 
 # groups
 # station number:depth - dictionary
@@ -89,8 +99,9 @@ def read_stats_data(reader, timeinterv = None, all = False):
     avgtemp = []
     maxtemp = []
     mintemp = []
+    x05 = []
+    x95 = []
     dateTime = []
-    printHeaderVal = False
 
     if timeinterv != None:
         startt = timeinterv[0]
@@ -106,6 +117,8 @@ def read_stats_data(reader, timeinterv = None, all = False):
         avgidx = 2
         maxidx = 3
         minidx = 4
+        x05idx = 5
+        x95idx = 6
 
     for row in reader:
         try:
@@ -118,9 +131,15 @@ def read_stats_data(reader, timeinterv = None, all = False):
             avgtemp.append(float(row[avgidx]))
             maxtemp.append(float(row[maxidx]))
             mintemp.append(float(row[minidx]))
+            if all:
+                x05.append(float(row[x05idx]))
+                x95.append(float(row[x95idx]))
             # end if
         except:
             pass
+    if all:
+        return [dateTime, avgtemp, maxtemp, mintemp, x05, x95]
+
     return [dateTime, avgtemp, maxtemp, mintemp]
 
 
@@ -206,13 +225,20 @@ def analyze_data(pair, name, id, writer):
             # display(dateTime, temp, v, k)
             # results = polyfit(dateTime, temp, 50)
             # results = splinefit(dateTime, temp, 7000)
+            span = window_day
 
-            windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
+            # check if span is correct
+            dt = dateTime[2] - dateTime[1]  # usually days
+            if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
+                nspan = 6. / (dt * 24)
+            elif span == "window_hour":  # 30 for a 2 minute sampling
+                nspan = 1. / (dt * 24)
+            elif span == "window_day":  # 30 * 24 for a 2 minute sampling
+                nspan = 24. / (dt * 24)
+            elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
+                nspan = 12. / (dt * 24)
 
-            window_6hour = 30 * 6
-            window_hour = 30
-            window_day = 30 * 24
-            results = smooth.smoothfit(dateTime, temp, window_day, windows[1])
+            results = smooth.smoothfit(dateTime, temp, nspan, windows[1])
 
             display_data.display2(dateTime, temp, results['smoothed'], k)
 
@@ -247,12 +273,24 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
     [dateTime, temp] = read_data(reader, timeinterv)
 
-    results = smooth.smoothfit(dateTime, temp, span, window)
+    # check if span is correct
+    dt = dateTime[2] - dateTime[1]  # usually days
+    if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
+        nspan = 6. / (dt * 24)
+    elif span == "window_hour":  # 30 for a 2 minute sampling
+        nspan = 1. / (dt * 24)
+    elif span == "window_day":  # 30 * 24 for a 2 minute sampling
+        nspan = 24. / (dt * 24)
+    elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
+        nspan = 12. / (dt * 24)
+
+    results = smooth.smoothfit(dateTime, temp, nspan, window)
 
     # print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
     # writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
     ifile.close()
     return [dateTime, temp, results['smoothed']]
+    # return [dateTime, temp, temp]
 
 def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type, all = False):
     if rpath != None:
@@ -264,7 +302,10 @@ def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type, all =
     else:
         return
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
-    [dateTime, avgtemp, maxtemp, mintemp] = read_stats_data(reader, timeinterv, all = all)
+    if all:
+        [dateTime, avgtemp, maxtemp, mintemp, x05, x95] = read_stats_data(reader, timeinterv, all = all)
+    else:
+        [dateTime, avgtemp, maxtemp, mintemp] = read_stats_data(reader, timeinterv, all = all)
 
     if type == 'min':
         temp = mintemp
@@ -280,12 +321,29 @@ def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type, all =
     else:
         print "len temp %d" % len(temp)
 
-    results = smooth.smoothfit(dateTime, temp, span, window)
+    # check if span is correct
+#===============================================================================
+#     dt = dateTime[2] - dateTime[1]  # usually days
+#
+#     if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
+#         nspan = 6. / (dt * 24)
+#     elif span == "window_hour":  # 30 for a 2 minute sampling
+#         nspan = 1. / (dt * 24)
+#     elif span == "window_day":  # 30 * 24 for a 2 minute sampling
+#         nspan = 24. / (dt * 24)
+#     elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
+#         nspan = 12. / (dt * 24)
+#     results = smooth.smoothfit(dateTime, temp, nspan, window)
+#===============================================================================
 
     # print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
     # writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
     ifile.close()
-    return [dateTime, temp, results['smoothed']]
+
+    if all:
+        return [dateTime, temp, temp, x05, x95]
+    # return #[dateTime, temp, results['smoothed']]
+    return [dateTime, temp, temp]
 
 
 def read_files_and_display(rpath = None):
@@ -294,19 +352,16 @@ def read_files_and_display(rpath = None):
     else:
         ppath = path
 
-    windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
-    window_6hour = 30 * 6
-    window_hour = 30
-    window_day = 30 * 24
-    window_half_day = 30 * 12
-    dirList = os.listdir(path)
+    dirList = os.listdir(ppath)
+
+
     dateTimeArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
     tempArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
     resultsArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
     k = numpy.zeros(len(dirList), dtype = numpy.ndarray)
     i = 0
     for fname in dirList:
-        dateTime, temp, results = get_data_from_file(fname, window_hour, windows[1])
+        dateTime, temp, results = get_data_from_file(fname, window_hour, windows[1], rpath = ppath)
         maxidx = 30000
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime[:maxidx])
         resultsArr[i] = numpy.append(resultsArr[i], results[:maxidx])
@@ -315,7 +370,7 @@ def read_files_and_display(rpath = None):
         i += 1
     # end for
 
-    display_data.display_temperatures(dateTimeArr, tempArr, resultsArr, k)
+    display_data.display_temperatures(dateTimeArr, tempArr, resultsArr, k, fnames = dirList, custom = "Temperature Toronto Waterfront Zones $^oC$")
     t11 = ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27']
     t12 = [27, 24, 21, 18, 15, 12, 9, 6, 3, 0]
     tick = [t11, t12]
@@ -380,32 +435,32 @@ def read_stat_files(span, window, timeinterv, rpath, type, all = False):
     k = numpy.zeros(len(files), dtype = numpy.ndarray)
     fnames = numpy.zeros(len(files), dtype = numpy.chararray)
     i = 0
-    for fname in dirList:
-        print "Reading file %s" % fname
-        if os.path.isdir(ppath + "/" + fname):
-            continue
+    if all:
+        dateTime, temp, results, x05, x95 = get_data_from_stats_file('all_stations.csv', span, window, timeinterv, ppath, type, all = all)
+    else:
+        for fname in dirList:
+            print "Reading file %s" % fname
+            if os.path.isdir(ppath + "/" + fname):
+                continue
 
-        dateTime, temp, results = get_data_from_stats_file(fname, span, window, timeinterv, ppath, type, all = all)
+            dateTime, temp, results = get_data_from_stats_file(fname, span, window, timeinterv, ppath, type, all = all)
 
-        dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
-        resultsArr[i] = numpy.append(resultsArr[i], results)
-        tempArr[i] = numpy.append(tempArr[i], temp)
-        k[i] = numpy.append(k[i], i)
-        fnames[i] = fname
-        i += 1
-    # end for
+            dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
+            resultsArr[i] = numpy.append(resultsArr[i], results)
+            tempArr[i] = numpy.append(tempArr[i], temp)
+            k[i] = numpy.append(k[i], i)
+            fnames[i] = fname
+            i += 1
+        # end for
+    if all:
+        return [dateTime, temp, results, k, fnames, x05, x95]
     return [dateTimeArr, tempArr, resultsArr, k, fnames]
 
 
 
 def plot_upwelling_multiple_locations():
 
-    windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
-    # windows[1]
-    window_6hour = 30 * 6
-    window_hour = 30
-    window_day = 30 * 24
-    window_half_day = 30 * 12
+
 
     file21 = '9678892_Stn_21_03-11-11.csv'
     file32 = '1020953_Stn_32_04-11-11.csv'
@@ -440,6 +495,6 @@ def plot_upwelling_multiple_locations():
 if __name__ == '__main__':
     # select_data()
     # plot_upwelling_multiple_locations()
-    read_files_and_display()
+    read_files_and_display("/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/.Motivation")
     print "Done!"
 

@@ -241,7 +241,7 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
             dmax = num2date(d[len(d) - 1])
             maxx = max(maxx, (dmax.timetuple().tm_yday + dmax.timetuple().tm_hour / 24. + dmax.timetuple().tm_min / (24. * 60) + dmax.timetuple().tm_sec / (24. * 3600)))
 
-            dmin = num2date(d[0])
+            dmin = num2date(d[1])
             minx = min(minx, (dmin.timetuple().tm_yday + dmin.timetuple().tm_hour / 24. + dmin.timetuple().tm_min / (24. * 60) + dmin.timetuple().tm_sec / (24. * 3600) - delay[k]))
 
 
@@ -275,7 +275,7 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
             dofy = numpy.zeros(len(dateTime))
             # dates = [datetime.fromordinal(d) for d in dataTime]
             # dofy = [d.tordinal() - datetime.date(d.year, 1, 1).toordinal() + 1 for d in dates]
-            for j in range(0, len(dateTime)) :
+            for j in range(1, len(dateTime)) :
                 d = num2date(dateTime[j])
 
                 dely = delay[i] if delay != None else 0.0
@@ -352,10 +352,25 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
     plt.show()
 
 
-def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, revert = True, tick = None, custom = None, firstlog = None):
+def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = None, revert = True, tick = None, custom = None, firstlog = None):
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     format = 100 * len(dateTimes) + 10
     matplotlib.rcParams['legend.fancybox'] = True
+
+
+    if yday != None:
+        minx = 10000000.
+        maxx = 0.
+
+        # find maxx and minX of the X axis
+        for k in range(0, len(dateTimes)):
+            d = dateTimes[k]
+            dmax = num2date(d[len(d) - 1])
+            maxx = max(maxx, (dmax.timetuple().tm_yday + dmax.timetuple().tm_hour / 24. + dmax.timetuple().tm_min / (24. * 60) + dmax.timetuple().tm_sec / (24. * 3600)))
+
+            dmin = num2date(d[0])
+            minx = min(minx, (dmin.timetuple().tm_yday + dmin.timetuple().tm_hour / 24. + dmin.timetuple().tm_min / (24. * 60) + dmin.timetuple().tm_sec / (24. * 3600)))
+
 
     i = 0
     # ls = ['-', '--', ':', '-.', '-', '--', ':', '-.']
@@ -381,8 +396,20 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, revert = 
                 fileName, fileExtension = os.path.splitext(fnames[i])
                 lg = '%s' % fileName
 
+        if yday == None:
+            lplt = ax[i].plot(dateTime[1:], reversed_depth[1:], linewidth = 0.6, label = lg)
+        else:
+            dofy = numpy.zeros(len(dateTime))
+            # dates = [datetime.fromordinal(d) for d in dataTime]
+            # dofy = [d.tordinal() - datetime.date(d.year, 1, 1).toordinal() + 1 for d in dates]
+            for j in range(0, len(dateTime)) :
+                d = num2date(dateTime[j])
+                dofy[j] = d.timetuple().tm_yday + d.timetuple().tm_hour / 24. + d.timetuple().tm_min / (24. * 60) + d.timetuple().tm_sec / (24. * 3600)
 
-        lplt = ax[i].plot(dateTime[1:], reversed_depth[1:], linewidth = 0.6, label = lg)
+            lplt = ax[i].plot(dofy[1:], reversed_depth[1:], linewidth = 0.6, label = lg)
+
+
+
 
         # LEGEND
         # blue_proxy = plt.Rectangle((0, 0), 1, 1, fc = "b")
@@ -392,12 +419,14 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, revert = 
 
         # X-AXIS -Time
         # format the ticks
-        formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-        # formatter = matplotlib.dates.DateFormatter('`%y')
+        if yday == None:
+            formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
+            # formatter = matplotlib.dates.DateFormatter('`%y')
 
-        ax[i].xaxis.set_major_formatter(formatter)
-        # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
-        ax[i].xaxis.set_minor_locator(mondays)
+            ax[i].xaxis.set_major_formatter(formatter)
+            # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+            ax[i].xaxis.set_minor_locator(mondays)
+
 
         # ax.xaxis.grid(True, 'major')
         ax[i].xaxis.grid(True, 'minor')
@@ -411,7 +440,12 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, revert = 
             ax[i].set_ylabel(custom[i])
 
         ax[i].set_title(title).set_fontsize(18)
-        ax[i].set_xlim(xmax = dateTime[len(dateTime) - 1])
+        if yday == None:
+            ax[i].set_xlim(xmax = dateTime[len(dateTime) - 1])
+            ax[i].set_xlabel("Time").set_fontsize(16)
+        else:
+            ax[i].set_xlim(xmin = minx, xmax = maxx)
+            ax[i].set_xlabel("day of the year").set_fontsize(16)
 
         if maxdepth != None:
             if firstlog != None:

@@ -40,7 +40,7 @@ def smooth(x, window_len = 11, window = 'hanning'):
 
 
     if window_len < 3:
-        return x
+        return x, None
 
 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
