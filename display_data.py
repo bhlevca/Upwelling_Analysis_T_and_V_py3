@@ -18,7 +18,7 @@ hour = matplotlib.dates.HourLocator(byhour = None, interval = 4, tz = None)
 def display(dateTime, temp, label, k):
     fig = plt.figure(num = k, facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
-    ax.plot(dateTime, temp, linewidth = 0.6, color = 'r')
+    ax.plot(dateTime, temp, linewidth = 1.4, color = 'r')
     # format the ticks
     formatter = matplotlib.dates.DateFormatter('%Y-%m')
     # formatter = matplotlib.dates.DateFormatter('`%y')
@@ -44,7 +44,7 @@ def display(dateTime, temp, label, k):
 def display2(dateTime, temp, coeff, k):
     fig = plt.figure(num = k, facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
-    ax.plot(dateTime, temp, 'r', dateTime, coeff, 'b', linewidth = 0.6)
+    ax.plot(dateTime, temp, 'r', dateTime, coeff, 'b', linewidth = 1.4)
     # format the ticks
     formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
     # formatter = matplotlib.dates.DateFormatter('`%y')
@@ -71,7 +71,7 @@ def display_upwelling(dateTimes, temps, coeffs, k):
     for dateTime in dateTimes:
         temp = temps[i]
         coef = coeffs[i]
-        ax.plot(dateTime, coef, linestyle = ls[i], linewidth = 1.6 + 0.2 * i)
+        ax.plot(dateTime, coef, linestyle = ls[i], linewidth = 1.2 + 0.2 * i)
         # ax.plot(dateTime, temp, linewidth = 0.6)
         lg = 'Station %d' % k[i]
         legend.append(lg)
@@ -109,7 +109,7 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
     for dateTime in dateTimes:
         temp = temps[i]
         coef = coeffs[i]
-        ax.plot(dateTime, coef, linestyle = ls[i], linewidth = 1.6 + 0.2 * i)
+        ax.plot(dateTime, coef, linestyle = ls[i], linewidth = 1.2 + 0.2 * i)
         # ax.plot(dateTime, temp, linewidth = 0.6)
         if fnames == None:
             lg = 'Sensor %s' % k[i][1]
@@ -141,28 +141,26 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
     fig.autofmt_xdate()
     plt.show()
 
-def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = False, difflines = False, custom = None, maxdepth = None, tick = None, firstlog = None):
+def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, difflines = False, custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 16):
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
     i = 0
     legend = []
+    title = None
     ls = ['-', '--', ':', '-.', '-', '--', ':', '-.', '-', '--', ':', '-.']
     for dateTime in dateTimes:
         temp = temps[i]
-        coef = coeffs[i]
         # ax.plot(dateTime[1:], coef[1:])
         if revert == True:
             reversed_temp = temp[::-1]
-            reversed_coef = coef[::-1]
         else:
             reversed_temp = temp
-            reversed_coef = coef
         if difflines:
-            ax.plot(dateTime[1:], reversed_temp[1:], linestyle = ls[i], linewidth = 1.0 + 0.2 * i)
+            ax.plot(dateTime[1:], reversed_temp[1:], linestyle = ls[i], linewidth = 1.2 + 0.2 * i)
         else:
             try:
                 if len(dateTime) > 0:
-                    ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 0.8)
+                    ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 1.4)
             except Exception as e:
                 print "Error %s" % e
                 continue
@@ -174,6 +172,8 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
                 lg = "%s" % (fnames[i])
             else:
                 fileName, fileExtension = os.path.splitext(fnames[i])
+                if fileName[0:3] == "zz_":
+                    fileName = fileName[3:]
                 lg = '%s' % fileName
 
         legend.append(lg)
@@ -187,8 +187,9 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
     # ax.xaxis.set_major_locator(years)
     ax.xaxis.set_major_formatter(formatter)
     # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
-    ax.xaxis.set_minor_locator(hour)
-    # ax.xaxis.set_minor_locator(mondays)
+
+    # ax.xaxis.set_minor_locator(hour)
+    ax.xaxis.set_minor_locator(mondays)
 
     # ax.xaxis.grid(True, 'major')
     ax.xaxis.grid(True, 'minor')
@@ -203,13 +204,17 @@ def display_temperatures(dateTimes, temps, coeffs, k, fnames = None, revert = Fa
         title = ' Temperature Profiles'
 
     else:
-        title = ' Profiles: %s' % custom
-        ylabel = custom
+        # title = ' Profiles: %s' % custom
+        title = ' %s' % custom
+        ylabel = ' Temp. ($^\circ$C)'
 
-    plt.ylabel(ylabel).set_fontsize(16)
+    plt.ylabel(ylabel).set_fontsize(fontsize + 2)
+
+    labels = ax.get_xticklabels()
+    plt.setp(labels, rotation = 0, fontsize = fontsize - 2)
 
 
-    plt.title(title).set_fontsize(20)
+    plt.title(title).set_fontsize(fontsize + 2)
     plt.legend(legend)
 
     # rotates and right aligns the x labels, and moves the bottom of the
@@ -270,7 +275,7 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
 
 
         if yday == None:
-            lplt = ax[i].plot(dateTime[1:], reversed_temp[1:], linewidth = 0.6, label = lg)
+            lplt = ax[i].plot(dateTime[1:], reversed_temp[1:], linewidth = 1.4, label = lg)
         else:
             dofy = numpy.zeros(len(dateTime))
             # dates = [datetime.fromordinal(d) for d in dataTime]
@@ -282,7 +287,7 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
 
                 dofy[j] = d.timetuple().tm_yday + d.timetuple().tm_hour / 24. + d.timetuple().tm_min / (24. * 60) + d.timetuple().tm_sec / (24. * 3600) - dely
 
-            lplt = ax[i].plot(dofy[1:], reversed_temp[1:], linewidth = 0.6, label = lg)
+            lplt = ax[i].plot(dofy[1:], reversed_temp[1:], linewidth = 1.4, label = lg)
 
         # LEGEND
         # blue_proxy = plt.Rectangle((0, 0), 1, 1, fc = "b")
@@ -397,7 +402,7 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
                 lg = '%s' % fileName
 
         if yday == None:
-            lplt = ax[i].plot(dateTime[1:], reversed_depth[1:], linewidth = 0.6, label = lg)
+            lplt = ax[i].plot(dateTime[1:], reversed_depth[1:], linewidth = 1.4, label = lg)
         else:
             dofy = numpy.zeros(len(dateTime))
             # dates = [datetime.fromordinal(d) for d in dataTime]
@@ -406,7 +411,7 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
                 d = num2date(dateTime[j])
                 dofy[j] = d.timetuple().tm_yday + d.timetuple().tm_hour / 24. + d.timetuple().tm_min / (24. * 60) + d.timetuple().tm_sec / (24. * 3600)
 
-            lplt = ax[i].plot(dofy[1:], reversed_depth[1:], linewidth = 0.6, label = lg)
+            lplt = ax[i].plot(dofy[1:], reversed_depth[1:], linewidth = 1.4, label = lg)
 
 
 
@@ -473,7 +478,7 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
     plt.show()
 
 
-def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstlog, maxtemp, revert = False):
+def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstlog, maxtemp, revert = False, fontsize = 16):
     n = len(dateTimes[0])
     m = len(dateTimes)
     Temp = numpy.zeros((m, n - 1))
@@ -533,9 +538,11 @@ def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstl
 
     cb = fig.colorbar(im)
     cb.set_clim(0, maxtemp)
+    labels = cb.ax.get_yticklabels()
+    plt.setp(labels, rotation = 0, fontsize = fontsize)
 
     ylabel = ' Depth (m)'
-    plt.ylabel(ylabel).set_fontsize(16)
+    plt.ylabel(ylabel).set_fontsize(fontsize + 2)
     title = ' Temperature Profiles'
     ax.set_ylim(0, maxdepth)
     # reverse
@@ -544,6 +551,8 @@ def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstl
     # THIS works only for the T-CHAIN April2012
     ax.set_yticks(tick[1])
     ax.set_yticklabels(tick[0])
+    labels = ax.get_yticklabels()
+    plt.setp(labels, rotation = 0, fontsize = fontsize)
 
     # format the ticks
     formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
@@ -553,13 +562,16 @@ def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstl
     # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
     ax.xaxis.set_minor_locator(hour)
 
+    labels = ax.get_xticklabels()
+    plt.setp(labels, rotation = 0, fontsize = fontsize)
+
     fig.autofmt_xdate()
 
     # draw the thermocline
     levels = [13]
     colors = ['k']
     linewidths = [1]
-    ax.contour(X, Y, Temp, levels, colors = colors, linewidths = linewidths)
+    ax.contour(X, Y, Temp, levels, colors = colors, linewidths = linewidths, fontsize = fontsize)
     plt.show()
 
 def display_vertical_temperature_profiles(dateTimes, temps, coeffs, k, startdepth, profiles, revert = False, legendloc = 4):
@@ -580,7 +592,7 @@ def display_vertical_temperature_profiles(dateTimes, temps, coeffs, k, startdept
             reversed_temp = temp[::-1]
         else:
             reversed_temp = temp
-        ax.plot(reversed_temp, depth, linestyle = ls[lidx], linewidth = 1.7)
+        ax.plot(reversed_temp, depth, linestyle = ls[lidx], linewidth = 1.4)
         lidx += 1
         lg = '%s' % datetime.date.fromordinal(int(dateTimes[0][j]))
         legend.append(lg)
@@ -608,7 +620,7 @@ def display_vertical_temperature_profiles(dateTimes, temps, coeffs, k, startdept
     #---------------------------------------------------------- center right    7
     #---------------------------------------------------------- lower center    8
     #---------------------------------------------------------- upper center    9
-#-------------------------------------------------------------- center    10
+    #-------------------------------------------------------------- center    10
     # prop={'size':14} font size  =14
     plt.legend(legend, loc = legendloc, prop = {'size':12})
 

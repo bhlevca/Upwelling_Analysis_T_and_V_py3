@@ -36,6 +36,9 @@ window_6hour = "window_6hour"  # window_hour * 6
 window_hour = "window_hour"  #  900  # every 4sec
 window_day = "window_day"  # window_hour * 24
 window_half_day = "window_half_day"  # window_hour * 12
+window_3days = "window_3days"  # 3 * 30 * 24
+window_7days = "window_7days"  # 7 * 30 * 24
+
 
 # window_hour = 900  # every 4sec
 # window_6hour = window_hour * 6
@@ -159,24 +162,30 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
     [dateTime, temp] = read_data(reader, timeinterv)
 
-     # check if span is correct
-    dt = dateTime[2] - dateTime[1]  # usually days
-    if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
-        nspan = 6. / (dt * 24)
-    elif span == "window_hour":  # 30 for a 2 minute sampling - 900 for a 4 sec sampling frequency.
-        nspan = 1. / (dt * 24)
-    elif span == "window_day":  # 30 * 24 for a 2 minute sampling
-        nspan = 24. / (dt * 24)
-    elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
-        nspan = 12. / (dt * 24)
+    if span != None:
+         # check if span is correct
+        dt = dateTime[2] - dateTime[1]  # usually days
+        if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
+            nspan = 6. / (dt * 24)
+        elif span == "window_hour":  # 30 for a 2 minute sampling - 900 for a 4 sec sampling frequency.
+            nspan = 1. / (dt * 24)
+        elif span == "window_day":  # 30 * 24 for a 2 minute sampling
+            nspan = 24. / (dt * 24)
+        elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
+            nspan = 12. / (dt * 24)
+        elif span == "window_3days":  # 3 * 30 * 24 for a 2 minute sampling
+            nspan = 24. * 3 / (dt * 24)
+        elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
+            nspan = 24. * 7 / (dt * 24)
 
-    # results = smooth.smoothfit(dateTime, temp, nspan, window)
-
+        results = smooth.smoothfit(dateTime, temp, nspan, window)
+    else:
+        results = {}
+        results['smoothed'] = temp
     # print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
     # writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
     ifile.close()
-    # return [dateTime, temp, results['smoothed']]
-    return [dateTime, temp, temp]
+    return [dateTime, temp, results['smoothed']]
 
 
 def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
@@ -215,7 +224,7 @@ def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
     revert = True
 
     # display_data.display_temperatures(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], fNameArr[:-dirNo], revert)
-    display_data.display_temperatures(dateTimeArr, tempArr, resultsArr, k, fNameArr, revert)
+    display_data.display_temperatures(dateTimeArr, tempArr, k, fNameArr, revert)
 
     t11 = ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20']
     t12 = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0]
@@ -233,7 +242,7 @@ def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
     display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles, revert, legendpos)
 
 
-def read_files(span, window, dateinterval, path):
+def read_files(span = None, window = windows[1], dateinterval = None, path = None):
 
     # dirs = numpy.array(os.listdir(path))
     # Separate directories from files
