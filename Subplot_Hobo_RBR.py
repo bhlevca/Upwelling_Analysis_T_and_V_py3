@@ -201,6 +201,7 @@ def read_Tor_Harbour_files():
         recurse = True
 
         Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+        HOBOdateTimeArr_res = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
         delay = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
         i = 0
         btype = 'band'
@@ -208,9 +209,9 @@ def read_Tor_Harbour_files():
             fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
             Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
             if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
-                HOBOdateTimeArr_res = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+                HOBOdateTimeArr_res[i] = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
             else :
-                HOBOdateTimeArr_res = HOBOdateTimeArr[i]
+                HOBOdateTimeArr_res[i] = HOBOdateTimeArr[i]
 
             i += 1
 
@@ -240,13 +241,14 @@ def read_Tor_Harbour_files():
         Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay[len(HOBOresultsArr) - 1] = filters.butterworth(temp, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
         if len(Filtered_data[len(HOBOresultsArr) - 1]) != len(HOBOdateTimeArr[len(HOBOdateTimeArr) - 1]):
             HOBOdateTimeArr[len(HOBOresultsArr) - 1] = sp.signal.resample(HOBOdateTimeArr[len(HOBOresultsArr) - 1], len(Filtered_data[len(HOBOresultsArr) - 1]))
-
+        else :
+            HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = HOBOdateTimeArr[len(HOBOresultsArr) - 1]
 
         print "Start display"
         display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
-        display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, k, fnames = fnames, difflines = difflines)
+        display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = fnames, difflines = difflines)
     # end for path
 
 def read_TRCA_files(paths):
@@ -286,6 +288,7 @@ def read_TRCA_files(paths):
         recurse = True
 
         Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+        HOBOdateTimeArr_res = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
         delay = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
         i = 0
         btype = 'band'
@@ -293,9 +296,9 @@ def read_TRCA_files(paths):
             fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
             Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
             if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
-                HOBOdateTimeArr_res = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+                HOBOdateTimeArr_res[i] = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
             else :
-                HOBOdateTimeArr_res = HOBOdateTimeArr[i]
+                HOBOdateTimeArr_res[i] = HOBOdateTimeArr[i]
 
             i += 1
 
@@ -322,15 +325,16 @@ def read_TRCA_files(paths):
         # Filtered_data[len(HOBOresultsArr) - 1] = filters.fft_bandpassfilter(temp, fs, lowcut, highcut)
         Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay[len(HOBOresultsArr) - 1] = filters.butterworth(temp, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
         if len(Filtered_data[len(HOBOresultsArr) - 1]) != len(HOBOdateTimeArr[len(HOBOdateTimeArr) - 1]):
-            HOBOdateTimeArr[len(HOBOresultsArr) - 1] = sp.signal.resample(HOBOdateTimeArr[len(HOBOresultsArr) - 1], len(Filtered_data[len(HOBOresultsArr) - 1]))
-
+            HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = sp.signal.resample(HOBOdateTimeArr[len(HOBOresultsArr) - 1], len(Filtered_data[len(HOBOresultsArr) - 1]))
+        else :
+            HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = HOBOdateTimeArr[len(HOBOresultsArr) - 1]
 
         print "Start display"
         if len(HOBOdateTimeArr) <= 9:
             display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = False
-        display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, k, fnames = fnames, difflines = difflines)
+        display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = fnames, difflines = difflines)
     # end for path
 
 
@@ -1060,7 +1064,7 @@ def harbour_statistics(all = False):
     print "Done!"
 
 
-def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, fft = False):
+def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, fft = False, stats = False):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     print "Start read_Upwelling_files()"
@@ -1113,8 +1117,8 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             tunits = "day"
             title = "Toronto Waterfront: %s" % zoneName
             dat = [HOBOdateTimeArr[0][1:], HOBOtempArr[0][1:]]  # skip first value because is usually 0
-
-            [Time, y, x05, x95] = spectral_analysis.doLogSpectralAnalysis(dat, zoneName, fn, title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False)
+            log = True
+            [Time, y, x05, x95] = spectral_analysis.doSpectralAnalysis(dat, zoneName, fn, title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False, log = log)
         # end if fft
 
         if filter != None:
@@ -1136,17 +1140,18 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             astop = 32
             recurse = True
 
-            Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
-            delay = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.ndarray)
+            Filtered_data = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
+            HOBOdateTimeArr_res = numpy.zeros(len(HOBOdateTimeArr), dtype = numpy.ndarray)
+            delay = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
             i = 0
             btype = 'band'
             for data in HOBOdateTimeArr:
                 fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
                 Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
                 if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
-                    HOBOdateTimeArr_res = sp.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+                    HOBOdateTimeArr_res[i] = scipy.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
                 else :
-                    HOBOdateTimeArr_res = HOBOdateTimeArr[i]
+                    HOBOdateTimeArr_res[i] = HOBOdateTimeArr[i]
 
                 i += 1
             # end for data
@@ -1156,7 +1161,18 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             difflines = False
             filtstr = " filter: %.0f - %.0f (h)" % (1. / filter[1] / 3600, 1. / filter[0] / 3600)
             custom = " %s - %s" % (zoneName, filtstr)
-            display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, k, fnames = fnames, difflines = difflines, custom = custom)
+            # [300:-100] eliminate the bad ends generated by the filter
+            display_data.display_temperatures([HOBOdateTimeArr_res[0][300:-100]], [Filtered_data[0][300:-100]], k, fnames = fnames, difflines = difflines, custom = custom)
+
+            # statistics SD, max, avg, min
+            if stats:
+                f_sd = Filtered_data[0][300:-100].std()
+                f_avg = Filtered_data[0][300:-100].mean()
+                f_min = Filtered_data[0][300:-100].min()
+                f_max = Filtered_data[0][300:-100].max()
+                # print "SD=%f Avg=%f Min=%f Max=%f" % (f_sd, f_avg, f_min, f_max)
+                print "SD=%f" % (f_sd)
+
     # end for path
 
 
@@ -1288,14 +1304,41 @@ if __name__ == '__main__':
         # with lake data
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/wLake'
         # FFT
-        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT'
+        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Surf'
+        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot'
         startdate = '12/05/19 00:00:00'
         enddate = '12/10/24 00:00:00'
-        # Kelvin?
-        lowcut = 1.0 / (24 * 10) / 3600
-        highcut = 1.0 / (24 * 3) / 3600
+
+        # filtering
+        filt = "k10_15"
+
+        if filt == "k3_7":
+            # Kelvin 3-7 days
+            lowcut = 1.0 / (24 * 10) / 3600
+            highcut = 1.0 / (24 * 3) / 3600
+            filter = [lowcut, highcut]
+        elif filt == "k10_15":
+            # Kelvin 10-15 days
+            lowcut = 1.0 / (24 * 15) / 3600
+            highcut = 1.0 / (24 * 10) / 3600
+            filter = [lowcut, highcut]
+        elif filt == "poincare":
+            # poincare
+            lowcut = 1.0 / (17.3) / 3600
+            highcut = 1.0 / (16.6) / 3600
+            filter = [lowcut, highcut]
+        elif filt == "diurnal":
+            # diurnal
+            lowcut = 1.0 / (24.2) / 3600
+            highcut = 1.0 / (23.8) / 3600
+            filter = [lowcut, highcut]
+        else:
+            filter = None
+
+
+
         # read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = [lowcut, highcut])
-        read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True)
+        read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True)
         if exit_if[6]:
             print "Exit Upwelling!"
             os.abort()
