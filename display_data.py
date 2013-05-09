@@ -141,7 +141,24 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
     fig.autofmt_xdate()
     plt.show()
 
-def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, difflines = False, custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 16):
+def display_temperatures_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnames = None, revert = False, difflines = False, \
+                                      custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 16, ylim = None, fill = False):
+    ax = display_temperatures(dateTimes, temps, k, fnames = fnames, revert = revert, difflines = difflines, custom = custom, \
+                          maxdepth = maxdepth, tick = tick, firstlog = firstlog, fontsize = fontsize, ylim = ylim, fill = fill, show = False)
+
+    xm = [p[0] for p in maxpeaks]
+    ym = [p[1] for p in maxpeaks]
+    xn = [p[0] for p in minpeaks]
+    yn = [p[1] for p in minpeaks]
+
+    # plot local min and max
+    ax.plot(xm, ym, 'ro')
+    ax.plot(xn, yn, 'bo')
+
+    plt.show()
+
+def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, difflines = False, custom = None, \
+                          maxdepth = None, tick = None, firstlog = None, fontsize = 16, ylim = None, fill = False, show = True):
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
     i = 0
@@ -180,6 +197,10 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
         ax.set_xlim(xmax = dateTime[len(dateTime) - 1])
 
         i += 1
+    # end for
+    if fill == True and len(dateTimes) == 2 and len(dateTimes[1]) == len(dateTimes[0]):
+        sd = 0.5
+        ax.fill_between(dateTimes[0], temps[1], temps[0], where = temps[1] <= temps[0], facecolor = [sd, sd, sd], interpolate = True)
 
     # format the ticks
     formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
@@ -208,6 +229,10 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
         title = ' %s' % custom
         ylabel = ' Temp. ($^\circ$C)'
 
+    if ylim != None:
+         ax.set_ylim(ylim[0], ylim[1])
+
+
     plt.ylabel(ylabel).set_fontsize(fontsize + 2)
 
     labels = ax.get_xticklabels()
@@ -220,7 +245,9 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
     fig.autofmt_xdate()
-    plt.show()
+    if show:
+        plt.show()
+    return ax
 
 
 def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, revert = False, custom = None, \

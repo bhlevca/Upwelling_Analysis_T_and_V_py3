@@ -54,7 +54,61 @@ def display(title, label, x, y, colour, legend = None, linewidth = 0.6):
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
     fig.autofmt_xdate()
+
     plt.draw()
+    return plt
+
+def display_twinx(title, label1, label2, x1, y1, x2, y2, colour1, colour2, \
+                  legend = None, linewidth1 = 1.0, linewidth2 = .0):
+
+    n = len(x1)
+    fig = plt.figure(facecolor = 'w', edgecolor = 'k')
+    ax = fig.add_subplot(111)
+    for i in range(0, n):
+        ax.plot(x1[i], y1[i], linewidth = linewidth1[i], color = colour1[i])
+    # format the ticks
+    formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
+    # formatter = matplotlib.dates.DateFormatter('`%y')
+    # ax.xaxis.set_major_locator(years)
+    ax.xaxis.set_major_formatter(formatter)
+    # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+    ax.xaxis.set_minor_locator(mondays)
+
+    # ax.xaxis.grid(True, 'major')
+    ax.xaxis.grid(True, 'minor')
+    ax.grid(True)
+    title = title
+
+    # plt.ylabel(ylabel)
+
+    ax.set_ylabel(label1).set_fontsize(16)
+    plt.title(title).set_fontsize(18)
+
+    ax2 = ax.twinx()
+    n = len(x2)
+    for i in range(0, n):
+        ax2.plot(x2[i], y2[i], colour2[i], linewidth = linewidth2[i])
+
+    ax2.set_ylabel(label2, color = colour2[i]).set_fontsize(16)
+    for tl in ax2.get_yticklabels():
+        tl.set_color(colour2[i])
+
+    ax2.xaxis.set_major_formatter(formatter)
+    ax2.xaxis.set_minor_locator(mondays)
+    ax2.xaxis.grid(True, 'minor')
+    ax2.grid(True)
+
+    if legend != None:
+        plt.legend(legend);
+
+
+    # rotates and right aligns the x labels, and moves the bottom of the
+    # axes up to make room for them
+    fig.autofmt_xdate()
+
+    plt.draw()
+    plt.show()
+
     return plt
 
 

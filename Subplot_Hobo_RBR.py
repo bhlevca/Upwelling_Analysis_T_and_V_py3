@@ -20,9 +20,12 @@ import fft.filters as filters
 import fft.fft_utils as fft_utils
 
 import spectral_analysis
+import tor_harb_windrose
+import upwelling
 
 sys.path.insert(0, '/software/SAGEwork/Pressure_analysis')
 import utils.hdf_tools as hdf
+
 
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
@@ -359,7 +362,7 @@ def wind_airpress_airtemp_water_temp():
     HOBOresultsArr = results
     HOBOtempArr = temp
 
-    weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData'
+    weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData/all'
     wfile = open(weather_path + '/eng-hourly-07012012-11302012.csv', 'rb')
 
     wreader = csv.reader(wfile, delimiter = ',', quotechar = '"')
@@ -1064,116 +1067,6 @@ def harbour_statistics(all = False):
     print "Done!"
 
 
-def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, fft = False, stats = False):
-    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-
-    print "Start read_Upwelling_files()"
-    startdate = timeint[0]
-    enddate = timeint[1]
-    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
-    start_num = date2num(dt)
-    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
-    end_num = date2num(dt)
-
-    # Separate directories from files
-    base, dirs, files = iter(os.walk(ppath)).next()
-
-    if timeavg == None:
-        moving_avg = window_hour
-    else:
-        moving_avg = timeavg
-
-    for path in dirs:
-        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
-        HOBOdateTimeArr = dateTime
-        HOBOresultsArr = results
-        HOBOtempArr = temp
-
-        difflines = False
-
-        if len(fnames) > 0:
-            fn = fnames[0][fnames[0].find("_") + 1:]
-        # else:
-        #    fn = fnames[0][fnames[0].find("_") + 1:]
-        zoneName, fileExtension = os.path.splitext(fn)
-
-        if not fft:
-            if timeavg != None:
-                display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = fnames, difflines = difflines, custom = zoneName)
-            else:
-                display_data.display_temperatures(HOBOdateTimeArr, HOBOtempArr, k, fnames = fnames, difflines = difflines, custom = zoneName)
-
-            if len(HOBOdateTimeArr) <= 9 and subplot != None:
-                display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
-            # end if len
-        else:
-            # fft
-
-            numseg = 10
-            draw = False
-            # funits = "Hz"
-            funits = "cph"
-            # tunits = "sec"
-            tunits = "day"
-            title = "Toronto Waterfront: %s" % zoneName
-            dat = [HOBOdateTimeArr[0][1:], HOBOtempArr[0][1:]]  # skip first value because is usually 0
-            log = True
-            [Time, y, x05, x95] = spectral_analysis.doSpectralAnalysis(dat, zoneName, fn, title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False, log = log)
-        # end if fft
-
-        if filter != None:
-
-            lowcut = filter[0]
-            highcut = filter[1]
-            tunits = 'day'
-            if tunits == 'day':
-                factor = 86400
-            elif tunits == 'hour':
-                factor = 3600
-            else:
-                factor = 1
-
-            yday = True
-            debug = False
-            order = None
-            gpass = 9
-            astop = 32
-            recurse = True
-
-            Filtered_data = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
-            HOBOdateTimeArr_res = numpy.zeros(len(HOBOdateTimeArr), dtype = numpy.ndarray)
-            delay = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
-            i = 0
-            btype = 'band'
-            for data in HOBOdateTimeArr:
-                fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
-                Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
-                if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
-                    HOBOdateTimeArr_res[i] = scipy.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
-                else :
-                    HOBOdateTimeArr_res[i] = HOBOdateTimeArr[i]
-
-                i += 1
-            # end for data
-
-            print "Start display filtered data"
-            # superimposed filtered data for 1-3 days oscillation freq
-            difflines = False
-            filtstr = " filter: %.0f - %.0f (h)" % (1. / filter[1] / 3600, 1. / filter[0] / 3600)
-            custom = " %s - %s" % (zoneName, filtstr)
-            # [300:-100] eliminate the bad ends generated by the filter
-            display_data.display_temperatures([HOBOdateTimeArr_res[0][300:-100]], [Filtered_data[0][300:-100]], k, fnames = fnames, difflines = difflines, custom = custom)
-
-            # statistics SD, max, avg, min
-            if stats:
-                f_sd = Filtered_data[0][300:-100].std()
-                f_avg = Filtered_data[0][300:-100].mean()
-                f_min = Filtered_data[0][300:-100].min()
-                f_max = Filtered_data[0][300:-100].max()
-                # print "SD=%f Avg=%f Min=%f Max=%f" % (f_sd, f_avg, f_min, f_max)
-                print "SD=%f" % (f_sd)
-
-    # end for path
 
 
 if __name__ == '__main__':
@@ -1310,7 +1203,7 @@ if __name__ == '__main__':
         enddate = '12/10/24 00:00:00'
 
         # filtering
-        filt = "k10_15"
+        filt = "diurnal"
 
         if filt == "k3_7":
             # Kelvin 3-7 days
@@ -1338,7 +1231,8 @@ if __name__ == '__main__':
 
 
         # read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = [lowcut, highcut])
-        read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True)
+        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = True)
+        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = False, stats = True, with_weather = True)
         if exit_if[6]:
             print "Exit Upwelling!"
             os.abort()

@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from pylab import poly_between
 
 RESOLUTION = 100
-ZBASE = -1000 #The starting zorder for all drawing, negative to have the grid on
+ZBASE = -1000  # The starting zorder for all drawing, negative to have the grid on
 
 class WindroseAxes(PolarAxes):
     """
@@ -32,9 +32,9 @@ class WindroseAxes(PolarAxes):
         See Axes base class for args and kwargs documentation
         """
 
-        #Uncomment to have the possibility to change the resolution directly 
-        #when the instance is created
-        #self.RESOLUTION = kwargs.pop('resolution', 100)
+        # Uncomment to have the possibility to change the resolution directly
+        # when the instance is created
+        # self.RESOLUTION = kwargs.pop('resolution', 100)
         PolarAxes.__init__(self, *args, **kwargs)
         self.set_aspect('equal', adjustable = 'box', anchor = 'C')
         self.radii_angle = 67.5
@@ -77,9 +77,9 @@ class WindroseAxes(PolarAxes):
             angle = self.radii_angle
         self.radii_angle = angle
         radii = np.linspace(0.1, self.get_rmax(), 6)
-        #radii_labels = [ "%.1f" %r for r in radii ]
+        # radii_labels = [ "%.1f" %r for r in radii ]
         radii_labels = ["%d %%" % (r * 100 / sum(radii)) for r in radii]
-        radii_labels[0] = "" #Removing label 0
+        radii_labels[0] = ""  # Removing label 0
         null = self.set_rgrids(radii = radii, labels = radii_labels,
                                angle = self.radii_angle, **kwargs)
 
@@ -140,7 +140,7 @@ class WindroseAxes(PolarAxes):
 
         def get_labels():
             labels = np.copy(self._info['bins'])
-            labels = ["[%.1f : %0.1f[" % (labels[i], labels[i + 1]) \
+            labels = ["[%.1f : %0.1f]" % (labels[i], labels[i + 1]) \
                       for i in range(len(labels) - 1)]
             return labels
 
@@ -157,10 +157,10 @@ class WindroseAxes(PolarAxes):
         """
         Internal method used by all plotting commands
         """
-        #self.cla()
+        # self.cla()
         null = kwargs.pop('zorder', None)
 
-        #Init of the bins array if not set
+        # Init of the bins array if not set
         bins = kwargs.pop('bins', None)
         if bins is None:
             bins = np.linspace(np.min(var), np.max(var), 6)
@@ -169,12 +169,12 @@ class WindroseAxes(PolarAxes):
         bins = np.asarray(bins)
         nbins = len(bins)
 
-        #Number of sectors
+        # Number of sectors
         nsector = kwargs.pop('nsector', None)
         if nsector is None:
             nsector = 16
 
-        #Sets the colors table based on the colormap or the "colors" argument
+        # Sets the colors table based on the colormap or the "colors" argument
         colors = kwargs.pop('colors', None)
         cmap = kwargs.pop('cmap', None)
         if colors is not None:
@@ -188,13 +188,13 @@ class WindroseAxes(PolarAxes):
                 cmap = cm.jet
             colors = self._colors(cmap, nbins)
 
-        #Building the angles list
+        # Building the angles list
         angles = np.arange(0, -2 * np.pi, -2 * np.pi / nsector) + np.pi / 2
 
         normed = kwargs.pop('normed', False)
         blowto = kwargs.pop('blowto', False)
 
-        #Set the global information dictionnary
+        # Set the global information dictionnary
         self._info['dir'], self._info['bins'], self._info['table'] = histogram(dir, var, bins, nsector, normed, blowto)
 
         return bins, nbins, nsector, colors, angles, kwargs
@@ -235,7 +235,7 @@ class WindroseAxes(PolarAxes):
         bins, nbins, nsector, colors, angles, kwargs = self._init_plot(dir, var,
                                                                        **kwargs)
 
-        #closing lines
+        # closing lines
         angles = np.hstack((angles, angles[-1] - 2 * np.pi / nsector))
         vals = np.hstack((self._info['table'],
                          np.reshape(self._info['table'][:, 0],
@@ -289,7 +289,7 @@ class WindroseAxes(PolarAxes):
         null = kwargs.pop('facecolor', None)
         null = kwargs.pop('edgecolor', None)
 
-        #closing lines
+        # closing lines
         angles = np.hstack((angles, angles[-1] - 2 * np.pi / nsector))
         vals = np.hstack((self._info['table'],
                          np.reshape(self._info['table'][:, 0],
@@ -539,7 +539,7 @@ if __name__ == '__main__':
     l = ax.legend(axespad = -0.10)
     setp(l.get_texts(), fontsize = 8)
     draw()
-    #print ax._info
+    # print ax._info
     show()
 
 
