@@ -26,6 +26,8 @@ import utils.interpolate as interpolate
 
 sys.path.insert(0, '/software/SAGEwork/Pressure_analysis')
 import utils.hdf_tools as hdf
+import utils.read_csv as read_csv
+import utils.stats as stat
 
 # turn off warning in polyfit
 import warnings
@@ -52,7 +54,7 @@ def calculate_30days_running_mean(dateTime, temp, tunits):
     elif tunits == "sec":
         nspan = 30 / dt * 3600 * 24
     else:
-        raise Exception("timeunit unsupported")
+        raise Exception("time unit unsupported")
 
     mean_month = smooth.smoothfit(dateTime, temp, nspan, windows[1])
 
@@ -137,10 +139,10 @@ def calculate_Upwelling_indices(time, temp, fnames, tunits, zoneName):
         # calculate roots TOO slow
         # rx, ry1, ry2, p1, p2 = interpolate.find_roots(time[i][trim:-trim], temp[i][trim:-trim], time[i][trim:-trim], month_mean[trim:-trim])
 
-        # calculate cooling rate CR
-        cr = calculate_cooling_rate(time[i][trim:-trim], month_mean[trim:-trim], _max, _min, tunits)
-        CR_mean = cr.sum() / len(cr)
-        print "name=%s CR=%f" % (fnames[i], CR_mean)
+        # calculate cooling intensity UCI
+        uci = calculate_cooling_rate(time[i][trim:-trim], month_mean[trim:-trim], _max, _min, tunits)
+        UCI_mean = uci.sum() / len(uci)
+        print "name=%s UCI=%f" % (fnames[i], UCI_mean)
         display_data.display_temperatures_peaks([time[i][trim:-trim], time[i][trim:-trim]], [month_mean[trim:-trim], temp[i][trim:-trim]],
                                                        _max, _min, [], fnames = ['30 day mean', fnames[i]], custom = zoneName, fill = True)
 
@@ -152,6 +154,21 @@ def calculate_correlation():
 
 def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, fft = False, stats = False, with_weather = False):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+
+
+
+    data = read_csv.read_csv('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones.csv', 1, [9, 10])
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(data[0], data[1])
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    stat.plot_regression(data[0], data[1], x_label = "UIA ($^oC$ days)", y_label = "Temperature ($^oC$)", title = "Temperature vs. Upwelling Integrated Anomaly Index", \
+                          slope = slope, intercept = intercept, r_value = r_value, p_value = p_value)
+
+    data = read_csv.read_csv('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones.csv', 1, [9, 11])
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(data[0], data[1])
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    stat.plot_regression(data[0], data[1], x_label = "UCI ($^oC$/days)", y_label = "Temperature ($^oC$)", title = "Temperature vs. Upwelling Cooling Intensity Index", \
+                          slope = slope, intercept = intercept, r_value = r_value, p_value = p_value)
+    os.abort()
 
     print "Start read_Upwelling_files()"
     startdate = timeint[0]
@@ -183,6 +200,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
         HOBOresultsArr = results
         HOBOtempArr = temp
 
+
         difflines = False
 
         if len(fnames) > 0:
@@ -190,6 +208,13 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
         # else:
         #    fn = fnames[0][fnames[0].find("_") + 1:]
         zoneName, fileExtension = os.path.splitext(fn)
+
+        t_sd = temp[0].std()
+        t_avg = temp[0].mean()
+        t_min = temp[0].min()
+        t_max = temp[0].max()
+        print "Zone: %s, SD=%f" % (zoneName, t_sd)
+
 
         if not fft:
             if timeavg != None:
@@ -290,7 +315,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
                 f_min = Filtered_data[0][300:-100].min()
                 f_max = Filtered_data[0][300:-100].max()
                 # print "SD=%f Avg=%f Min=%f Max=%f" % (f_sd, f_avg, f_min, f_max)
-                print "SD=%f" % (f_sd)
+                print "Filtered data SD=%f" % (f_sd)
 
 
         # end filter
