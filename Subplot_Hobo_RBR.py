@@ -1268,7 +1268,7 @@ if __name__ == '__main__':
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/wLake'
         # FFT
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Surf'
-        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot'
+        # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot'
         startdate = '12/05/19 00:00:00'
         enddate = '12/10/24 00:00:00'
 
@@ -1301,11 +1301,17 @@ if __name__ == '__main__':
 
 
         # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = True)
-        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = False, stats = True, with_weather = False)
+        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
+        # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
+        withLake = True
+        # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv', withLake)
         if exit_if[6]:
             print "Exit Upwelling!"
             os.abort()
 
+    if Fish_data:
+        path = "/home/bogdan/Documents/UofT/PhD/Data_Files/Fish-data-Apr-Dec-2012/April-Dec2012.csv"
+        fish_detection.fish_detection(path, [startdate, enddate])
 
     print "Done! Script"
 

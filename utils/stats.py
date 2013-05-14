@@ -10,22 +10,44 @@ def rsquared(x, y):
     return [r_value ** 2, slope, intercept, r_value, p_value, std_err]
 
 
-def plot_regression(x, y, slope, intercept, x_label = None, y_label = None, title = None, \
+def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None, y_label = None, title = None, \
                     r_value = None, p_value = None):
 
-    print "itercept = %f, slope = %f" % (slope, intercept)
-    plt.plot(x, y, 'bd')
-    plt.plot(x, slope * x + intercept, 'r-')
+    print "intercept = %f, slope = %f" % (slope, intercept)
+    fig, ax = plt.subplots()
+    ax.plot(x, y, 'bd')
 
+    ax.plot(x, slope * x + intercept, 'r-')
+
+
+    scalex = ax.xaxis.get_view_interval()
+    xbins = len(ax.xaxis.get_gridlines()) - 1
+    xn_per_bin = (scalex[1] - scalex[0]) / xbins
+
+    scaley = ax.yaxis.get_view_interval()
+    ybins = len(ax.yaxis.get_gridlines()) - 1
+    yn_per_bin = (scaley[1] - scaley[0]) / ybins
+
+    if point_labels != None:
+        dx = scalex[0] / scalex[1] + 3.5 / xn_per_bin
+        dy = scaley[0] / scaley[1] + 3.5 / yn_per_bin
+        for i in range(0, len(point_labels)):
+            ax.annotate(point_labels[i], xy = (x[i], y[i]), xycoords = 'data', xytext = (dx, dy) , textcoords = 'offset points',
+                        ha = 'right', va = 'top', bbox = dict(fc = 'white', ec = 'none', alpha = 0.3))
+
+    bbox_props = dict(boxstyle = "square,pad=0.3", fc = "white", ec = "b", lw = 2)
     if r_value != None:
         text = "R$^2$=%4.2f" % r_value ** 2
-        y0 = max(y) * 7.9 / 8
-        x0 = max(x) * 3.2 / 4
-        plt.annotate(text, (x0, y0), ha = 'left', va = 'center', bbox = dict(fc = 'white', ec = 'none'))
+        x0 = scalex[0] + (xbins - 2) * xn_per_bin
+        y0 = scaley[0] + (ybins - 1) * yn_per_bin
+        # y0 = scaley[0] + (2) * yn_per_bin
+        ax.text(x0, y0, text, ha = 'center', va = 'center', bbox = bbox_props)
     if p_value != None:
-        text2 = "p value=%2.5f" % p_value
-        y0 = max(y) * 7.8 / 8 - 7
-        plt.annotate(text2, (x0, y0), ha = 'left', va = 'center', bbox = dict(fc = 'white', ec = 'none'))
+        text2 = "p-value=%2.5f" % p_value
+        x0 = scalex[0] + (xbins - 2) * xn_per_bin
+        y0 = scaley[0] + (ybins - 2) * yn_per_bin
+        # y0 = scaley[0] + (1) * yn_per_bin
+        ax.text(x0, y0, text2, ha = 'center', va = 'center', bbox = bbox_props)
 
     if x_label != None:
         plt.xlabel(x_label).set_fontsize(14)
