@@ -11,7 +11,7 @@ def rsquared(x, y):
 
 
 def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None, y_label = None, title = None, \
-                    r_value = None, p_value = None):
+                    r_value = None, p_value = None, fontsize = 16):
 
     print "intercept = %f, slope = %f" % (slope, intercept)
     fig, ax = plt.subplots()
@@ -38,23 +38,24 @@ def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None,
     bbox_props = dict(boxstyle = "square,pad=0.3", fc = "white", ec = "b", lw = 2)
     if r_value != None:
         text = "R$^2$=%4.2f" % r_value ** 2
-        x0 = scalex[0] + (xbins - 2) * xn_per_bin
+        x0 = scalex[0] + (xbins - 1.5) * xn_per_bin
+        # x0 = scalex[0] + (1.5) * xn_per_bin
         y0 = scaley[0] + (ybins - 1) * yn_per_bin
         # y0 = scaley[0] + (2) * yn_per_bin
         ax.text(x0, y0, text, ha = 'center', va = 'center', bbox = bbox_props)
     if p_value != None:
         text2 = "p-value=%2.5f" % p_value
-        x0 = scalex[0] + (xbins - 2) * xn_per_bin
-        y0 = scaley[0] + (ybins - 2) * yn_per_bin
+        x0 = scalex[0] + (xbins - 1.5) * xn_per_bin
+        y0 = scaley[0] + (ybins - 1.5) * yn_per_bin
         # y0 = scaley[0] + (1) * yn_per_bin
         ax.text(x0, y0, text2, ha = 'center', va = 'center', bbox = bbox_props)
 
     if x_label != None:
-        plt.xlabel(x_label).set_fontsize(14)
+        plt.xlabel(x_label).set_fontsize(fontsize)
     if y_label != None:
-        plt.ylabel(y_label).set_fontsize(14)
+        plt.ylabel(y_label).set_fontsize(fontsize)
     if title != None:
-        plt.title(title).set_fontsize(16)
+        plt.title(title).set_fontsize(fontsize + 2)
 
     plt.grid(True)
     plt.show()

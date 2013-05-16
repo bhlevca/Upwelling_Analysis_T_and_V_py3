@@ -245,7 +245,6 @@ def analyze_data(pair, name, id, writer):
             elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
                 nspan = 24. * 7 / (dt * 24)
 
-
             results = smooth.smoothfit(dateTime, temp, nspan, windows[1])
 
             display_data.display2(dateTime, temp, results['smoothed'], k)

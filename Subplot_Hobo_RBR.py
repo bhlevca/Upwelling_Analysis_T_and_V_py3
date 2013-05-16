@@ -22,6 +22,7 @@ import fft.fft_utils as fft_utils
 import spectral_analysis
 import tor_harb_windrose
 import upwelling
+import fish_detection
 
 sys.path.insert(0, '/software/SAGEwork/Pressure_analysis')
 import utils.hdf_tools as hdf
@@ -815,8 +816,9 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
     print "Start display: poincare_wave_in_lontario"
 
     # superimposed filtered data for he period oscillation freq
-    custom1 = "Isotherme %d ($^\circ$C) depth (m)" % isotemp
-    custom2 = "Isotherme %d ($^\circ$C) depth (m)" % isotemp
+    custom1 = "Poincare signature in Lake Ontario"  # % isotemp
+    custom2 = custom1
+    # custom2 = "Isotherme %d ($^\circ$C) depth (m)" % isotemp
     custom = [custom1, custom2]
     t01 = ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27']
     t02 = [27, 24, 21, 18, 15, 12, 9, 6, 3, 0]
@@ -1142,14 +1144,15 @@ def harbour_statistics(all = False):
 if __name__ == '__main__':
     harbour_stats = False  # 0
     LO_hobot_rbrt_10m = False  # 1
-    LO_isotherm = False  # 2
+    LO_isotherm = True  # 2
     Toronto_harbour = False  # 3
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
-    Upwelling_zone = True  # 7
+    Upwelling_zone = False  # 7
+    Fish_detection = False  # 8
 
-    exit_if = [False, False, False, True, False, False, True]
+    exit_if = [False, False, False, True, False, False, True, False, True]
 
     if harbour_stats:
         all = True
@@ -1251,13 +1254,13 @@ if __name__ == '__main__':
         poincare_wave_in_harbour(period_hours, [start_num, end_num], paths)
 
         print "Done! Toronto_harb_filter"
-        if exit_if[4]:
+        if exit_if[5]:
             print "Exit!"
             os.abort()
     if TRCA_data:
         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo-TRCA/2012/csv_processed/selected']
         read_TRCA_files(paths)
-        if exit_if[5]:
+        if exit_if[6]:
             print "Exit!"
             os.abort()
 
@@ -1269,6 +1272,7 @@ if __name__ == '__main__':
         # FFT
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Surf'
         # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot'
+        # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/allStations'
         startdate = '12/05/19 00:00:00'
         enddate = '12/10/24 00:00:00'
 
@@ -1301,17 +1305,33 @@ if __name__ == '__main__':
 
 
         # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = True)
-        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
+        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = False, stats = True, with_weather = False)
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
-        withLake = True
-        # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv', withLake)
-        if exit_if[6]:
+        # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv')
+        upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
+
+        if exit_if[7]:
             print "Exit Upwelling!"
             os.abort()
 
-    if Fish_data:
+    if Fish_detection:
         path = "/home/bogdan/Documents/UofT/PhD/Data_Files/Fish-data-Apr-Dec-2012/April-Dec2012.csv"
-        fish_detection.fish_detection(path, [startdate, enddate])
+        startdate = '12/05/19 00:00:00'
+        enddate = '12/10/24 00:00:00'
 
+        count_detect = False
+        draw = True
+        # this is just to esitmate detection
+        if count_detect:
+            fish_detection.fish_detection(path, [startdate, enddate])
+
+        if draw:
+            upwelling.draw_upwelling_fish_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesFishDetection.csv')
+            # upwelling.draw_upwelling_fish_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
+            # NO cells file is not good.
+            # upwelling.draw_upwelling_fish_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZonesNoCells.csv')
+        if exit_if[8]:
+            print "Exit!"
+            os.abort()
     print "Done! Script"
 

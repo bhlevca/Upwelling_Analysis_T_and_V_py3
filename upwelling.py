@@ -160,13 +160,21 @@ def calculate_correlation():
     pass
 
 
-def draw_upwelling_correlation(filepath, withLake = False):
+def draw_upwelling_correlation(filepath):
 
-
+    '''
+    Works as is with
+    /home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Surf
+        and
+    /home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot
+    '''
     ########################################################
     # Mean Temperature
     ########################################################
     # bottom UIA
+    #########################################################################################################
+    # The indices passed to the read_csv must be in ascending order to match what we expect in the output
+    #########################################################################################################
     data = read_csv.read_csv(filepath, 1, [1, 10, 11])
     temp = data[1]  # .astype(numpy.float)
     uia = data[2]  # .astype(numpy.float)
@@ -273,10 +281,10 @@ def draw_upwelling_correlation(filepath, withLake = False):
     # bottom Temp
     bmouth = False
     if bmouth:
-        data = read_csv.read_csv(filepath, 1, [1, 13, 14, 10])
-        depth = data[1]  # .astype(numpy.float)
-        width = data[2]
-        temp = data[3]  # .astype(numpy.float)
+        data = read_csv.read_csv(filepath, 1, [1, 10, 13, 14])
+        temp = data[1]  # .astype(numpy.float)
+        depth = data[2]  # .astype(numpy.float)
+        width = data[3]
         mouth = depth * width
         [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mouth, temp)
         stat.plot_regression(mouth, temp, slope = slope, intercept = intercept, point_labels = data[0], \
@@ -301,9 +309,10 @@ def draw_upwelling_correlation(filepath, withLake = False):
     #------------------------------------------------------------------------------------------------------
     if bmouth:
         data = read_csv.read_csv(filepath, 1, [1, 13, 14, 7])
-        depth = data[1]  # .astype(numpy.float)
-        width = data[2]
-        temp = data[3]  # .astype(numpy.float)
+        temp = data[1]  # .astype(numpy.float)
+
+        depth = data[2]  # .astype(numpy.float)
+        width = data[3]
         mouth = depth * width
         [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mouth, temp)
         stat.plot_regression(mouth, temp, slope = slope, intercept = intercept, point_labels = data[0], \
@@ -322,12 +331,349 @@ def draw_upwelling_correlation(filepath, withLake = False):
     print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
 
 
+def draw_upwelling_correlation_all(filepath):
+
+    '''
+    Works as is with
+    /home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/allStations
+
+    '''
+    ########################################################
+    # Mean Temperature
+    ########################################################
+    # bottom UIA
+    #########################################################################################################
+    # The indices passed to the read_csv must be in ascending order to match what we expect in the output
+    #########################################################################################################
+    data = read_csv.read_csv(filepath, 1, [1, 5, 6])
+    temp = data[1]  # .astype(numpy.float)
+    uia = data[2]  # .astype(numpy.float)
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
+                          x_label = "UIA ($^oC$ day)", y_label = "Bottom Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Integrated Anomaly Index", \
+                          r_value = r_value, p_value = p_value)
+
+    # bottom UIC
+    data = read_csv.read_csv(filepath, 1, [1, 5, 7])
+    temp = data[1]  # .astype(numpy.float)
+    uci = data[2]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "UCI ($^oC$/day)", y_label = "Bootom Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Cooling Intensity Index", \
+                         r_value = r_value, p_value = p_value)
+
+    ########################################################
+    # Standard deviation
+    ########################################################
+    # bottom UIA
+    data = read_csv.read_csv(filepath, 1, [1, 4, 6])
+    temp = data[1]  # .astype(numpy.float)
+    uia = data[2]  # .astype(numpy.float)
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
+                          x_label = "UIA ($^oC$ day)", y_label = "Bottom SD Temperature ($^oC$)", title = "SD Temperature vs. Upwelling Integrated Anomaly Index", \
+                          r_value = r_value, p_value = p_value)
+
+    # bottom UIC
+    data = read_csv.read_csv(filepath, 1, [1, 6, 7])
+    temp = data[1]  # .astype(numpy.float)
+    uci = data[2]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "UCI ($^oC$/day)", y_label = "Bootom SD Temperature ($^oC$)", title = "SD Temperature vs. Upwelling Cooling Intensity Index", \
+                         r_value = r_value, p_value = p_value)
+
+
+
+
+
+def draw_upwelling_fish_correlation(filepath):
+
+    ########################################################
+    # Fish detection
+    ########################################################
+    # bottom UIA
+    data = read_csv.read_csv(filepath, 1, [1, 7, 9])
+    uia = data[1]  # .astype(numpy.float)
+    det = data[2]  # .astype(numpy.float)
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, det)
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    stat.plot_regression(uia, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                          x_label = "UIA ($^oC$ day)", y_label = "Fish detections", title = "Fish detections vs. Bottom Upwelling Integrated Anomaly Index", \
+                          r_value = r_value, p_value = p_value)
+
+    # bottom UIC
+    data = read_csv.read_csv(filepath, 1, [1, 8, 9])
+    uci = data[1]  # .astype(numpy.float)
+    det = data[2]  # .astype(numpy.float)
+
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, det)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    stat.plot_regression(uci, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "UCI ($^oC$/day)", y_label = "Fish detections", title = "Fish detections vs. Bottom Upwelling Cooling Intensity Index", \
+                         r_value = r_value, p_value = p_value)
+
+    #------------------------------------------------------------------------------------------------------
+    # Surface UIA
+    #------------------------------------------------------------------------------------------------------
+    data = read_csv.read_csv(filepath, 1, [1, 4, 9])
+    uia = data[1]  # .astype(numpy.float)
+    det = data[2]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, det)
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    stat.plot_regression(uia, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                          x_label = "UIA ($^oC$ day)", y_label = "Fish detections", title = "Fish detections vs. Surface Upwelling Integrated Anomaly Index", \
+                          r_value = r_value, p_value = p_value)
+
+    # Surface UIC
+    data = read_csv.read_csv(filepath, 1, [1, 5, 9])
+    uci = data[1]  # .astype(numpy.float)
+    det = data[2]  # .astype(numpy.float)
+
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, det)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    stat.plot_regression(uci, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "UCI ($^oC$/day)", y_label = "Fish detections", title = "Fish detections vs. Surface Upwelling Cooling Intensity Index", \
+                         r_value = r_value, p_value = p_value)
+
+    ########################################################
+    # Surf Max -Min
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 9, 12])
+    mmtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mmtemp, det)
+
+    stat.plot_regression(mmtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Surface Max-Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Surface (Max-min) Temperature", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+
+    ########################################################
+    # Surf Temp min
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 9, 10])
+    mtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mtemp, det)
+
+    stat.plot_regression(mtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Surface Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Surface Min Temperature", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    ########################################################
+    # Surf Temp max
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 9, 11])
+    Mtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(Mtemp, det)
+
+    stat.plot_regression(Mtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Surface Max Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Surface Max Temp", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    ########################################################
+    # Bot Max -Min
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 9, 15])
+    mmtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mmtemp, det)
+
+    stat.plot_regression(mmtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Bottom Max-Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Bottom (Max-min) Temperature", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+
+    ########################################################
+    # Bot Temp min
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 9, 13])
+    mtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mtemp, det)
+
+    stat.plot_regression(mtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Bottom Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Bottom Min Temperature", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    ########################################################
+    # Bot Temp max
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 9, 14])
+    Mtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(Mtemp, det)
+
+    stat.plot_regression(Mtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Bottom Max Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Bottom Max Temp", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+
+    ########################################################
+    # Mouth mean depth
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 2, 9])
+    depth = data[1]
+    det = data[2]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(depth, det)
+
+    stat.plot_regression(depth, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Mean depth ($m$)", y_label = "Fish detections", title = "Fish detections vs. Mean depth", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+
+def draw_upwelling_fish_correlation_all(filepath):
+
+
+    ########################################################
+    # Fish detection
+    ########################################################
+    # bottom UIA
+    data = read_csv.read_csv(filepath, 1, [1, 6, 8])
+    uia = data[1]  # .astype(numpy.float)
+    det = data[2]  # .astype(numpy.float)
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, det)
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    stat.plot_regression(uia, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                          x_label = "UIA ($^oC$ day)", y_label = "Fish detections", title = "Fish detections vs. Bottom Upwelling Integrated Anomaly Index", \
+                          r_value = r_value, p_value = p_value)
+
+    # bottom UIC
+    data = read_csv.read_csv(filepath, 1, [1, 7, 8])
+    uci = data[1]  # .astype(numpy.float)
+    det = data[2]  # .astype(numpy.float)
+
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, det)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    stat.plot_regression(uci, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "UCI ($^oC$/day)", y_label = "Fish detections", title = "Fish detections vs. Bottom Upwelling Cooling Intensity Index", \
+                         r_value = r_value, p_value = p_value)
+
+    ########################################################
+    # mean Temp
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 5, 8])
+    temp = data[1]
+    det = data[2]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(temp, det)
+
+    stat.plot_regression(temp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Mean Temp ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Mean temp", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+
+
+
+    ########################################################
+    # SD Temp
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 4, 8])
+    sdtemp = data[1]
+    det = data[2]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(sdtemp, det)
+
+    stat.plot_regression(sdtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Temp Std Deviation ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Temp Std Deviation", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+
+    ########################################################
+    # Max -Min
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 8, 12])
+    mmtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mmtemp, det)
+
+    stat.plot_regression(mmtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Max-Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Max - min Temperature", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+
+    ########################################################
+    # Temp min
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 8, 10])
+    mtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(mtemp, det)
+
+    stat.plot_regression(mtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Min Temperature", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+
+    ########################################################
+    # Temp max
+    ########################################################
+    data = read_csv.read_csv(filepath, 1, [1, 8, 11])
+    Mtemp = data[2]
+    det = data[1]  # .astype(numpy.float)
+
+    [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(Mtemp, det)
+
+    stat.plot_regression(Mtemp, det, slope = slope, intercept = intercept, point_labels = data[0], \
+                         x_label = "Max Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Max Temp", \
+                         r_value = r_value, p_value = p_value)
+
+    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
 
 def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, fft = False, stats = False, with_weather = False):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-
-
-
 
     print "Start read_Upwelling_files()"
     startdate = timeint[0]
@@ -368,11 +714,15 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
         #    fn = fnames[0][fnames[0].find("_") + 1:]
         zoneName, fileExtension = os.path.splitext(fn)
 
-        t_sd = temp[0].std()
-        t_avg = temp[0].mean()
-        t_min = temp[0].min()
-        t_max = temp[0].max()
-        print "Zone: %s, SD=%f" % (zoneName, t_sd)
+        for i in range(1, len(temp[0])):
+            if temp[0][i] == 0.0:
+                print "i = %d, t=0, date = %f" % (i, dateTime[0][i])
+
+        t_sd = temp[0][1:].std()
+        t_avg = temp[0][1:].mean()
+        t_min = temp[0][1:].min()
+        t_max = temp[0][1:].max()
+        print "Zone: %s, SD=%2.2f, Min=%2.2f, Max=%2.2f, extreme=%2.2f" % (zoneName, t_sd, t_min, t_max, t_max - t_min)
 
 
         if not fft:

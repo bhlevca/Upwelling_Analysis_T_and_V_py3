@@ -116,7 +116,11 @@ def convert_to_numeric_date (ifname, ofname):
 
 
 
-def read_fish_data(reader, timeinterv = None):
+def read_fish_data(fname, timeinterv = None):
+
+    ifile = open(fname, 'rb')
+    reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
+
     rownum = 0
 
     dateTime = []
@@ -131,26 +135,29 @@ def read_fish_data(reader, timeinterv = None):
         startt = timeinterv[0]
         endt = timeinterv[1]
 
-
     for row in reader:
         try:
             time = float(row[1])
             if timeinterv != None:
                 if time < startt or time > endt:
                     continue
-
-            dateTime.append(time)
-            if (row[2] == ''):
-                temp.append(float(1))
-            else:
-                temp.append(float(row[2]))
-            # end if
+            dateTime.append(float(row[1]))
+            TransmitterName.append(str(row[2]))
+            SensorValue.append(str(row[3]))
+            SensorUnit.append(str(row[4]))
+            StationName.append(str(row[5]))
         except:
             pass
-    return [dateTime, temp]
+
+    ifile.close()
+    return [dateTime, TransmitterName, SensorValue, SensorUnit, StationName]
 
 def read_csv(fname, startrow, columns):
-
+    '''
+    #########################################################################################################
+    # The indices passed to the read_csv must be in ascending order to match what we expect in the output
+    #########################################################################################################
+    '''
     ifile = open(fname, 'rb')
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
     rownum = 0
@@ -160,7 +167,6 @@ def read_csv(fname, startrow, columns):
         data[i] = []
 
     for row in reader:
-        # cidx = 0
         i = 0
         try:
             if rownum >= startrow:
@@ -168,8 +174,6 @@ def read_csv(fname, startrow, columns):
                 for col in row:
                     if i in columns:
                         tempdata.append(col)
-                        # data[cidx].append(col)
-                        # cidx += 1
                     i += 1
                 to_add = True
                 for j in range(0, len(tempdata)):
