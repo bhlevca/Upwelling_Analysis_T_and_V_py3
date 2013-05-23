@@ -736,10 +736,8 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             # end if len
         else:
             # fft
-
             numseg = 10
             draw = False
-
             title = "Toronto Waterfront: %s" % zoneName
             dat = [HOBOdateTimeArr[0][1:], HOBOtempArr[0][1:]]  # skip first value because is usually 0
             log = True

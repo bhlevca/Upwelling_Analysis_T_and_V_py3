@@ -48,7 +48,7 @@ warnings.simplefilter('ignore', numpy.RankWarning)
 import smooth
 
 
-def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , bfilter = False):
+def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = None, bfilter = False):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
     print "Start read_LOntario_files()"
@@ -74,13 +74,15 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , bfilter = F
 
     k = [[0, 0], [0, 1]]
     print "Start display"
+    if zNames == None:
+        zNames = ["Hobo ", "RBR "]
     if chain == "all":
         display_data.display_temperatures_subplot([HOBOdateTimeArr, RBRdateTimeArr], [HOBOtempArr, RBRtempArr], [HOBOresultsArr, RBRresultsArr], k, fnames = ["Hobo-10m", "RBR-10m"])
-        display_data.display_temperatures([HOBOdateTimeArr, RBRdateTimeArr], [HOBOtempArr, RBRtempArr], k, fnames = ["Hobo-10m", "RBR-10m"])
+        display_data.display_temperatures([HOBOdateTimeArr, RBRdateTimeArr], [HOBOtempArr, RBRtempArr], k, fnames = zNames)
     elif chain == "hobo":
-        display_data.display_temperatures([HOBOdateTimeArr], [HOBOtempArr], k, fnames = ["Hobo-10m"])
+        display_data.display_temperatures([HOBOdateTimeArr], [HOBOtempArr], k, fnames = zNames[0])
     elif chain == "rbr":
-        display_data.display_temperatures([RBRdateTimeArr], [RBRtempArr], k, fnames = ["RBR-10m"])
+        display_data.display_temperatures([RBRdateTimeArr], [RBRtempArr], k, fnames = zNames[1])
 
     if bfilter:
         tunits = 'day'
@@ -95,13 +97,18 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , bfilter = F
 
 
         # Poincare 17h filter
-        highcut = 1.0 / 16.5 / 3600
-        lowcut = 1.0 / 17.5 / 3600
+        fnumber = 24
+        delta = 0.5
+        highcut = 1.0 / (fnumber - delta) / 3600
+        lowcut = 1.0 / (fnumber + delta) / 3600
 
         # Diurnal  24h filter
         # highcut = 1.0 / 23.8 / 3600
         # lowcut = 1.0 / 24.2 / 3600
 
+        # Kelvin
+        # highcut = 1.0 / 24 * 10 / 3600
+        # lowcut = 1.0 / 24 *15 / 3600
 
         btype = 'band'
 
@@ -134,18 +141,22 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , bfilter = F
             else :
                 RBRdateTimeArr_res2 = RBRdateTimeArr
 
+        strg1 = " %s - filter: %d h" % (zNames[0], int(fnumber))
+        strg2 = " %s -filter- %d h" % (zNames[1], int(fnumber))
+
+
         if chain == "all":
-            legend1 = ["Hobo-10m-filter-17h", "RBR-10m-filter-17h"]
+            legend1 = [strg1, strg2]
             # legend1 = ["Hobo-10m-filter-24h", "RBR-10m-filter-24h"]
             display_data.display_temperatures_subplot([HOBOdateTimeArr_res1, RBRdateTimeArr_res2], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1, yday = yday, delay = [delay1, delay2])
             display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2)], [data1, data2], k, fnames = legend1)
         elif chain == "hobo":
-            legend1 = ["Hobo-10m-filter-17h"]
+            legend1 = [strg1]
             # legend1 = ["Hobo-10m-filter-24h"]
 
             display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1)], [data1], k, fnames = legend1)
         elif chain == "rbr":
-            legend1 = ["RBR-10m-filter-17h"]
+            legend1 = [strg2]
             # legend1 = ["RBR-10m-filter-24h"]
             display_data.display_temperatures([numpy.subtract(RBRdateTimeArr_res2, delay2)], [data2], k, fnames = legend1)
 
@@ -153,15 +164,17 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , bfilter = F
 
 
         # Kelvin?
-        lowcut = 1.0 / (24 * 10) / 3600
-        highcut = 1.0 / (24 * 3) / 3600
+        f2number = 12.5
+        delta = 2.5
+        highcut = 1.0 / (24 * (f2number - delta)) / 3600
+        lowcut = 1.0 / (24 * (f2number + delta)) / 3600
 
         if chain == "hobo"  or chain == "all":
             fs3 = 1.0 / ((HOBOdateTimeArr[1] - HOBOdateTimeArr[0]) * factor)
             # data3 = filters.fft_bandpassfilter(HOBOtempArr, fs3, lowcut, highcut)
             data3, w, h, N, delay3 = filters.butterworth(HOBOtempArr, btype, lowcut, highcut, fs3, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
             if len(data3) != len(HOBOdateTimeArr):
-                HOBOdateTimeArr_res3 = sp.signal.resample(HOBOdateTimeArr, len(data3))
+                HOBOdateTimeArr_res3 = scipy.signal.resample(HOBOdateTimeArr, len(data3))
             else :
                 HOBOdateTimeArr_res3 = HOBOdateTimeArr
 
@@ -175,16 +188,20 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , bfilter = F
                 RBRdateTimeArr_res4 = RBRdateTimeArr
 
 
+        strg1 = "%s - filter: %d-%d  days" % (zNames[0], int(f2number - delta), int(f2number + delta))
+        strg2 = "%s - filter- %d-%d days" % (zNames[1], int(f2number - delta), int(f2number + delta))
+
         if chain == "all":
-            legend2 = ["Hobo-10m-filter-3-10 days", "RBR-10m-filter-3-10 days"]
+            legend2 = [strg1, strg2]
+
             display_data.display_temperatures_subplot([HOBOdateTimeArr_res3, RBRdateTimeArr_res4], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2, yday = yday, delay = [delay3, delay4])
             display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)], [data3, data4], k, fnames = legend2)
         elif chain == "hobo":
-            legend2 = ["Hobo-10m-filter-3-10 days"]
+            legend2 = [strg1]
             display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3)], [data3], k, fnames = legend2, custom = "Filtered Temperature Oscillation")
 
         elif chain == "rbr":
-            legend2 = ["RBR-10m-filter-3-10 days"]
+            legend2 = [strg2]
             display_data.display_temperatures([numpy.subtract(RBRdateTimeArr_res4, delay4)], [data4], k, fnames = legend2, custom = "Filtered Temperature Oscillation")
 
 
@@ -201,12 +218,13 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , bfilter = F
         elif chain == "hobo":
             legend = [legend1[0], legend2[0]]
             trim = int(len(HOBOdateTimeArr_res1) / 10)
-            Data = [data1[trim:-trim], data3[trim:-trim]]
+            trim2 = int(len(HOBOdateTimeArr_res3) / 10)
+            Data = [data1[trim:-trim], data3[trim2:-trim2]]
             Result = [HOBOresultsArr[trim:-trim], HOBOresultsArr[trim:-trim]]
 
-            timeint = [numpy.subtract(HOBOdateTimeArr_res1, delay1)[trim:-trim], numpy.subtract(HOBOdateTimeArr_res3, delay3)[trim:-trim]]
+            timeint = [numpy.subtract(HOBOdateTimeArr_res1, delay1)[trim:-trim], numpy.subtract(HOBOdateTimeArr_res3, delay3)[trim2:-trim2]]
 
-            display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay1, delay3], custom = "Filtered Temperature Oscillation")
+            # display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay1, delay3], custom = "Filtered Temperature Oscillation")
             display_data.display_temperatures(timeint, Data, k, fnames = legend, custom = "Filtered Temperature Oscillation", ylim = [-4, 8])
         elif chain == "rbr":
             Data = [data2, data4]
@@ -1144,12 +1162,12 @@ def harbour_statistics(all = False):
 if __name__ == '__main__':
     harbour_stats = False  # 0
     LO_hobot_rbrt_10m = False  # 1
-    LO_isotherm = True  # 2
+    LO_isotherm = False  # 2
     Toronto_harbour = False  # 3
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
-    Upwelling_zone = False  # 7
+    Upwelling_zone = True  # 7
     Fish_detection = False  # 8
 
     exit_if = [False, False, False, True, False, False, True, False, True]
@@ -1165,7 +1183,7 @@ if __name__ == '__main__':
     #---------------------------------
     # Set the start and end date-time
     #---------------------------------
-    startdate = '12/07/19 00:00:00'
+    startdate = '12/05/19 00:00:00'
     enddate = '12/10/24 00:00:00'
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
     start_num = date2num(dt)
@@ -1179,14 +1197,18 @@ if __name__ == '__main__':
         #-----------------------------------------------------------
         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed',
                  '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR']
-        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/nLake/Cell3', ""]
+        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed', '']
+        # paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/nLake/Cell3', '']
         waterdepths = [27, 20]  # water depths at the location
         top_log_depths = [3, 4]
         delta_ls = [1, 1]  # loggers interval
 
-        fnames = ['18_2393005.csv', '019513.dat']
-        fnames = ['Surf_Cell_3.csv', '']
-        read_LOntario_files(paths, fnames, [start_num, end_num], chain = "hobo" , bfilter = True)
+        # fnames = ['18_2393005.csv', '019513.dat']
+
+        fnames = ['18_2393005.csv', ''];  zNames = ['L_Ontario', '']
+        # fnames = ['Surf_Cell_3.csv', '']; zNames = ['Hobo - Cell 3', '']
+
+        read_LOntario_files(paths, fnames, [start_num, end_num], chain = "hobo" , zNames = zNames, bfilter = True)
         if exit_if[1]:
             print "Done! LO_hobot_rbrt_10m"
             os.abort()
@@ -1271,7 +1293,7 @@ if __name__ == '__main__':
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/wLake'
         # FFT
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Surf'
-        # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot'
+        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot'
         # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/allStations'
         startdate = '12/05/19 00:00:00'
         enddate = '12/10/24 00:00:00'
@@ -1305,7 +1327,7 @@ if __name__ == '__main__':
 
 
         # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = True)
-        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = False, stats = True, with_weather = False)
+        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv')
         upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
