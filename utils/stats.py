@@ -3,6 +3,36 @@ import scipy.stats
 import numpy.polynomial.polynomial as polynomial
 import matplotlib.pyplot as plt
 
+def interquartile_range(X, a = 25, b = 75):
+    """Calculates the Freedman-Diaconis bin size for
+    a data set for use in making a histogram
+
+    Arguments:
+    X:  1D Data set
+    a: lower quartile 0-> 100
+    b: upperquartile  0 ->100
+
+    b neesd to be greater thant a
+    Returns:
+    h:  F-D bin size
+    """
+    # check
+    if b < a:
+        raise Exception("upper quartile has to be greater than lower quartile")
+
+
+    # First Calculate the interquartile range
+    X = numpy.sort(X)
+    upperQuartile = scipy.stats.scoreatpercentile(X, b)
+    lowerQuartile = scipy.stats.scoreatpercentile(X, a)
+
+    IQR = upperQuartile - lowerQuartile
+    # return IQR
+    return lowerQuartile
+
+# end interquartile_range
+
+
 def rsquared(x, y):
     """ Return R^2 where x and y are array-like."""
 

@@ -48,7 +48,7 @@ warnings.simplefilter('ignore', numpy.RankWarning)
 import smooth
 
 
-def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = None, bfilter = False):
+def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = None, bfilter = False, bkelvin = False):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
     print "Start read_LOntario_files()"
@@ -83,6 +83,11 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
         display_data.display_temperatures([HOBOdateTimeArr], [HOBOtempArr], k, fnames = zNames[0])
     elif chain == "rbr":
         display_data.display_temperatures([RBRdateTimeArr], [RBRtempArr], k, fnames = zNames[1])
+
+    if bkelvin:
+        [hobo, rbr] = [ [HOBOdateTimeArr[1:], HOBOtempArr[1:]], [RBRdateTimeArr[1:], RBRtempArr[1:]] ]
+        kelvin_wave_in_lontario([hobo, rbr], zNames)
+    # end bkelvin
 
     if bfilter:
         tunits = 'day'
@@ -823,7 +828,7 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
         HOBOdateTimeArr_res = HOBOdateTimeArr
 
 
-    fs2 = 1 / ((RBRdateTimeArr[2] - RBRdateTimeArr[1]) * factor)
+    fs2 = 1.0 / ((RBRdateTimeArr[2] - RBRdateTimeArr[1]) * factor)
     Filtered_data_rbr, w, h, N, delay = filters.butterworth(RBRDepthArr, btype, lowcut, highcut, fs2, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
     if len(Filtered_data_rbr) != len(RBRdateTimeArr):
         RBRdateTimeArr_res = scipy.signal.resample(RBRdateTimeArr, len(Filtered_data_rbr))
@@ -859,6 +864,83 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
 
         display_data.display_depths_subplot([HOBOdateTimeArr[1:], HOBOdateTimeArr_res[1:]], [HOBODepthArr[1:], Filtered_data[1:]], maxdepth = None, \
                                              fnames = fnames, yday = yday, revert = False, tick = None, custom = [custom1, "FFT"], firstlog = None)
+
+def kelvin_wave_in_lontario(data, fnames):
+
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+    print "Start kelvin_wave_in_lontario()"
+    HOBOdateTimeArr = data[0][0]
+    HOBODepthArr = data[0][1]
+    RBRdateTimeArr = data[1][0]
+    RBRDepthArr = data[1][1]
+
+    # Kelvin 10-15 day
+    lowcut = 1.0 / (24 * 10) / 3600
+    highcut = 1.0 / (24 * 3) / 3600
+    tunits = 'day'
+
+    if tunits == 'day':
+        factor = 86400
+    elif tunits == 'hour':
+        factor = 3600
+    else:
+        factor = 1
+
+
+
+    yday = True
+    debug = False
+    order = None
+    gpass = 9
+    astop = 32
+    recurse = True
+
+
+    btype = 'band'
+    fs1 = 1.0 / ((HOBOdateTimeArr[2] - HOBOdateTimeArr[1]) * factor)
+    Filtered_data = numpy.zeros(len(HOBOdateTimeArr) + 1, dtype = numpy.float)
+    Filtered_data, w, h, N, delay1 = filters.butterworth(HOBODepthArr, btype, lowcut, highcut, fs1, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
+    if len(Filtered_data) != len(HOBOdateTimeArr):
+        HOBOdateTimeArr_res = scipy.signal.resample(HOBOdateTimeArr, len(Filtered_data))
+    else :
+        HOBOdateTimeArr_res = HOBOdateTimeArr
+
+
+    fs2 = 1.0 / ((RBRdateTimeArr[2] - RBRdateTimeArr[1]) * factor)
+    Filtered_data_rbr, w, h, N, delay2 = filters.butterworth(RBRDepthArr, btype, lowcut, highcut, fs2, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
+    if len(Filtered_data_rbr) != len(RBRdateTimeArr):
+        RBRdateTimeArr_res = scipy.signal.resample(RBRdateTimeArr, len(Filtered_data_rbr))
+    else :
+        RBRdateTimeArr_res = RBRdateTimeArr
+
+
+    print "Start display: poincare_wave_in_lontario"
+
+    # superimposed filtered data for he period oscillation freq
+    custom1 = "Hobo Kelvin signature in Lake Ontario"  # % isotemp
+    custom2 = "RBR Kelvin signature in Lake Ontario"
+    # custom2 = "Isotherme %d ($^\circ$C) depth (m)" % isotemp
+    custom = [custom1, custom2]
+    t01 = ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27']
+    t02 = [27, 24, 21, 18, 15, 12, 9, 6, 3, 0]
+    t11 = ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20']
+    t12 = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0]
+    tick1 = [t01, t02]
+    tick2 = [t11, t12]
+    tick = [tick1, tick2]
+    revert_y = True
+
+
+
+    # display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [Filtered_data[1:], Filtered_data_rbr[1:]], maxdepth = None, \
+    #                                   fnames = fnames, yday = yday, revert = False, tick = None, custom = custom, firstlog = None)
+
+    # superimposed filtered data for the period oscillation freq
+    difflines = True
+    display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res[1:], delay1), numpy.subtract(RBRdateTimeArr_res[1:], delay1)], [Filtered_data[1:], Filtered_data_rbr[1:]],
+                                       [], fnames = fnames, difflines = difflines, custom = custom)
+
+
 
 def poincare_wave_in_harbour(period, dateinterval, paths):
 
@@ -896,7 +978,7 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
 
         for data in HOBOdateTimeArr:
             fs1 = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
-            Filtered_data[i], w, h, N, delay = filters.butterworth(HOBODepthArr, btype, lowcut, highcut, fs1, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
+            Filtered_data[i], w, h, N, delay = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs1, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
             i += 1
 
         # get hobo file from the lake
@@ -1170,7 +1252,7 @@ if __name__ == '__main__':
     Upwelling_zone = True  # 7
     Fish_detection = False  # 8
 
-    exit_if = [False, False, False, True, False, False, True, False, True]
+    exit_if = [False, False, False, False, False, False, False, False, False]
 
     if harbour_stats:
         all = True
@@ -1183,7 +1265,7 @@ if __name__ == '__main__':
     #---------------------------------
     # Set the start and end date-time
     #---------------------------------
-    startdate = '12/05/19 00:00:00'
+    startdate = '12/07/19 00:00:00'
     enddate = '12/10/24 00:00:00'
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
     start_num = date2num(dt)
@@ -1197,18 +1279,20 @@ if __name__ == '__main__':
         #-----------------------------------------------------------
         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed',
                  '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR']
-        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed', '']
+        # paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed', '']
         # paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/nLake/Cell3', '']
         waterdepths = [27, 20]  # water depths at the location
         top_log_depths = [3, 4]
         delta_ls = [1, 1]  # loggers interval
 
-        # fnames = ['18_2393005.csv', '019513.dat']
+        fnames = ['18_2393005.csv', '019513.dat']
+        zNames = ['Hobo', 'RBR']
 
-        fnames = ['18_2393005.csv', ''];  zNames = ['L_Ontario', '']
+        # fnames = ['18_2393005.csv', ''];  zNames = ['L_Ontario', '']
         # fnames = ['Surf_Cell_3.csv', '']; zNames = ['Hobo - Cell 3', '']
 
-        read_LOntario_files(paths, fnames, [start_num, end_num], chain = "hobo" , zNames = zNames, bfilter = True)
+        read_LOntario_files(paths, fnames, [start_num, end_num], chain = "all" , zNames = zNames, bfilter = True, bkelvin = True)
+
         if exit_if[1]:
             print "Done! LO_hobot_rbrt_10m"
             os.abort()
@@ -1225,7 +1309,6 @@ if __name__ == '__main__':
         # Filter in [ lo period, hi period] = > [Hi freq, lo freq]
         filter = None  # [16.5, 17.5]
 
-        [hobo, rbr] = isoterm_oscillation(temp, paths, waterdepths, top_log_depths, delta_ls, [start_num, end_num], filter)
         period_hours = 17
         startdate = '12/07/19 00:00:00'
         enddate = '12/10/24 00:00:00'
@@ -1233,8 +1316,12 @@ if __name__ == '__main__':
         start_num = date2num(dt)
         dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
         end_num = date2num(dt)
+
+        [hobo, rbr] = isoterm_oscillation(temp, paths, waterdepths, top_log_depths, delta_ls, [start_num, end_num], filter)
+
         fnames = ['Hobo t-Chain', 'RBR t-Chain']
-        poincare_wave_in_lontario(period_hours, [start_num, end_num], [hobo, rbr], fnames, waterdepths, temp)
+        # poincare_wave_in_lontario(period_hours, [start_num, end_num], [hobo, rbr], fnames, waterdepths, temp)
+        kelvin_wave_in_lontario(period_hours, [hobo, rbr], fnames, waterdepths, temp)
 
         print "Done! LO_isotherm"
         if exit_if[2]:
@@ -1288,9 +1375,9 @@ if __name__ == '__main__':
 
     if Upwelling_zone:
         # no lake data
-        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/nLake'
+        # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/nLake'
         # with lake data
-        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/wLake'
+        # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/wLake'
         # FFT
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Surf'
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/FFT_Bot'
@@ -1299,7 +1386,7 @@ if __name__ == '__main__':
         enddate = '12/10/24 00:00:00'
 
         # filtering
-        filt = "diurnal"
+        filt = "k10_15"
 
         if filt == "k3_7":
             # Kelvin 3-7 days
@@ -1326,11 +1413,13 @@ if __name__ == '__main__':
 
 
 
-        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = True)
-        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
+        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
+        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv')
-        upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
+        # upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
+        upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones-NoLO.csv')
+        # upwelling.draw_upwelling_correlation_IQR('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones-NoLO.csv')
 
         if exit_if[7]:
             print "Exit Upwelling!"

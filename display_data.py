@@ -142,7 +142,7 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
     plt.show()
 
 def display_temperatures_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnames = None, revert = False, difflines = False, \
-                                      custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 16, ylim = None, fill = False):
+                                      custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 18, ylim = None, fill = False):
     ax = display_temperatures(dateTimes, temps, k, fnames = fnames, revert = revert, difflines = difflines, custom = custom, \
                           maxdepth = maxdepth, tick = tick, firstlog = firstlog, fontsize = fontsize, ylim = ylim, fill = fill, show = False)
 
@@ -158,7 +158,7 @@ def display_temperatures_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnames =
     plt.show()
 
 def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, difflines = False, custom = None, \
-                          maxdepth = None, tick = None, firstlog = None, fontsize = 16, ylim = None, fill = False, show = True):
+                          maxdepth = None, tick = None, firstlog = None, fontsize = 18, ylim = None, fill = False, show = True):
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
     i = 0
@@ -173,11 +173,11 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
         else:
             reversed_temp = temp
         if difflines:
-            ax.plot(dateTime[1:], reversed_temp[1:], linestyle = ls[i], linewidth = 1.2 + 0.2 * i)
+            ax.plot(dateTime[1:], reversed_temp[1:], linestyle = ls[i], linewidth = 1.6 + 0.1 * i)
         else:
             try:
                 if len(dateTime) > 0:
-                    ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 1.4)
+                    ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 1.8)
             except Exception as e:
                 print "Error %s" % e
                 continue
@@ -337,22 +337,22 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
         ax[i].grid(True)
         if custom == None:
             ylabel = ' Temp. ($^\circ$C)'
-            ax[i].set_ylabel(ylabel).set_fontsize(16)
+            ax[i].set_ylabel(ylabel).set_fontsize(18)
             title = ' Temperature Profiles - %s' % lg
         else:
             title = ' Profile: %s' % custom[i]
             ax[i].set_ylabel(custom[i])
 
-        ax[i].set_title(title).set_fontsize(18)
+        ax[i].set_title(title).set_fontsize(20)
         if yday == None:
             ax[i].set_xlim(xmax = dateTime[len(dateTime) - 1])
-            ax[i].set_xlabel("Time").set_fontsize(16)
+            ax[i].set_xlabel("Time").set_fontsize(18)
         else:
             if delay != None:
                 ax[i].set_xlim(xmin = minx, xmax = maxx)
                 # ax[i].set_xlim(xmin = 150 , xmax = 400)
 
-            ax[i].set_xlabel("day of the year").set_fontsize(16)
+            ax[i].set_xlabel("day of the year").set_fontsize(18)
 
         if maxdepth != None:
             if firstlog != None:
@@ -465,19 +465,19 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
         ax[i].grid(True)
         if custom == None:
             ylabel = ' Depth. (m)'
-            ax[i].set_ylabel(ylabel).set_fontsize(16)
+            ax[i].set_ylabel(ylabel).set_fontsize(18)
             title = '  Profiles - %s' % lg
         else:
             title = ' Profile: %s' % custom[i]
             ax[i].set_ylabel(custom[i])
 
-        ax[i].set_title(title).set_fontsize(18)
+        ax[i].set_title(title).set_fontsize(20)
         if yday == None:
             ax[i].set_xlim(xmax = dateTime[len(dateTime) - 1])
-            ax[i].set_xlabel("Time").set_fontsize(16)
+            ax[i].set_xlabel("Time").set_fontsize(18)
         else:
             ax[i].set_xlim(xmin = minx, xmax = maxx)
-            ax[i].set_xlabel("day of the year").set_fontsize(16)
+            ax[i].set_xlabel("day of the year").set_fontsize(18)
 
         if maxdepth != None:
             if firstlog != None:
