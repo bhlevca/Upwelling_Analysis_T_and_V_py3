@@ -3,7 +3,7 @@ import scipy.stats
 import numpy.polynomial.polynomial as polynomial
 import matplotlib.pyplot as plt
 
-def interquartile_range(X, a = 25, b = 75):
+def interquartile_range(X, a = 25, b = 75, onlylower = False):
     """Calculates the Freedman-Diaconis bin size for
     a data set for use in making a histogram
 
@@ -26,9 +26,12 @@ def interquartile_range(X, a = 25, b = 75):
     upperQuartile = scipy.stats.scoreatpercentile(X, b)
     lowerQuartile = scipy.stats.scoreatpercentile(X, a)
 
-    IQR = upperQuartile - lowerQuartile
-    # return IQR
-    return lowerQuartile
+    if onlylower:
+        return lowerQuartile
+    else:
+        IQR = upperQuartile - lowerQuartile
+        return IQR
+
 
 # end interquartile_range
 
@@ -41,7 +44,7 @@ def rsquared(x, y):
 
 
 def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None, y_label = None, title = None, \
-                    r_value = None, p_value = None, fontsize = 16):
+                    r_value = None, p_value = None, fontsize = 20):
 
     print "intercept = %f, slope = %f" % (slope, intercept)
     fig, ax = plt.subplots()
@@ -69,7 +72,6 @@ def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None,
     if r_value != None:
         text = "R$^2$=%4.2f" % r_value ** 2
         x0 = scalex[0] + (xbins - 1.5) * xn_per_bin
-        # x0 = scalex[0] + (1.5) * xn_per_bin
         y0 = scaley[0] + (ybins - 1) * yn_per_bin
         # y0 = scaley[0] + (2) * yn_per_bin
         ax.text(x0, y0, text, ha = 'center', va = 'center', bbox = bbox_props)

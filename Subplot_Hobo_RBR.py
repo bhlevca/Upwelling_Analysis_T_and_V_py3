@@ -336,7 +336,7 @@ def read_Tor_Harbour_files(moving_avg):
 
         print "Start display"
         # display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
-        display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = fnames, difflines = True)
+        display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = fnames, difflines = True, custom = "Temperature Timseries - Toronto Harbour")
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
         # cut the 1/10 atc each end with bad filtered data
@@ -345,7 +345,7 @@ def read_Tor_Harbour_files(moving_avg):
             Filtered_data[i] = Filtered_data[i][trim:-trim];
             HOBOdateTimeArr_res[i] = HOBOdateTimeArr_res[i][trim:-trim]
 
-        display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Filtered Temperature Profiles")
+        display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Filtered Temperature Timeseries - Toronto Harbour")
     # end for path
 
 def read_TRCA_files(paths):
@@ -1249,8 +1249,8 @@ if __name__ == '__main__':
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
-    Upwelling_zone = True  # 7
-    Fish_detection = False  # 8
+    Upwelling_zone = False  # 7
+    Fish_detection = True  # 8
 
     exit_if = [False, False, False, False, False, False, False, False, False]
 
@@ -1413,12 +1413,12 @@ if __name__ == '__main__':
 
 
 
-        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
+        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
         # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv')
         # upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
-        upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones-NoLO.csv')
+        # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones-NoLO.csv')
         # upwelling.draw_upwelling_correlation_IQR('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones-NoLO.csv')
 
         if exit_if[7]:

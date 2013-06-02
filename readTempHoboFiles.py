@@ -372,15 +372,20 @@ def read_files_and_display(rpath = None):
     else:
         ppath = path
 
-    dirList = os.listdir(ppath)
+    # dirList = os.listdir(ppath)
 
+    # dirlist needs to be sorted in ascending order
+    # Separate directories from files
+    base, dirs, files = iter(os.walk(ppath)).next()
 
-    dateTimeArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
-    tempArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
-    resultsArr = numpy.zeros(len(dirList), dtype = numpy.ndarray)
-    k = numpy.zeros(len(dirList), dtype = numpy.ndarray)
+    sorted_files = sorted(files, key = lambda x: x.split('.')[0])
+
+    dateTimeArr = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
+    tempArr = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
+    resultsArr = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
+    k = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
     i = 0
-    for fname in dirList:
+    for fname in sorted_files:
         dateTime, temp, results = get_data_from_file(fname, window_hour, windows[1], rpath = ppath)
         maxidx = 30000
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime[:maxidx])
@@ -391,7 +396,7 @@ def read_files_and_display(rpath = None):
     # end for
 
     # plot the temperature not the smoothed ones
-    display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = dirList, custom = "Temperature Toronto Waterfront Zones $^oC$")
+    display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$")
     t11 = ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27']
     t12 = [27, 24, 21, 18, 15, 12, 9, 6, 3, 0]
     tick = [t11, t12]
@@ -517,6 +522,8 @@ if __name__ == '__main__':
     # select_data()
     # plot_upwelling_multiple_locations()
     path = "/home/bogdan/Documents/UofT/PhD/Data_Files/Motivation"
+
+    # plot the heat map of the thermistor chain
     path = "/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed"
     read_files_and_display(path)
     print "Done!"
