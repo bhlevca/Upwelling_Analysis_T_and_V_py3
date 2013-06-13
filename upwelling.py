@@ -988,6 +988,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             title = "Toronto Waterfront: %s" % zoneName
             dat = [HOBOdateTimeArr[0][1:], HOBOtempArr[0][1:]]  # skip first value because is usually 0
             log = True
+            # log = False
             # ylabel = "Spectral Density ($^oC$/cph$)"
             ylabel = "Amplitude ($^oC$)"
             [Time, y, x05, x95] = spectral_analysis.doSpectralAnalysis(dat, zoneName, ylabel , title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False, log = log)

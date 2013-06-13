@@ -1249,7 +1249,7 @@ if __name__ == '__main__':
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
-    Upwelling_zone = False  # 7
+    Upwelling_zone = True  # 7
     Fish_detection = True  # 8
 
     exit_if = [False, False, False, False, False, False, False, False, False]
@@ -1413,8 +1413,8 @@ if __name__ == '__main__':
 
 
 
-        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
-        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
+        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
+        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv')
         # upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
@@ -1432,7 +1432,7 @@ if __name__ == '__main__':
 
         count_detect = False
         draw = True
-        # this is just to esitmate detection
+        # this is just to estimate detection
         if count_detect:
             fish_detection.fish_detection(path, [startdate, enddate])
 

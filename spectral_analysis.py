@@ -16,10 +16,13 @@ def doSpectralAnalysis(data, name, label, title, draw, window = "hanning", num_s
     showLevels = False
     detrend = False
 
-    [Time, y, x05, x95] = fftsa.doSpectralAnalysis(showLevels, draw, tunits, window, num_segments, filter, log)
+    [Time, y, x05, x95, power] = fftsa.doSpectralAnalysis(showLevels, draw, tunits, window, num_segments, filter = None, log = log)
     fftsa.plotLakeLevels(name, None, detrend, label, title)
-    fftsa.plotSingleSideAplitudeSpectrumFreq(name, None, funits, label, title, log, fontsize = 20)
-    fftsa.plotSingleSideAplitudeSpectrumTime(name, bay_name = None, y_label = None, title = title, ymax_lim = None, log = False)
+    fftsa.plotSingleSideAplitudeSpectrumFreq(name, None, funits, label, title, log, fontsize = 20, tunits = tunits)
+    fftsa.plotPowerDensitySpectrumFreq(name, None, funits, label, title, log, fontsize = 20, tunits = tunits)
+    # This uses the matplotlib psd and deos not have  log axes
+    # fftsa.plotPSDFreq(name, None, funits, label, title, log = True, fontsize = 20, tunits = tunits)
+    fftsa.plotSingleSideAplitudeSpectrumTime(name, bay_name = None, y_label = None, title = title, ymax_lim = None, log = False, tunits = tunits)
 
     # fftsa.plotZoomedSingleSideAplitudeSpectrumFreq()
     # fftsa.plotZoomedSingleSideAplitudeSpectrumTime()
