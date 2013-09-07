@@ -35,7 +35,7 @@ writer2 = csv.writer(ofile2, delimiter = ',', quotechar = '"', quoting = csv.QUO
 '''
 
 '''
-path = '/home/bogdan/Documents/UofT/PhD/Research-docs/Data_Files/Toberymory_tides'
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Toberymory_tides'
 
 #ifile1 = open(path + '/LL3_Harbour_Is_Logger.csv', 'rb')
 ifile1 = open(path + '/LL1_Inner_Boat_Passage.csv', 'rb')
@@ -53,8 +53,15 @@ writer1 = csv.writer(ofile1, delimiter = ',', quotechar = '"', quoting = csv.QUO
 ofile2 = open(path + '/LL4.csv', "wb")
 writer2 = csv.writer(ofile2, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 '''
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Toberymory_tides'
+ifile1 = open(path + '/11690-01-JUL-2010_slev.csv', 'rb')
+reader1 = csv.reader(ifile1, delimiter = ',', quotechar = '"')
+ofile1 = open(path + '/11690-01-JUL-2010_out.csv', "wb")
+writer1 = csv.writer(ofile1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 
 
+
+'''
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files_Bogdan/Pressure_loggers_11_sept_2012_test'
 ifile1 = open(path + '/1115681-test.csv', 'rb')
 reader1 = csv.reader(ifile1, delimiter = '\t', quotechar = '"')
@@ -69,6 +76,7 @@ ofile2 = open(path + '/1115683-test_date.csv', "wb")
 writer2 = csv.writer(ofile2, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 ofile3 = open(path + '/1115685-test_date.csv', "wb")
 writer3 = csv.writer(ofile3, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+'''
 
 '''
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files_Bogdan/Pressure_loggers_11_sept_2012_test'
@@ -144,14 +152,14 @@ def read_stringdatefile(reader):
             else:
                 colnum = 0
                 for col in row:
-                    # if header[colnum] == "Sensor Depth, meters":
-                    if header[colnum] == "Abs Pres kPa":
+                    if header[colnum] == "Sensor Depth, meters":
+                    # if header[colnum] == "Abs Pres kPa":
                         depth.append(str(col))
                     if header[colnum][0:4] == "Temp":
                         temp.append(str(col))
 
-                    # if header[colnum] == "Time, GMT-04:00":
-                    if header[colnum] == "Date Time GMT-04:00":
+                    if header[colnum] == "Time, GMT-04:00":
+                    # if header[colnum] == "Date Time GMT-04:00":
                         dateTime.append(str(col))
 
                     colnum += 1
@@ -171,8 +179,9 @@ def write_datefile(writer, depth, dateTime):
     eps = 1.5
     prevtxt = ''
     for row in depth:
-        dt = datetime.strptime(dateTime[idx], "%d/%m/%Y %I:%M:%S %p")
+        # dt = datetime.strptime(dateTime[idx], "%d/%m/%Y %I:%M:%S %p")
         # dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
+        dt = datetime.strptime(dateTime[idx], "%Y/%m/%d %H:%M")
         dn = date2num(dt)
         if prevdt > dn:
             print "Next value lower!"
@@ -192,11 +201,13 @@ def write_datefile(writer, depth, dateTime):
 [depth, dateTime, temp] = read_stringdatefile(reader1)
 nd = write_datefile(writer1, depth, dateTime)
 plt.plot(nd, linewidth = 0.3, color = 'r')
-[depth2, dateTime2, temp2] = read_stringdatefile(reader2)
-nd2 = write_datefile(writer2, depth2, dateTime2)
-[depth3, dateTime3, temp3] = read_stringdatefile(reader3)
-nd3 = write_datefile(writer3, depth3, dateTime3)
+plt.show()
+# [depth2, dateTime2, temp2] = read_stringdatefile(reader2)
+# nd2 = write_datefile(writer2, depth2, dateTime2)
+# [depth3, dateTime3, temp3] = read_stringdatefile(reader3)
+# nd3 = write_datefile(writer3, depth3, dateTime3)
 
+'''
 legend = ['1115685']
 colors = ['r', 'b']
 title = '1115685 Pressure logger'
@@ -216,6 +227,6 @@ fig, plt2, ax = display(title, xlabel, ylabel, [nd, nd2, nd3], [depth, depth2, d
 ax.plot(nd, temp, nd2, temp2)  # , nd3, temp3)
 plt2.grid(True)
 plt2.show()
-
+'''
 
 print "Done!"

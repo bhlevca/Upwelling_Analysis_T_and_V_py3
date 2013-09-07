@@ -84,7 +84,7 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
     elif chain == "rbr":
         display_data.display_temperatures([RBRdateTimeArr], [RBRtempArr], k, fnames = zNames[1])
 
-    if bkelvin:
+    if bkelvin and chain == 'all':
         [hobo, rbr] = [ [HOBOdateTimeArr[1:], HOBOtempArr[1:]], [RBRdateTimeArr[1:], RBRtempArr[1:]] ]
         kelvin_wave_in_lontario([hobo, rbr], zNames)
     # end bkelvin
@@ -102,7 +102,7 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
 
 
         # Poincare 17h filter
-        fnumber = 24
+        fnumber = 27
         delta = 0.5
         highcut = 1.0 / (fnumber - delta) / 3600
         lowcut = 1.0 / (fnumber + delta) / 3600
@@ -1243,14 +1243,14 @@ def harbour_statistics(all = False):
 
 if __name__ == '__main__':
     harbour_stats = False  # 0
-    LO_hobot_rbrt_10m = False  # 1
+    LO_hobot_rbrt_10m = True  # 1
     LO_isotherm = False  # 2
     Toronto_harbour = False  # 3
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
-    Upwelling_zone = True  # 7
-    Fish_detection = True  # 8
+    Upwelling_zone = False  # 7
+    Fish_detection = False  # 8
 
     exit_if = [False, False, False, False, False, False, False, False, False]
 
@@ -1280,7 +1280,7 @@ if __name__ == '__main__':
         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed',
                  '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/RBR']
         # paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed', '']
-        # paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/nLake/Cell3', '']
+        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/nLake/Cell3', '']
         waterdepths = [27, 20]  # water depths at the location
         top_log_depths = [3, 4]
         delta_ls = [1, 1]  # loggers interval
@@ -1289,9 +1289,10 @@ if __name__ == '__main__':
         zNames = ['Hobo', 'RBR']
 
         # fnames = ['18_2393005.csv', ''];  zNames = ['L_Ontario', '']
-        # fnames = ['Surf_Cell_3.csv', '']; zNames = ['Hobo - Cell 3', '']
+        # fnames = ['Surf_Cell_3.csv', '']; zNames = ['Hobo - Cell 3 Surf', '']
+        fnames = ['Bot_Cell_3.csv', '']; zNames = ['Hobo - Cell 3 Bot', '']
 
-        read_LOntario_files(paths, fnames, [start_num, end_num], chain = "all" , zNames = zNames, bfilter = True, bkelvin = True)
+        read_LOntario_files(paths, fnames, [start_num, end_num], chain = "hobo" , zNames = zNames, bfilter = True, bkelvin = True)
 
         if exit_if[1]:
             print "Done! LO_hobot_rbrt_10m"
@@ -1386,7 +1387,7 @@ if __name__ == '__main__':
         enddate = '12/10/24 00:00:00'
 
         # filtering
-        filt = "k10_15"
+        filt = "semidiurnal"
 
         if filt == "k3_7":
             # Kelvin 3-7 days
@@ -1408,13 +1409,18 @@ if __name__ == '__main__':
             lowcut = 1.0 / (24.2) / 3600
             highcut = 1.0 / (23.8) / 3600
             filter = [lowcut, highcut]
+        elif filt == "semidiurnal":
+            # diurnal
+            lowcut = 1.0 / (12.1) / 3600
+            highcut = 1.0 / (11.9) / 3600
+            filter = [lowcut, highcut]
         else:
             filter = None
 
 
 
-        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
-        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
+        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
+        # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv')
         # upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')

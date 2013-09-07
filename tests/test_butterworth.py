@@ -15,13 +15,14 @@ t = numpy.linspace(0, T, nsamples, endpoint = False)
 
 # signal = sin1 = numpy.sin(xs * .3)  # (A)
 
-sin1 = numpy.sin(2 * numpy.pi * t * 10)  # (B) sin1
+sin1 = numpy.sin(2 * numpy.pi * t * 10) * 4.0  # (B) sin1
 
 sin2 = numpy.sin(2 * numpy.pi * t * 20) * 2.0  # (B) sin2
 
-sin3 = numpy.sin(2 * numpy.pi * t * 30) * 3.0  # (B) sin3
+sin3 = numpy.sin(2 * numpy.pi * t * 3) * 6.0  # (B) sin3
 
 noise = sin1 + sin2 + sin3  # (C)
+
 
 static = (numpy.random.random_sample((len(t))) - .5) * .2  # (D)
 
@@ -33,6 +34,21 @@ plt.plot(t, sin1, label = "sin1")
 plt.plot(t, sin2, label = "sin2")
 plt.plot(t, sin3, label = "sin3")
 
+plt.plot(t, noise, label = 'raw')
+plt.legend()
+plt.show()
+
+
+# for tobermory
+T = 10000.0
+nsamples = 10000
+t = numpy.linspace(0, T, nsamples, endpoint = False)
+sin1 = numpy.sin(2 * numpy.pi * t * 1. / (60. * 7.2) + numpy.pi / 4.) * 3.5  # (B) sin1
+sin2 = numpy.sin(2 * numpy.pi * t * 1. / (60. * 16.8)) * 5.7  # (B) sin2
+
+noise = sin1 + sin2
+plt.plot(t, sin1, label = "sin1")
+plt.plot(t, sin2, label = "sin2")
 plt.plot(t, noise, label = 'raw')
 plt.legend()
 plt.show()
