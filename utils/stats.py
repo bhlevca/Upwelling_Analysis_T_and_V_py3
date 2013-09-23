@@ -53,6 +53,9 @@ def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None,
     ax.plot(x, slope * x + intercept, 'r-')
 
     xmax = numpy.max(x)
+    xmin = numpy.min(x)
+    ymax = numpy.max(y)
+    ymin = numpy.min(y)
     scalex = ax.xaxis.get_view_interval()
     xbins = len(ax.xaxis.get_gridlines()) - 1
     xn_per_bin = (scalex[1] - scalex[0]) / xbins
@@ -67,7 +70,7 @@ def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None,
         dy = scaley[0] / scaley[1] + 3.5 / yn_per_bin
         for i in range(0, len(point_labels)):
             ax.annotate(point_labels[i], xy = (x[i], y[i]), xycoords = 'data', xytext = (dx, dy) , textcoords = 'offset points',
-                        ha = 'right', va = 'top', bbox = dict(fc = 'white', ec = 'none', alpha = 0.3))
+                        ha = 'left', va = 'top', bbox = dict(fc = 'white', ec = 'none', alpha = 0.3))
 
     if bbox:
         bbox_props = dict(boxstyle = "square,pad=0.3", fc = "white", ec = "b", lw = 1)
@@ -97,7 +100,11 @@ def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None,
     if title != None:
         plt.title(title).set_fontsize(fontsize + 2)
 
-    ax.set_xlim(xmax = xmax + xmax / 10)
+    xeps = abs((xmax - xmin) / 10.)
+    yeps = abs((ymax - ymin) / 10.)
+
+    ax.set_xlim(xmin = xmin - xeps , xmax = xmax + xmax / 8.)
+    ax.set_ylim(ymin = ymin - yeps , ymax = ymax + ymax / 8.)
 
     plt.grid(True)
     # plt.show()
