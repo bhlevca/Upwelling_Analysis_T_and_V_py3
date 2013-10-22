@@ -94,6 +94,16 @@ reader3 = csv.reader(ifile3, delimiter = '\t', quotechar = '"')
 ofile3 = open(path + '/1115685-Boat_Passage_Log_date.csv', "wb")
 writer3 = csv.writer(ofile3, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 '''
+
+'''
+path = '//software/software/scientific/Matlab_files/Helmoltz/Embayments-Exact/Data-long/LOntario'
+ifile1 = open(path + '/1115682.csv', 'rb')
+reader1 = csv.reader(ifile1, delimiter = '\t', quotechar = '"')
+path = '//software/software/scientific/Matlab_files/Helmoltz/Embayments-Exact/Data-long/FMB'
+ifile2 = open(path + '/1115683-Boat_Passage_Logger_1.csv', "rb")
+reader2 = csv.reader(ifile2, delimiter = '\t', quotechar = '"')
+'''
+
 def display(title, xlable, ylabel, x, y, colour, legend = None, linewidth = 0.6):
 
     n = len(x)
