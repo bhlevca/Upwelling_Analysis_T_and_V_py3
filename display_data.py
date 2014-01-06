@@ -1,10 +1,13 @@
 import numpy
 import matplotlib.pyplot as plt
 from datetime import datetime
-c
 from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
-import time, os, datetime, math
+import time, os, datetime, math, sys
+
+sys.path.insert(0, '/software/SAGEwork/Seiches')
+import fft.filters as filters
+import fft.fft_utils as fft_utils
 
 years = matplotlib.dates.YearLocator()  # every year
 months = matplotlib.dates.MonthLocator()  # every month
@@ -158,26 +161,36 @@ def display_temperatures_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnames =
     plt.show()
 
 def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, difflines = False, custom = None, \
-                          maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, fill = False, show = True):
+                          maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, fill = False, \
+                          show = True, datetype = 'date'):
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
     i = 0
     legend = []
     title = None
-    ls = ['-', '--', ':', '-.', '-', '--', ':', '-.', '-', '--', ':', '-.']
-    for dateTime in dateTimes:
+
+
+    ls = ['-', '--', ':', '-.', '-', '--', ':', '-.', '-', '--', ':', '-.', '-', '--', ':', '-.']
+    colour_list = ['g', 'r', 'y', 'b', 'c', 'm', 'k', (0.976, 0.333, 0.518), (0.643, 0.416, 0.994), (0.863, 0.267, 0.447), \
+                                                (0.576, 0.533, 0.318), (0.343, 0.516, 0.394), (0.563, 0.567, 0.347),
+                                                (0.176, 0.733, 0.118), (0.943, 0.616, 0.694), (0.263, 0.967, 0.247)]
+    for dT in dateTimes:
         temp = temps[i]
-        # ax.plot(dateTime[1:], coef[1:])
         if revert == True:
             reversed_temp = temp[::-1]
         else:
             reversed_temp = temp
+
+        if datetype == 'dayofyear':
+            dateTime = fft_utils.timestamp2doy(dT[1:])
+        else:
+            dateTime = dT[1:]
         if difflines:
-            ax.plot(dateTime[1:], reversed_temp[1:], linestyle = ls[i], linewidth = 1.6 + 0.1 * i)
+            ax.plot(dateTime, reversed_temp[1:], linestyle = ls[i], linewidth = 1.6 + 0.1 * i, color = colour_list[i])
         else:
             try:
                 if len(dateTime) > 0:
-                    ax.plot(dateTime[1:], reversed_temp[1:], linewidth = 1.8)
+                    ax.plot(dateTime, reversed_temp[1:], linewidth = 1.8)
             except Exception as e:
                 print "Error %s" % e
                 continue
@@ -203,13 +216,19 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
         ax.fill_between(dateTimes[0], temps[1], temps[0], where = temps[1] <= temps[0], facecolor = [sd, sd, sd], interpolate = True)
 
     # format the ticks
-    formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-    # formatter = matplotlib.dates.DateFormatter('`%y')
-    # ax.xaxis.set_major_locator(years)
-    ax.xaxis.set_major_formatter(formatter)
-    # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+    if datetype == 'date':
+        formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
+        # formatter = matplotlib.dates.DateFormatter('`%y')
+        # ax.xaxis.set_major_locator(years)
+        ax.xaxis.set_major_formatter(formatter)
+        # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
 
-    # ax.xaxis.set_minor_locator(hour)
+        # ax.xaxis.set_minor_locator(hour)
+        fig.autofmt_xdate()
+    else:
+        plt.xticks(fontsize = fontsize)
+        plt.xlabel("Julian Day").set_fontsize(fontsize)
+
     ax.xaxis.set_minor_locator(mondays)
 
     # ax.xaxis.grid(True, 'major')
@@ -244,7 +263,6 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
 
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
-    fig.autofmt_xdate()
     if show:
         plt.show()
     return ax
@@ -505,7 +523,8 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
     plt.show()
 
 
-def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstlog, maxtemp, revert = False, fontsize = 20):
+def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstlog, maxtemp, revert = False, \
+                             fontsize = 20, datetype = 'date'):
     n = len(dateTimes[0])
     m = len(dateTimes)
     Temp = numpy.zeros((m, n - 1))
@@ -557,7 +576,11 @@ def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstl
     else:
         yrev = y
 
-    X, Y = numpy.meshgrid(dateTimes[0][1:], yrev)
+    if datetype == 'dayofyear':
+        dateTime = fft_utils.timestamp2doy(dateTimes[0][1:])
+    else:
+        dateTime = dateTimes[0][1:]
+    X, Y = numpy.meshgrid(dateTime, yrev)
 
     # HERE = > interpolation, speedup, what is wrong at the ned is red
 
@@ -582,17 +605,21 @@ def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstl
     plt.setp(labels, rotation = 0, fontsize = fontsize)
 
     # format the ticks
-    formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-    # formatter = matplotlib.dates.DateFormatter('`%y')
-    # ax.xaxis.set_major_locator(years)
-    ax.xaxis.set_major_formatter(formatter)
-    # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+    if datetype == "date":
+        formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
+        # formatter = matplotlib.dates.DateFormatter('`%y')
+        # ax.xaxis.set_major_locator(years)
+        ax.xaxis.set_major_formatter(formatter)
+        # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+        plt.setp(labels, rotation = 0, fontsize = fontsize)
+        fig.autofmt_xdate()
+    else:
+        plt.xticks(fontsize = fontsize)
+        plt.xlabel("Julian Day").set_fontsize(fontsize)
+
     ax.xaxis.set_minor_locator(hour)
 
     labels = ax.get_xticklabels()
-    plt.setp(labels, rotation = 0, fontsize = fontsize)
-
-    fig.autofmt_xdate()
 
     # draw the thermocline
     levels = [13]

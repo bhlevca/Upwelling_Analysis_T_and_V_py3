@@ -5,10 +5,13 @@ from datetime import datetime
 from matplotlib.dates import date2num, num2date
 from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
-import time, os, datetime
+import time, os, datetime, sys
 from scipy.interpolate import UnivariateSpline
 import display_data
 
+sys.path.insert(0, '/software/SAGEwork/Seiches')
+import fft.filters as filters
+import fft.fft_utils as fft_utils
 
 # turn off warning in polyfit
 import warnings
@@ -396,14 +399,16 @@ def read_files_and_display(rpath = None):
     # end for
 
     # plot the temperature not the smoothed ones
-    display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$")
+    datetype = 'dayofyear'
+    display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$", \
+                                      datetype = datetype)
     t11 = ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27']
     t12 = [27, 24, 21, 18, 15, 12, 9, 6, 3, 0]
     tick = [t11, t12]
     maxdepth = 27
     firstlogdepth = 3
     maxtemp = 25
-    display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, fontsize = 18)
+    display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, fontsize = 18, datetype = datetype)
     profiles = [1000, 3500, 4000, 5500, 10000, 15000, 20000, 25000]
 
     display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles)
@@ -524,7 +529,8 @@ if __name__ == '__main__':
     path = "/home/bogdan/Documents/UofT/PhD/Data_Files/Motivation"
 
     # plot the heat map of the thermistor chain
-    path = "/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed"
+    # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed"
+    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
     read_files_and_display(path)
     print "Done!"
 

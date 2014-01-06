@@ -6,8 +6,7 @@ from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import matplotlib.pyplot as plt
 from datetime import datetime
-import time
-
+import time, os, locale
 import csv
 import numpy
 
@@ -59,7 +58,11 @@ reader1 = csv.reader(ifile1, delimiter = ',', quotechar = '"')
 ofile1 = open(path + '/11690-01-JUL-2010_out.csv', "wb")
 writer1 = csv.writer(ofile1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 
-
+# path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Station-13320-Apr-09-2013'
+# ifile2 = open(path + '/13320-07-APR-2013_slev.csv', 'rb')
+# reader2 = csv.reader(ifile1, delimiter = ',', quotechar = '"')
+# ofile2 = open(path + '/13320-07-APR-2013_slev.csv', "wb")
+# writer2 = csv.writer(ofile1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 
 '''
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files_Bogdan/Pressure_loggers_11_sept_2012_test'
@@ -96,13 +99,20 @@ writer3 = csv.writer(ofile3, delimiter = ',', quotechar = '"', quoting = csv.QUO
 '''
 
 '''
-path = '//software/software/scientific/Matlab_files/Helmoltz/Embayments-Exact/Data-long/LOntario'
+path = '/software/software/scientific/Matlab_files/Helmoltz/Embayments-Exact/Data-long/LOntario'
 ifile1 = open(path + '/1115682.csv', 'rb')
 reader1 = csv.reader(ifile1, delimiter = '\t', quotechar = '"')
-path = '//software/software/scientific/Matlab_files/Helmoltz/Embayments-Exact/Data-long/FMB'
+path = '/software/software/scientific/Matlab_files/Helmoltz/Embayments-Exact/Data-long/FMB'
 ifile2 = open(path + '/1115683-Boat_Passage_Logger_1.csv', "rb")
 reader2 = csv.reader(ifile2, delimiter = '\t', quotechar = '"')
 '''
+
+
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/WL'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/WL/csv_processed'
+
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Station-13320-Apr-09-2013'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Station-13320-Apr-09-2013/csv_processed'
 
 def display(title, xlable, ylabel, x, y, colour, legend = None, linewidth = 0.6):
 
@@ -145,11 +155,15 @@ def read_stringdatefile(reader):
 
     for row in reader:
         # skip comment lines
-        if len(row) == 0 or row[0][:1] == '#':
+        if len(row) == 0 or row[0][:1] == '@' or row[0][:4] == 'Plot' or row[0][:1] == '#' :
             continue
 
         # Save header row.
-        if rownum == 0:
+        strg = row[0]
+        print "header :%s" % strg
+        if strg == "":
+            continue
+        if rownum == 0 :  # or strg[0] == '#':
             header = row
         else:
             if printHeaderVal == True:
@@ -162,13 +176,18 @@ def read_stringdatefile(reader):
             else:
                 colnum = 0
                 for col in row:
-                    if header[colnum] == "Sensor Depth, meters":
-                    # if header[colnum] == "Abs Pres kPa":
+                    if colnum >= numpy.size(header):
+                        continue
+                    # if header[colnum] == "Sensor Depth, meters":
+                    if header[colnum][:8] == "Abs Pres":
                         depth.append(str(col))
                     if header[colnum][0:4] == "Temp":
                         temp.append(str(col))
-
-                    if header[colnum] == "Time, GMT-04:00":
+                    if header[colnum][:8] == "Obs_date":
+                        dateTime.append(str(col))
+                    if header[colnum][:4] == "SLEV":
+                        depth.append(str(col))
+                    if header[colnum][:9] == "Date Time":
                     # if header[colnum] == "Date Time GMT-04:00":
                         dateTime.append(str(col))
 
@@ -189,7 +208,7 @@ def write_datefile(writer, depth, dateTime):
     eps = 1.5
     prevtxt = ''
     for row in depth:
-        # dt = datetime.strptime(dateTime[idx], "%d/%m/%Y %I:%M:%S %p")
+        # dt = datetime.strptime(dateTime[idx], "%m/%d/%y %I:%M:%S %p")
         # dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
         dt = datetime.strptime(dateTime[idx], "%Y/%m/%d %H:%M")
         dn = date2num(dt)
@@ -207,7 +226,30 @@ def write_datefile(writer, depth, dateTime):
         numdat.append(dn)
     return numdat
 
+def read_files():
+    dirList = os.listdir(path)
+    for fname in dirList:
+        print "Fname %s" % fname
+        if os.path.isdir(path + "/" + fname) == False:
+            read_file(fname)
 
+def read_file(fname, fout = None):
+    ifile = open(path + '/' + fname, 'rb')
+    reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
+    print "Converting file: %s" % fname
+    [pres, dateTime, temp] = read_stringdatefile(reader)
+
+    if fout == None:
+        fout = fname
+
+    ofile = open(path_out + '/' + fout, "wb")
+    writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+    write_datefile(writer, pres, dateTime)
+    ifile.close()
+    ofile.close()
+
+
+'''
 [depth, dateTime, temp] = read_stringdatefile(reader1)
 nd = write_datefile(writer1, depth, dateTime)
 plt.plot(nd, linewidth = 0.3, color = 'r')
@@ -217,7 +259,6 @@ plt.show()
 # [depth3, dateTime3, temp3] = read_stringdatefile(reader3)
 # nd3 = write_datefile(writer3, depth3, dateTime3)
 
-'''
 legend = ['1115685']
 colors = ['r', 'b']
 title = '1115685 Pressure logger'
@@ -239,4 +280,6 @@ plt2.grid(True)
 plt2.show()
 '''
 
-print "Done!"
+if __name__ == '__main__':
+    read_files()
+    print "Done!"

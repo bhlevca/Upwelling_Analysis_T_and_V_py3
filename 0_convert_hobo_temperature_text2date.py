@@ -17,7 +17,19 @@ path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo
 path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Apr2012-Tor_Harb/csv_processed'
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo-TRCA/2012'
 path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo-TRCA/2012/csv_processed'
+
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed'
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
+# path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour'
+# path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed'
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013/csv_processed'
+
 # export to date file
+
+
 def write_datefile(writer, depth, dateTime):
     idx = 0
     numdat = []
@@ -34,13 +46,12 @@ def write_datefile(writer, depth, dateTime):
         # Nick Lapointe Format
         # dt = datetime.strptime(strg, "%m/%d/%y %I:%M:%S %p")
 
-        # dt = datetime.strptime(dateTime[idx], "%d/%m/%y %I:%M:%S %p")
-
         # dt = datetime.strptime(dateTime[idx], "%m/%d/%y %H:%M:%S")
 
         # TRCA Format
         try:
-            dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
+            # dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
+            dt = datetime.strptime(dateTime[idx], "%m/%d/%y %I:%M:%S %p")
         except :
             continue
 
@@ -68,12 +79,12 @@ def read_stringdatefile(reader):
             continue
 
         # skip comment lines
-        if len(row) == 0 or row[0][:1] == '@' :
+        if len(row) == 0 or row[0][:1] == '@' or row[0][:4] == 'Plot' :
             continue
 
         # Save header row.
         strg = row[0]
-        print "strg :%s" % strg
+        # print "strg :%s" % strg
         # if rownum == 1 and strg[:4] != 'Plot') or rownum == 1:
         if strg == "":
             continue
