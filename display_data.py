@@ -144,21 +144,27 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
     fig.autofmt_xdate()
     plt.show()
 
-def display_temperatures_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnames = None, revert = False, difflines = False, \
-                                      custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, fill = False):
+def display_temperatures_and_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnames = None, revert = False, difflines = False, \
+                                      custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, fill = False, show = True):
+    '''
+    '''
+
     ax = display_temperatures(dateTimes, temps, k, fnames = fnames, revert = revert, difflines = difflines, custom = custom, \
                           maxdepth = maxdepth, tick = tick, firstlog = firstlog, fontsize = fontsize, ylim = ylim, fill = fill, show = False)
 
-    xm = [p[0] for p in maxpeaks]
-    ym = [p[1] for p in maxpeaks]
-    xn = [p[0] for p in minpeaks]
-    yn = [p[1] for p in minpeaks]
+    for i in range(len(maxpeaks)):
+        xm = [p[0] for p in maxpeaks[i]]
+        ym = [p[1] for p in maxpeaks[i]]
+        xn = [p[0] for p in minpeaks[i]]
+        yn = [p[1] for p in minpeaks[i]]
 
-    # plot local min and max
-    ax.plot(xm, ym, 'ro')
-    ax.plot(xn, yn, 'bo')
+        # plot local min and max
+        ax.plot(xm, ym, 'ro')
+        ax.plot(xn, yn, 'bo')
 
-    plt.show()
+    if show:
+        plt.show()
+# end display_temperatures_peaks
 
 def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, difflines = False, custom = None, \
                           maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, fill = False, \

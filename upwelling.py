@@ -151,8 +151,8 @@ def calculate_Upwelling_indices(time, temp, fnames, tunits, zoneName):
 
         UCI_mean = uci.sum() / len(uci)
         print "name=%s UCI=%f" % (fnames[i], UCI_mean)
-        display_data.display_temperatures_peaks([time[i][trim:-trim], time[i][trim:-trim]], [month_mean[trim:-trim], temp[i][trim:-trim]],
-                                                       _max, _min, [], fnames = ['30 day mean', fnames[i]], custom = zoneName, fill = True)
+        display_data.display_temperatures_and_peaks([time[i][trim:-trim], time[i][trim:-trim]], [month_mean[trim:-trim], temp[i][trim:-trim]],
+                                                       [_max], [_min], [], fnames = ['30 day mean', fnames[i]], custom = zoneName, fill = True)
 
 
 
@@ -917,10 +917,11 @@ def draw_upwelling_fish_correlation_all(filepath):
 
     print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
 
-def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, fft = False, stats = False, with_weather = False):
-    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    print "Start read_Upwelling_files()"
+def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filter = None, \
+                         fft = False, stats = False, with_weather = False):
+    print "plot_Upwelling_one_fig()"
+
     startdate = timeint[0]
     enddate = timeint[1]
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
@@ -941,11 +942,101 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
     else:
         moving_avg = timeavg
 
+    atime = []
+    atemp = []
+    aresults = []
+    azone = []
+    a_max = []
+    a_min = []
+    afname = []
+
+    if len(dirs) == 0 :
+        dirs = [ppath]
+
+    dirList = sorted(dirs, key = lambda x: x.split('.')[0])
+
+    for path in dirList:
+        if len(dirs) > 1 :
+            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
+        else:
+            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
+        HOBOdateTimeArr = dateTime
+        HOBOresultsArr = results
+        HOBOtempArr = temp
+
+        difflines = False
+
+        if len(fnames) > 0:
+            fn = fnames[0][fnames[0].find("_") + 1:]
+        # else:
+        #    fn = fnames[0][fnames[0].find("_") + 1:]
+        zoneName, fileExtension = os.path.splitext(fn)
+
+        atime.append(dateTime[0])
+        atemp.append(temp[0])
+        aresults.append(results[0])
+        azone.append(zoneName)
+        afname.append(fnames[0])
+
+
+
+    # end (for path)
+
+    # Calculate upwelling indices and plot the shaded uwelling zones defined by the 30 days running average.
+        # calculate IA = integrated anomaly
+    for i in range(0, len(atime)):
+        trim = int (len(atime[i]) / 20)
+        # calculate peaks
+        _max, _min = peakdetect.peakdetect(aresults[i][trim:-trim], atime[i][trim:-trim], 250, 0.80)
+
+        a_max.append(_max)
+        a_min.append(_min)
+
+    display_data.display_temperatures_and_peaks(numpy.array(atime), numpy.array(aresults), \
+                                                numpy.array(a_max), numpy.array(a_min), [], fnames = numpy.array(afname), \
+                                                custom = "Upweling maxima", fill = False)
+    return [a_max, a_min, afname]
+
+# end plot_Upwelling_one_fig
+
+
+def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, \
+                         fft = False, stats = False, with_weather = False):
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+
+    print "Start read_Upwelling_files()"
+    startdate = timeint[0]
+    enddate = timeint[1]
+    dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+    start_num = date2num(dt)
+    dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+    end_num = date2num(dt)
+
+    # funits = "Hz"
+    funits = "cph"
+    # tunits = "sec"
+    tunits = "day"
+
+    # Separate directories from files
+    base, dirs, files = iter(os.walk(ppath)).next()
+
+    if timeavg == None:
+
+        moving_avg = window_hour
+    else:
+        moving_avg = timeavg
+
     # draw windrose only once
     dr_windrose = False
 
+    if len(dirs) == 0 :
+        dirs = [ppath]
+
     for path in dirs:
-        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
+        if len(dirs) > 1 :
+            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
+        else:
+            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
         HOBOtempArr = temp
@@ -971,7 +1062,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
         # print "Zone: %s, SD=%2.2f, Min=%2.2f, Max=%2.2f, extreme=%2.2f" % (zoneName, t_sd, t_min, t_max, t_max - t_min)
         print "Zone: %s, SD=%2.2f, Min=%2.2f, Max=%2.2f, IQR=%2.2f" % (zoneName, t_sd, t_min, t_max, t_iqr)
 
-
+        # Plot temperature time series time averages or not
         if not fft:
             if timeavg != None:
                 display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = fnames, difflines = difflines, custom = zoneName)
@@ -994,8 +1085,8 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             [Time, y, x05, x95] = spectral_analysis.doSpectralAnalysis(dat, zoneName, ylabel , title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False, log = log)
         # end if fft
 
+        # Plot BAND buterworth filtered time series to capture only the frequencies of interest.: diurnal , poincare, upwelling etc.
         if filter != None:
-
             lowcut = filter[0]
             highcut = filter[1]
             tunits = 'day'
@@ -1035,7 +1126,10 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             filtstr = " filter: %.0f - %.0f (h)" % (1. / filter[1] / 3600, 1. / filter[0] / 3600)
             custom = " %s - %s" % (zoneName, filtstr)
             # [300:-100] eliminate the bad ends generated by the filter
+
+
             if with_weather:
+                # Plot weather related variables if required
                 weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData/all'
                 wfile = open(weather_path + '/eng-hourly-04012012-11302012-all.csv', 'rb')
 
@@ -1062,8 +1156,10 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
                     tor_harb_windrose.draw_windrose(windir, winspd, 'bar', fontsize = 12)
                     dr_windrose = True
             else:
+                # Plot BAND buterworth filtered time series to capture only the frequencies of interest.: diurnal , poincare, upwelling etc.
                 display_data.display_temperatures([HOBOdateTimeArr_res[0][300:-100]], [Filtered_data[0][300:-100]], k, fnames = fnames,
                                               difflines = difflines, custom = custom, ylim = [-6, 6])
+            # end if
 
             # statistics SD, max, avg, min
             if stats:
@@ -1076,5 +1172,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
 
 
         # end filter
+
+        # Calculate upwelling indices and plot the shaded uwelling zones defined by the 30 days running average.
         calculate_Upwelling_indices(dateTime, results, fnames, tunits, zoneName)
     # end (for path)

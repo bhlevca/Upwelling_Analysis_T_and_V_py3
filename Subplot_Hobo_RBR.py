@@ -15,18 +15,17 @@ import readTempHoboFiles
 import env_can_weather_data_processing as envir
 from matplotlib import rcParams
 
-sys.path.insert(0, '/software/SAGEwork/Seiches')
-import fft.filters as filters
-import fft.fft_utils as fft_utils
 
 import spectral_analysis
 import tor_harb_windrose
 import upwelling
 import fish_detection
 
-sys.path.insert(0, '/software/SAGEwork/Pressure_analysis')
 import utils.hdf_tools as hdf
 
+sys.path.insert(0, '/software/SAGEwork/Seiches')
+import fft.filters as filters
+import fft.fft_utils as fft_utils
 
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
@@ -1246,11 +1245,11 @@ if __name__ == '__main__':
     harbour_stats = False  # 0
     LO_hobot_rbrt_10m = False  # 1
     LO_isotherm = False  # 2
-    Toronto_harbour = True  # 3
+    Toronto_harbour = False  # 3
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
-    Upwelling_zone = False  # 7
+    Upwelling_zone = True  # 7
     Fish_detection = False  # 8
 
     exit_if = [False, False, False, False, False, False, False, False, False]
