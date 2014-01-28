@@ -1245,11 +1245,11 @@ if __name__ == '__main__':
     harbour_stats = False  # 0
     LO_hobot_rbrt_10m = False  # 1
     LO_isotherm = False  # 2
-    Toronto_harbour = False  # 3
+    Toronto_harbour = True  # 3
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
-    Upwelling_zone = True  # 7
+    Upwelling_zone = False  # 7
     Fish_detection = False  # 8
 
     exit_if = [False, False, False, False, False, False, False, False, False]
@@ -1322,7 +1322,8 @@ if __name__ == '__main__':
 
         fnames = ['Hobo t-Chain', 'RBR t-Chain']
         # poincare_wave_in_lontario(period_hours, [start_num, end_num], [hobo, rbr], fnames, waterdepths, temp)
-        kelvin_wave_in_lontario(period_hours, [hobo, rbr], fnames, waterdepths, temp)
+        # kelvin_wave_in_lontario(period_hours, [hobo, rbr], fnames, waterdepths, temp)
+        kelvin_wave_in_lontario([hobo, rbr], fnames)
 
         print "Done! LO_isotherm"
         if exit_if[2]:
@@ -1335,6 +1336,36 @@ if __name__ == '__main__':
         #----------------------------------------------------
 
         #           Filename        [Location, depth, total-depth]
+#===============================================================================
+#         filemap = {
+#                    'Stn_21_-_Curtain_-_9678892.csv'      : ['Stn 21', 7, 6.5],
+#                    'Stn_29_-_E_Western_Gap_-_9992436.csv'   : ['Stn 29', 9, 8.5],
+#                    'Stn_34_-_Don_River_Mouth_-_9988085.csv'  : ['Stn 34', 3, 3.5],
+#                    'Stn_50_-_Don_River_-_9988088.csv' : ['Stn 50', 2, 1.5],
+#                    'Stn_28_-_W_Western_Gap_-_9674471.csv'   : ['Stn 28', 9, ],
+#                    'Stn_32-_S_Eastern_Gap_-_1020953.csv'    : ['Stn 32', 10, ],
+#                    'Stn_49_-_turning_basin_-_2393007.csv' : ['Stn 49', 5, 4.5],
+#                    'Stn_10_-_Embayment_C_-_9674470.csv'   : ['Stn 10', 6, 5.5],
+#                    'Stn_37_-_Cell_3_-_1020754.csv'   : ['Stn 37', 5, 4.5],
+#                    'Stn38_-_Cell_2_-_1020773.csv' : ['Stn 38', 3, 2.5],
+#                    'stn_17_-_2393004.csv' : ['Stn 17', 6, 5.5],
+#                    'Stn_2_-_Cherry_Beach_-_1020769.csv': ['Stn 2', 11, 10.5],
+#                    }
+#         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-10-37-38',
+#                 # '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-15-13',
+#                 # '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-15-14',
+#                 '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-17-2',
+#                 '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-28-21-34-32-49-50'
+#                 ]
+#
+#
+#         lo_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
+#         lo_file = '/18_2393005.csv'
+#
+#         startdate = '12/05/09 00:00:00'
+#         enddate = '12/10/24 00:00:00'
+#===============================================================================
+
         filemap = {'10098826.csv' : ['TC1', 8, 8],
                    '10098827.csv' : ['TC1', 7, 8],
                    '10098838.csv' : ['TC2', 10.2, 10.2],
@@ -1348,24 +1379,14 @@ if __name__ == '__main__':
                    '1157458.csv'  : ['St 2', 10.2, 11.2],
                    'Station21November.csv':  ["St 21", 9, 10],
                    }
-        #===========================================================================
-        # paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-10-37-38',
-        #         '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-15-13',
-        #         '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-15-14',
-        #         '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-21-17-2',
-        #         '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2012/csv_processed/upwelling-LO-28-21-34-32-49-50'
-        #         ]
-        #===========================================================================
 
         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed']
         # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
         lo_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
         lo_file = '/24_10298867.csv'  # '/11_2395420.csv'  # '/07_2393002.csv'
-
-        # startdate = '12/07/19 00:00:00'
-        # enddate = '12/10/24 00:00:00'
         startdate = '13/05/01 00:00:00'
         enddate = '13/10/30 00:00:00'
+
 
 
         period = [startdate, enddate]
@@ -1374,9 +1395,10 @@ if __name__ == '__main__':
         lowcut = 1.0 / (24 * 10) / 3600
         highcut = 1.0 / (24 * 3) / 3600
         filter = [lowcut, highcut]
-
         moving_avg = window_7days  # for upwellin
-        # moving_avg=window_day # for regular study
+
+        filter = None
+        moving_avg = window_hour  # for regular study
 
         read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period, filter = None)  # this can filter too and  exhibit poincare waves
         print "Done! Toronto harbour"
@@ -1464,13 +1486,19 @@ if __name__ == '__main__':
 
 
 
-        upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = filter, fft = False, stats = True, with_weather = False)
+        dateTime, results, temp, fnames, tunits, zoneName = upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, fft = False)
         # upwelling.read_Upwelling_files(path, [startdate, enddate], timeavg = window_3days, subplot = None, filter = None, fft = True, stats = True, with_weather = False)
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesMouth-NoLO.csv')
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/UCIZones.csv')
         # upwelling.draw_upwelling_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
         # upwelling.draw_upwelling_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones-NoLO.csv')
         # upwelling.draw_upwelling_correlation_IQR('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZones-NoLO.csv')
+
+        # Calculate upwelling indices and plot the shaded uwelling zones defined by the 30 days running average.
+        upwelling.calculate_Upwelling_indices(dateTime, results, fnames, tunits, zoneName)
+
+        if filter:
+            upwelling.plot_buterworth_filtered_data(dateTime, temp, filter, stats = True,)
 
         if exit_if[7]:
             print "Exit Upwelling!"

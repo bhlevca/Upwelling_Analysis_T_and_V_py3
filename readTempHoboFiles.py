@@ -23,6 +23,7 @@ import smooth
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
 window_6hour = "window_6hour"  # 30 * 6 for a 2 minute sampling
 window_hour = "window_hour"  # 30
+window_halfhour = "window_1/2hour"  # 30
 window_day = "window_day"  # 30 * 24
 window_half_day = "window_half_day"  # 30 * 12
 window_3days = "window_3days"  # 3 * 30 * 24
@@ -239,6 +240,8 @@ def analyze_data(pair, name, id, writer):
                 nspan = 6. / (dt * 24)
             elif span == "window_hour":  # 30 for a 2 minute sampling
                 nspan = 1. / (dt * 24)
+            elif span == "window_1/2hour":  # 30 for a 2 minute sampling
+                nspan = 0.5 / (dt * 24)
             elif span == "window_day":  # 30 * 24 for a 2 minute sampling
                 nspan = 24. / (dt * 24)
             elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
@@ -290,6 +293,8 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
             nspan = 6. / (dt * 24)
         elif span == "window_hour":  # 30 for a 2 minute sampling
             nspan = 1. / (dt * 24)
+        elif span == "window_1/2hour":  # 30 for a 2 minute sampling
+            nspan = 0.5 / (dt * 24)
         elif span == "window_day":  # 30 * 24 for a 2 minute sampling
             nspan = 24. / (dt * 24)
         elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
@@ -298,7 +303,9 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
             nspan = 24. * 3 / (dt * 24)
         elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
             nspan = 24. * 7 / (dt * 24)
-
+        else:
+            print "Error, window span not defined"
+            return
         results = smooth.smoothfit(dateTime, temp, nspan, window)
     else:
         results = {}

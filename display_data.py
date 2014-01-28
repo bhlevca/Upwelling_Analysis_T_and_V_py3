@@ -1,21 +1,22 @@
 import numpy
 import matplotlib.pyplot as plt
+import matplotlib
 from datetime import datetime
 from matplotlib.dates import MONDAY, SATURDAY
-import matplotlib.dates
+import matplotlib.dates as dates
 import time, os, datetime, math, sys
 
 sys.path.insert(0, '/software/SAGEwork/Seiches')
 import fft.filters as filters
 import fft.fft_utils as fft_utils
 
-years = matplotlib.dates.YearLocator()  # every year
-months = matplotlib.dates.MonthLocator()  # every month
-yearsFmt = matplotlib.dates.DateFormatter('%Y')
+years = dates.YearLocator()  # every year
+months = dates.MonthLocator()  # every month
+yearsFmt = dates.DateFormatter('%Y')
 # every monday
-mondays = matplotlib.dates.WeekdayLocator(MONDAY)
+mondays = dates.WeekdayLocator(MONDAY)
 
-hour = matplotlib.dates.HourLocator(byhour = None, interval = 4, tz = None)
+hour = dates.HourLocator(byhour = None, interval = 6, tz = None)
 
 
 def display(dateTime, temp, label, k):
@@ -23,11 +24,11 @@ def display(dateTime, temp, label, k):
     ax = fig.add_subplot(111)
     ax.plot(dateTime, temp, linewidth = 1.6, color = 'r')
     # format the ticks
-    formatter = matplotlib.dates.DateFormatter('%Y-%m')
-    # formatter = matplotlib.dates.DateFormatter('`%y')
+    formatter = dates.DateFormatter('%Y-%m')
+    # formatter = dates.DateFormatter('`%y')
     # ax.xaxis.set_major_locator(years)
     ax.xaxis.set_major_formatter(formatter)
-    # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+    # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
     ax.xaxis.set_minor_locator(mondays)
 
     # ax.xaxis.grid(True, 'major')
@@ -49,11 +50,11 @@ def display2(dateTime, temp, coeff, k):
     ax = fig.add_subplot(111)
     ax.plot(dateTime, temp, 'r', dateTime, coeff, 'b', linewidth = 1.4)
     # format the ticks
-    formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-    # formatter = matplotlib.dates.DateFormatter('`%y')
+    formatter = dates.DateFormatter('%Y-%m-%d')
+    # formatter = dates.DateFormatter('`%y')
     # ax.xaxis.set_major_locator(years)
     ax.xaxis.set_major_formatter(formatter)
-    # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+    # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
     ax.xaxis.set_minor_locator(mondays)
 
     # ax.xaxis.grid(True, 'major')
@@ -81,11 +82,11 @@ def display_upwelling(dateTimes, temps, coeffs, k):
         i += 1
 
     # format the ticks
-    formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-    # formatter = matplotlib.dates.DateFormatter('`%y')
+    formatter = dates.DateFormatter('%Y-%m-%d')
+    # formatter = dates.DateFormatter('`%y')
     # ax.xaxis.set_major_locator(years)
     ax.xaxis.set_major_formatter(formatter)
-    # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+    # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
     ax.xaxis.set_minor_locator(hour)
 
     # ax.xaxis.grid(True, 'major')
@@ -122,11 +123,11 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
         i += 1
 
     # format the ticks
-    formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-    # formatter = matplotlib.dates.DateFormatter('`%y')
+    formatter = dates.DateFormatter('%Y-%m-%d')
+    # formatter = dates.DateFormatter('`%y')
     # ax.xaxis.set_major_locator(years)
     ax.xaxis.set_major_formatter(formatter)
-    # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+    # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
     ax.xaxis.set_minor_locator(hour)
 
     # ax.xaxis.grid(True, 'major')
@@ -145,12 +146,14 @@ def display_temperature(dateTimes, temps, coeffs, k, fnames = None):
     plt.show()
 
 def display_temperatures_and_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnames = None, revert = False, difflines = False, \
-                                      custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, fill = False, show = True):
+                                      custom = None, maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, \
+                                      fill = False, show = True, minorgrid = None, datetype = 'date'):
     '''
     '''
 
     ax = display_temperatures(dateTimes, temps, k, fnames = fnames, revert = revert, difflines = difflines, custom = custom, \
-                          maxdepth = maxdepth, tick = tick, firstlog = firstlog, fontsize = fontsize, ylim = ylim, fill = fill, show = False)
+                          maxdepth = maxdepth, tick = tick, firstlog = firstlog, fontsize = fontsize, ylim = ylim, fill = fill, \
+                           show = False, minorgrid = minorgrid, datetype = datetype)
 
     for i in range(len(maxpeaks)):
         xm = [p[0] for p in maxpeaks[i]]
@@ -168,7 +171,8 @@ def display_temperatures_and_peaks(dateTimes, temps, maxpeaks, minpeaks, k, fnam
 
 def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, difflines = False, custom = None, \
                           maxdepth = None, tick = None, firstlog = None, fontsize = 20, ylim = None, fill = False, \
-                          show = True, datetype = 'date'):
+                          show = True, datetype = 'date', minorgrid = None, ylab = None):
+
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
     ax = fig.add_subplot(111)
     i = 0
@@ -204,13 +208,22 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
         if fnames == None:
             lg = 'Sensor %s' % k[i][1]
         else:
-            if fnames[i].rfind('.') == -1:
-                lg = "%s" % (fnames[i])
-            else:
-                fileName, fileExtension = os.path.splitext(fnames[i])
-                if fileName[0:3] == "zz_":
-                    fileName = fileName[3:]
-                lg = '%s' % fileName
+            if isinstance(fnames, str):
+                if fnames.rfind('.') == -1:
+                    lg = "%s" % (fnames)
+                else:
+                    fileName, fileExtension = os.path.splitext(fnames)
+                    if fileName[0:3] == "zz_":
+                        fileName = fileName[3:]
+                    lg = '%s' % fileName
+            elif isinstance(fnames, list) or isinstance(fnames, numpy.ndarray):
+                if fnames[i].rfind('.') == -1:
+                    lg = "%s" % (fnames[i])
+                else:
+                    fileName, fileExtension = os.path.splitext(fnames[i])
+                    if fileName[0:3] == "zz_":
+                        fileName = fileName[3:]
+                    lg = '%s' % fileName
 
         legend.append(lg)
         ax.set_xlim(xmax = dateTime[len(dateTime) - 1])
@@ -223,19 +236,27 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
 
     # format the ticks
     if datetype == 'date':
-        formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-        # formatter = matplotlib.dates.DateFormatter('`%y')
+        formatter = dates.DateFormatter('%Y-%m-%d')
+        # formatter = dates.DateFormatter('`%y')
         # ax.xaxis.set_major_locator(years)
         ax.xaxis.set_major_formatter(formatter)
-        # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+        # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
 
-        # ax.xaxis.set_minor_locator(hour)
+        if minorgrid != None:
+            if minorgrid == 'hour':
+                mgrid = hour
+            elif minorgrid == 'mondays':
+                mgrid = mondays
+            else:
+                mgrid = None
+            if mgrid != None:
+                ax.xaxis.set_minor_locator(mgrid)
         fig.autofmt_xdate()
     else:
         plt.xticks(fontsize = fontsize)
         plt.xlabel("Julian Day").set_fontsize(fontsize)
 
-    ax.xaxis.set_minor_locator(mondays)
+    # ax.xaxis.set_minor_locator(mondays)
 
     # ax.xaxis.grid(True, 'major')
     ax.xaxis.grid(True, 'minor')
@@ -252,7 +273,10 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
     else:
         # title = ' Profiles: %s' % custom
         title = ' %s' % custom
-        ylabel = ' Temp. ($^\circ$C)'
+        if ylab == None:
+            ylabe = title
+        else:
+            ylabel = ylab
 
     if ylim != None:
          ax.set_ylim(ylim[0], ylim[1])
@@ -272,6 +296,42 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
     if show:
         plt.show()
     return ax
+
+def display_marker_histogram(x, y, fnames, xlabel, ylabel, title = None, log = False, grid = True, fontsize = 20):
+    '''
+    Display the array as histogram with markers.
+    '''
+    marker = ['o', '*', '^', 'd', 's', 'p', 'o']
+    colour = ['MediumTurquoise', 'Chartreuse', 'Yellow', 'Fuchsia', 'Red', 'b', 'aqua', 'r', 'g', 'k', 'm', 'c', 'y']
+    legend = []
+    for i in range(0, len(x)):
+        if log:
+            plt.yscale('log')
+
+        # plt.plot(x[i], y[i])
+        plt.plot(x[i], y[i], marker = marker[i], markersize = 9, lw = 2.2, color = colour[i],
+                 markerfacecolor = 'None', markeredgecolor = colour[i])
+
+        # Plot legend
+        if fnames == None:
+            legend.append("Sensor %s" % k[i][1])
+        else:
+            if fnames[i].rfind('.') == -1:
+                legend.append("%s" % (fnames[i]))
+            else:
+                fileName, fileExtension = os.path.splitext(fnames[i])
+                legend.append('%s' % fileName)
+
+    plt.legend(legend)
+
+    if title != None:
+        plt.title(title).set_fontsize(fontsize + 2)
+    plt.xlabel(xlabel).set_fontsize(fontsize)
+    plt.ylabel(ylabel).set_fontsize(fontsize)
+    plt.xticks(fontsize = fontsize - 2)
+    plt.yticks(fontsize = fontsize - 2)
+    plt.grid(grid, axis = 'both')
+    plt.show()
 
 
 def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, revert = False, custom = None, \
@@ -294,10 +354,10 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
         # find maxx and minX of the X axis
         for k in range(0, len(dateTimes)):
             d = dateTimes[k]
-            dmax = num2date(d[len(d) - 1])
+            dmax = dates.num2date(d[len(d) - 1])
             maxx = max(maxx, (dmax.timetuple().tm_yday + dmax.timetuple().tm_hour / 24. + dmax.timetuple().tm_min / (24. * 60) + dmax.timetuple().tm_sec / (24. * 3600)))
 
-            dmin = num2date(d[1])
+            dmin = dates.num2date(d[1])
             minx = min(minx, (dmin.timetuple().tm_yday + dmin.timetuple().tm_hour / 24. + dmin.timetuple().tm_min / (24. * 60) + dmin.timetuple().tm_sec / (24. * 3600) - delay[k]))
 
 
@@ -332,7 +392,7 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
             # dates = [datetime.fromordinal(d) for d in dataTime]
             # dofy = [d.tordinal() - datetime.date(d.year, 1, 1).toordinal() + 1 for d in dates]
             for j in range(1, len(dateTime)) :
-                d = num2date(dateTime[j])
+                d = dates.num2date(dateTime[j])
 
                 dely = delay[i] if delay != None else 0.0
 
@@ -349,11 +409,11 @@ def display_temperatures_subplot(dateTimes, temps, coeffs, k, fnames = None, rev
         # X-AXIS -Time
         # format the ticks
         if yday == None:
-            formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-            # formatter = matplotlib.dates.DateFormatter('`%y')
+            formatter = dates.DateFormatter('%Y-%m-%d')
+            # formatter = dates.DateFormatter('`%y')
 
             ax[i].xaxis.set_major_formatter(formatter)
-            # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+            # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
             ax[i].xaxis.set_minor_locator(mondays)
 
         # ax.xaxis.grid(True, 'major')
@@ -421,10 +481,10 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
         # find maxx and minX of the X axis
         for k in range(0, len(dateTimes)):
             d = dateTimes[k]
-            dmax = num2date(d[len(d) - 1])
+            dmax = dates.num2date(d[len(d) - 1])
             maxx = max(maxx, (dmax.timetuple().tm_yday + dmax.timetuple().tm_hour / 24. + dmax.timetuple().tm_min / (24. * 60) + dmax.timetuple().tm_sec / (24. * 3600)))
 
-            dmin = num2date(d[0])
+            dmin = dates.num2date(d[0])
             minx = min(minx, (dmin.timetuple().tm_yday + dmin.timetuple().tm_hour / 24. + dmin.timetuple().tm_min / (24. * 60) + dmin.timetuple().tm_sec / (24. * 3600)))
 
 
@@ -459,7 +519,7 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
             # dates = [datetime.fromordinal(d) for d in dataTime]
             # dofy = [d.tordinal() - datetime.date(d.year, 1, 1).toordinal() + 1 for d in dates]
             for j in range(0, len(dateTime)) :
-                d = num2date(dateTime[j])
+                d = dates.num2date(dateTime[j])
                 dofy[j] = d.timetuple().tm_yday + d.timetuple().tm_hour / 24. + d.timetuple().tm_min / (24. * 60) + d.timetuple().tm_sec / (24. * 3600)
 
             lplt = ax[i].plot(dofy[1:], reversed_depth[1:], linewidth = 1.4, label = lg)
@@ -476,11 +536,11 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
         # X-AXIS -Time
         # format the ticks
         if yday == None:
-            formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-            # formatter = matplotlib.dates.DateFormatter('`%y')
+            formatter = dates.DateFormatter('%Y-%m-%d')
+            # formatter = dates.DateFormatter('`%y')
 
             ax[i].xaxis.set_major_formatter(formatter)
-            # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+            # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
             ax[i].xaxis.set_minor_locator(mondays)
 
 
@@ -553,10 +613,10 @@ def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstl
                 break
         # end for
 
-        # Loop for shorter series (sensor malfuction) that need interpolation
+        # Loop for shorter series (sensor malfunction) that need interpolation
         # Conditions:
-        #    1- the  first and timeseries must be good
-        #    2 - The bad timeseries can not be last or first (actually is implied from 1.
+        #    1- the  first and time series must be good
+        #    2 - The bad time series can not be last or first (actually is implied from 1.
         if j < n - 3 :
             prev = temps[i - 1]
             next = temps[i + 1]
@@ -612,11 +672,11 @@ def display_img_temperatures(dateTimes, temps, coeffs, k, tick, maxdepth, firstl
 
     # format the ticks
     if datetype == "date":
-        formatter = matplotlib.dates.DateFormatter('%Y-%m-%d')
-        # formatter = matplotlib.dates.DateFormatter('`%y')
+        formatter = dates.DateFormatter('%Y-%m-%d')
+        # formatter = dates.DateFormatter('`%y')
         # ax.xaxis.set_major_locator(years)
         ax.xaxis.set_major_formatter(formatter)
-        # ax.xaxis.set_minor_formatter(matplotlib.dates.DateFormatter('%d'))
+        # ax.xaxis.set_minor_formatter(dates.DateFormatter('%d'))
         plt.setp(labels, rotation = 0, fontsize = fontsize)
         fig.autofmt_xdate()
     else:

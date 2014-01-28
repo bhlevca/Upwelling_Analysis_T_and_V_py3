@@ -111,8 +111,8 @@ reader2 = csv.reader(ifile2, delimiter = '\t', quotechar = '"')
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/WL'
 path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/WL/csv_processed'
 
-path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Station-13320-Apr-09-2013'
-path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Station-13320-Apr-09-2013/csv_processed'
+# path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Station-13320-Apr-09-2013'
+# path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Station-13320-Apr-09-2013/csv_processed'
 
 def display(title, xlable, ylabel, x, y, colour, legend = None, linewidth = 0.6):
 
@@ -155,7 +155,9 @@ def read_stringdatefile(reader):
 
     for row in reader:
         # skip comment lines
-        if len(row) == 0 or row[0][:1] == '@' or row[0][:4] == 'Plot' or row[0][:1] == '#' :
+        if len(row) == 0 or row[0][:1] == '@':  # or row[0][:1] == '#' :
+            continue
+        if row[0].find("Plot") != -1:
             continue
 
         # Save header row.
@@ -205,12 +207,12 @@ def write_datefile(writer, depth, dateTime):
     numdat = []
     prevdt = 0
     prevdepth = depth[0]
-    eps = 1.5
+    eps = 3.5
     prevtxt = ''
     for row in depth:
-        # dt = datetime.strptime(dateTime[idx], "%m/%d/%y %I:%M:%S %p")
+        dt = datetime.strptime(dateTime[idx], "%m/%d/%y %I:%M:%S %p")
         # dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
-        dt = datetime.strptime(dateTime[idx], "%Y/%m/%d %H:%M")
+        # dt = datetime.strptime(dateTime[idx], "%Y/%m/%d %H:%M")
         dn = date2num(dt)
         if prevdt > dn:
             print "Next value lower!"

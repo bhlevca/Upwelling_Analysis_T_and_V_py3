@@ -918,8 +918,8 @@ def draw_upwelling_fish_correlation_all(filepath):
     print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
 
 
-def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filter = None, \
-                         fft = False, stats = False, with_weather = False):
+def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filter = None, peaks = False, minorgrid = 'mondays', \
+                            datetype = 'date'):
     print "plot_Upwelling_one_fig()"
 
     startdate = timeint[0]
@@ -982,26 +982,30 @@ def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filte
 
     # end (for path)
 
-    # Calculate upwelling indices and plot the shaded uwelling zones defined by the 30 days running average.
-        # calculate IA = integrated anomaly
-    for i in range(0, len(atime)):
-        trim = int (len(atime[i]) / 20)
-        # calculate peaks
-        _max, _min = peakdetect.peakdetect(aresults[i][trim:-trim], atime[i][trim:-trim], 250, 0.80)
+    if peaks:
+        # Calculate upwelling indices and plot the shaded uwelling zones defined by the 30 days running average.
+            # calculate IA = integrated anomaly
+        for i in range(0, len(atime)):
+            trim = int (len(atime[i]) / 20)
+            # calculate peaks
+            _max, _min = peakdetect.peakdetect(aresults[i][trim:-trim], atime[i][trim:-trim], 250, 0.80)
 
-        a_max.append(_max)
-        a_min.append(_min)
+            a_max.append(_max)
+            a_min.append(_min)
 
-    display_data.display_temperatures_and_peaks(numpy.array(atime), numpy.array(aresults), \
-                                                numpy.array(a_max), numpy.array(a_min), [], fnames = numpy.array(afname), \
-                                                custom = "Upweling maxima", fill = False)
+        display_data.display_temperatures_and_peaks(numpy.array(atime), numpy.array(aresults), \
+                                                    numpy.array(a_max), numpy.array(a_min), [], fnames = numpy.array(afname), \
+                                                    custom = "Upweling maxima", fill = False, minorgrid = 'hour', datetype = datetype)
+    else:
+        display_data.display_temperatures(numpy.array(atime), numpy.array(aresults), [], fnames = numpy.array(afname), \
+                                                    custom = "", fill = False, minorgrid = 'hour', datetype = datetype)
+
     return [a_max, a_min, afname]
 
 # end plot_Upwelling_one_fig
 
 
-def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter = None, \
-                         fft = False, stats = False, with_weather = False):
+def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = False):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     print "Start read_Upwelling_files()"
@@ -1037,6 +1041,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
         else:
             dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
+
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
         HOBOtempArr = temp
@@ -1085,94 +1090,103 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, filter 
             [Time, y, x05, x95] = spectral_analysis.doSpectralAnalysis(dat, zoneName, ylabel , title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False, log = log)
         # end if fft
 
+    # end (for path)
+
+    return dateTime, results, fnames, tunits, zoneName
+
+
+def plot_weather_data():
+        # Plot weather related variables if required
+        weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData/all'
+        wfile = open(weather_path + '/eng-hourly-04012012-11302012-all.csv', 'rb')
+
+        wreader = csv.reader(wfile, delimiter = ',', quotechar = '"')
+        [temp, dateTime, windDir, windSpd, press] = envir.read_stringdatefile(wreader)
+        # 2) select the dates
+        [wtemp, wdateTime, windDir, windSpd, press] = envir.select_dates_string(start_num, end_num, dateTime, temp, windDir, windSpd, press)
+        # envir.display_twinx("Filtered temperature, wind direction & speed", ' wind dir deg*10/wind speed Km/h', "Filtered temperature ($^oC$)", \
+        #                    [wdateTime[1:], wdateTime[1:]], [windDir[1:], windSpd[1:]], [HOBOdateTimeArr_res[0][1:]], [Filtered_data[0][1:]], \
+        #                    ['g', 'b'], ['r'])
+
+        ########################################################
+        #  multipy by 10 the degrees FROM which the wind blows
+        ########################################################
+        windir = map(lambda x: x * 10, windDir[1:])
+        winspd = windSpd[1:]
+        envir.display_twinx("Filtered water temperature, wind direction", "Filtered temperature ($^oC$)", 'wind dir ($^o$)', \
+                            [HOBOdateTimeArr_res[0][1:]], [Filtered_data[0][1:]], [wdateTime[1:]], [windir], \
+                            ['r'], ['b', 'g'], [zoneName + " Temp", "Wind dir"], linewidth1 = [1.8], linewidth2 = [0.6])
+        envir.display_twinx("Filtered water temperature, air temp", "Filtered temperature ($^oC$)", 'air temp ($^oC$)', \
+                            [HOBOdateTimeArr_res[0][1:]], [Filtered_data[0][1:]], [wdateTime[1:]], [wtemp[1:]], \
+                            ['r'], ['b', 'g'], [zoneName + " Temp", "Wind dir"], linewidth1 = [1.8], linewidth2 = [0.6])
+        if not dr_windrose:
+            tor_harb_windrose.draw_windrose(windir, winspd, 'bar', fontsize = 12)
+            dr_windrose = True
+        # end if
+
+def plot_buterworth_filtered_data(HOBOdateTimeArr, HOBOtempArr, fnames, k, filter, ylim = None, stats = False):
         # Plot BAND buterworth filtered time series to capture only the frequencies of interest.: diurnal , poincare, upwelling etc.
-        if filter != None:
-            lowcut = filter[0]
-            highcut = filter[1]
-            tunits = 'day'
-            if tunits == 'day':
-                factor = 86400
-            elif tunits == 'hour':
-                factor = 3600
-            else:
-                factor = 1
 
-            yday = True
-            debug = False
-            order = None
-            gpass = 9
-            astop = 32
-            recurse = True
+        lowcut = filter[0]
+        highcut = filter[1]
+        tunits = 'day'
+        if tunits == 'day':
+            factor = 86400
+        elif tunits == 'hour':
+            factor = 3600
+        else:
+            factor = 1
 
-            Filtered_data = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
-            HOBOdateTimeArr_res = numpy.zeros(len(HOBOdateTimeArr), dtype = numpy.ndarray)
-            delay = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
-            i = 0
-            btype = 'band'
-            for data in HOBOdateTimeArr:
-                fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
-                Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
-                if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
-                    HOBOdateTimeArr_res[i] = scipy.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
-                else :
-                    HOBOdateTimeArr_res[i] = HOBOdateTimeArr[i]
+        yday = True
+        debug = False
+        order = None
+        gpass = 9
+        astop = 32
+        recurse = True
 
-                i += 1
-            # end for data
+        Filtered_data = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
+        HOBOdateTimeArr_res = numpy.zeros(len(HOBOdateTimeArr), dtype = numpy.ndarray)
+        delay = numpy.zeros(len(HOBOdateTimeArr) , dtype = numpy.ndarray)
+        i = 0
+        btype = 'band'
+        for data in HOBOdateTimeArr:
+            fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
+            Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+            if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
+                HOBOdateTimeArr_res[i] = scipy.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+            else :
+                HOBOdateTimeArr_res[i] = HOBOdateTimeArr[i]
 
-            print "Start display filtered data"
+            i += 1
+        # end for data
+
+        print "Start display filtered data"
+        for i in range(0, len(HOBOdateTimeArr_res)):
+
             # superimposed filtered data for 1-3 days oscillation freq
             difflines = False
             filtstr = " filter: %.0f - %.0f (h)" % (1. / filter[1] / 3600, 1. / filter[0] / 3600)
+
+            if len(fnames) > 0:
+                fn = fnames[i][fnames[i].find("_") + 1:]
+            zoneName, fileExtension = os.path.splitext(fn)
             custom = " %s - %s" % (zoneName, filtstr)
             # [300:-100] eliminate the bad ends generated by the filter
 
 
-            if with_weather:
-                # Plot weather related variables if required
-                weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData/all'
-                wfile = open(weather_path + '/eng-hourly-04012012-11302012-all.csv', 'rb')
+            # Plot BAND buterworth filtered time series to capture only the frequencies of interest.: diurnal , poincare, upwelling etc.
+            display_data.display_temperatures([HOBOdateTimeArr_res[i][300:-100]], [Filtered_data[i][300:-100]], k, fnames = fnames[i],
+                                              difflines = difflines, custom = custom, ylim = ylim)
 
-                wreader = csv.reader(wfile, delimiter = ',', quotechar = '"')
-                [temp, dateTime, windDir, windSpd, press] = envir.read_stringdatefile(wreader)
-                # 2) select the dates
-                [wtemp, wdateTime, windDir, windSpd, press] = envir.select_dates_string(start_num, end_num, dateTime, temp, windDir, windSpd, press)
-                # envir.display_twinx("Filtered temperature, wind direction & speed", ' wind dir deg*10/wind speed Km/h', "Filtered temperature ($^oC$)", \
-                #                    [wdateTime[1:], wdateTime[1:]], [windDir[1:], windSpd[1:]], [HOBOdateTimeArr_res[0][1:]], [Filtered_data[0][1:]], \
-                #                    ['g', 'b'], ['r'])
-
-                ########################################################
-                #  multipy by 10 the degrees FROM which the wind blows
-                ########################################################
-                windir = map(lambda x: x * 10, windDir[1:])
-                winspd = windSpd[1:]
-                envir.display_twinx("Filtered water temperature, wind direction", "Filtered temperature ($^oC$)", 'wind dir ($^o$)', \
-                                    [HOBOdateTimeArr_res[0][1:]], [Filtered_data[0][1:]], [wdateTime[1:]], [windir], \
-                                    ['r'], ['b', 'g'], [zoneName + " Temp", "Wind dir"], linewidth1 = [1.8], linewidth2 = [0.6])
-                envir.display_twinx("Filtered water temperature, air temp", "Filtered temperature ($^oC$)", 'air temp ($^oC$)', \
-                                    [HOBOdateTimeArr_res[0][1:]], [Filtered_data[0][1:]], [wdateTime[1:]], [wtemp[1:]], \
-                                    ['r'], ['b', 'g'], [zoneName + " Temp", "Wind dir"], linewidth1 = [1.8], linewidth2 = [0.6])
-                if not dr_windrose:
-                    tor_harb_windrose.draw_windrose(windir, winspd, 'bar', fontsize = 12)
-                    dr_windrose = True
-            else:
-                # Plot BAND buterworth filtered time series to capture only the frequencies of interest.: diurnal , poincare, upwelling etc.
-                display_data.display_temperatures([HOBOdateTimeArr_res[0][300:-100]], [Filtered_data[0][300:-100]], k, fnames = fnames,
-                                              difflines = difflines, custom = custom, ylim = [-6, 6])
-            # end if
-
-            # statistics SD, max, avg, min
-            if stats:
-                f_sd = Filtered_data[0][300:-100].std()
-                f_avg = Filtered_data[0][300:-100].mean()
-                f_min = Filtered_data[0][300:-100].min()
-                f_max = Filtered_data[0][300:-100].max()
-                # print "SD=%f Avg=%f Min=%f Max=%f" % (f_sd, f_avg, f_min, f_max)
-                print "Filtered data SD=%f" % (f_sd)
+        # statistics SD, max, avg, min
+        if stats:
+            f_sd = Filtered_data[0][300:-100].std()
+            f_avg = Filtered_data[0][300:-100].mean()
+            f_min = Filtered_data[0][300:-100].min()
+            f_max = Filtered_data[0][300:-100].max()
+            # print "SD=%f Avg=%f Min=%f Max=%f" % (f_sd, f_avg, f_min, f_max)
+            print "Filtered data SD=%f" % (f_sd)
 
 
-        # end filter
+# end plot_buterworth_filtered_data
 
-        # Calculate upwelling indices and plot the shaded uwelling zones defined by the 30 days running average.
-        calculate_Upwelling_indices(dateTime, results, fnames, tunits, zoneName)
-    # end (for path)

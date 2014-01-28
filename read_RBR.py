@@ -169,6 +169,8 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
             nspan = 6. / (dt * 24)
         elif span == "window_hour":  # 30 for a 2 minute sampling - 900 for a 4 sec sampling frequency.
             nspan = 1. / (dt * 24)
+        elif span == "window_1/2hour":  # 30 for a 2 minute sampling
+            nspan = 0.5 / (dt * 24)
         elif span == "window_day":  # 30 * 24 for a 2 minute sampling
             nspan = 24. / (dt * 24)
         elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
