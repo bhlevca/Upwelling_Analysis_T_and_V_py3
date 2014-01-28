@@ -1,0 +1,29 @@
+!  -*-f90-*-  (for Emacs)    vim:set filetype=fortran:  (for vim)
+!
+! Brunt-Vaisala oscillations in an isothermal atmosphere (using an entropy
+! bubble).
+! Initialisation parameters
+!
+&init_pars
+  cvsid='$Id: start.in,v 1.6 2009-04-27 11:02:32 dintrans Exp $',
+  xyz0  = -2., -0.5, -0.5,       ! first corner of box
+  Lxyz  =  4.,   1.,  1.,        ! box size
+  lperi =  T ,   T ,   F,        ! periodic direction?
+  bcz   = 's','s','a','a2','a2',
+  lwrite_ic = T,
+  lwrite_2d = T
+/
+&eos_init_pars
+  cs0=1.
+/
+&hydro_init_pars
+/
+&density_init_pars
+  initlnrho='isothermal'
+/
+&grav_init_pars
+  gravz_profile='const', gravz=-1.
+/
+&entropy_init_pars
+  initss='blob_hs', ampl_ss=-0.3, radius_ss=0.2, center1_z=0.25
+/
