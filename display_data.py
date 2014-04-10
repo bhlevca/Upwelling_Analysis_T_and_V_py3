@@ -274,7 +274,7 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
         # title = ' Profiles: %s' % custom
         title = ' %s' % custom
         if ylab == None:
-            ylabe = title
+            ylabel = title
         else:
             ylabel = ylab
 

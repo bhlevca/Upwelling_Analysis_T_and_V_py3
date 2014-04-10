@@ -8,7 +8,7 @@ Created on Dec 21, 2013
 import numpy as np
 import gsw
 import csv
-import os
+import os, locale
 import datetime
 import matplotlib.dates as dates
 
@@ -100,7 +100,7 @@ class Upwelling(object):
         return dateTime, temp, results, k, fnames
 
 
-    def draw_isotherms(self, path, timeint, tick, maxdepth, firstlogdepth, maxtemp):
+    def draw_isotherms(self, path, timeint, tick, maxdepth, firstlogdepth, maxtemp, title = None):
         # dirlist needs to be sorted in ascending order
         # Separate directories from files
         base, dirs, files = iter(os.walk(path)).next()
@@ -124,7 +124,11 @@ class Upwelling(object):
 
         # plot the temperature not the smoothed ones
         datetype = 'dayofyear'
-        display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones", \
+        if title != None:
+            custom = title
+        else:
+            custom = "Temperature Toronto Waterfront Zones"
+        display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = custom, \
                                       datetype = datetype, ylab = "Temperature ($^oC$")
 
         display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, revert = True, fontsize = 18, datetype = datetype)
@@ -334,6 +338,37 @@ class Upwelling(object):
         upwelling.plot_buterworth_filtered_data(dateTimeArr, tempArr, fnames, k, filter, ylim)
 
 
+    def get_temp_snapshots(self, path, date, no_of_interv, timeavg, window):
+        '''
+        get temperatures at all points from date each interval for a number of intervals
+        '''
+        # get the data
+        dateTime, temp, results, k, fnames = self.get_timeseries_data(path, date, timeavg, window)
+
+        name = np.zeros(len(dateTime) , np.dtype('a14'))
+        X = np.zeros(len(dateTime) , dtype = np.float_)
+        Y = np.zeros(len(dateTime) , dtype = np.float_)
+        snap_temp = np.zeros(len(dateTime), dtype = np.ndarray)
+
+        for i in range(0, len(results)):
+            name[i] = fnames[i]
+            X[i] = 0.0
+            Y[i] = 0.0
+            temp_i = results[i][1:]
+
+            length = len(temp_i)
+            snap_temp[i] = np.zeros(no_of_interv, dtype = np.float_)
+            idx_increment = length / no_of_interv
+
+            for j in range(0, no_of_interv):
+                snap_temp[i][j] = temp_i[j * idx_increment]
+                print "name= %s temp=%f  idx = %i" % (name[i], snap_temp[i][j], j * idx_increment)
+            # end for j
+        # end for i
+        return [X, Y, name, snap_temp]
+
+
+
     def calculate_avg_maxgrd_max_min(self, path, date, timeavg, window):
         '''
         Calculate average temperatures, max gradient, max temperature and min temperatures
@@ -341,7 +376,6 @@ class Upwelling(object):
 
         # get the data
         dateTime, temp, results, k, fnames = self.get_timeseries_data(path, date, timeavg, window)
-
 
         # calculate max & min gradient
         grad = np.zeros(len(dateTime), dtype = np.ndarray)
@@ -361,16 +395,22 @@ class Upwelling(object):
 
         for i in range(0, len(results)):
             # calculate mean
-            mean_temp[i] = np.mean(results[i][1:])
+            mean_temp[i] = np.mean(results[i][1:])  # this is good
 
+            # USe percentile for a more accurate perspective and to avoid flukes and extremes
             # calculate max
-            max_temp[i] = np.amax(results[i][1:])  # along the time line not the stations
+            # max_temp[i] = np.amax(results[i][1:])  # along the time line not the stations
+
+            max_temp[i] = np.percentile(results[i][1:], 95, axis = 0)
 
             # calculate min
-            min_temp[i] = np.amin(results[i][1:])  # along the time line not the stations
+            # min_temp[i] = np.amin(results[i][1:])  # along the time line not the stations
 
-            # calculate max grad
-            max_grad[i] = np.max(np.abs(grad[i][1:]))  # along the time line not the stations
+            min_temp[i] = np.percentile(results[i][1:], 5, axis = 0)
+
+            # calculate max rate
+            # max_grad[i] = np.max(np.abs(grad[i][1:]))  # along the time line not the stations
+            max_grad[i] = np.percentile(grad[i][1:], 95, axis = 0)
 
         for i in range(0, maxidx):
             print "Stn %s : mean_temp:%2.2f  max_temp:%2.2f  min_temp:%2.2f  max_grad:%2.2f" \
@@ -432,11 +472,14 @@ if __name__ == '__main__':
 
     # set what we want to do - Shouldd be controlled by cmd line args
     ###########################################################
-    climate = False
-    gradient = True
+    climate = True
+    gradient = False
+    upwelling_anim = False
+    slide_timestamp = False
     show_timeseries = False
     CB_heatmap = False
     EG_heatmap = False
+    WG_heatmap = False
     JarvDock_heatmap = False
     filter_data = False
 
@@ -454,17 +497,95 @@ if __name__ == '__main__':
     filt = "semidiurnal"
 
     if climate:
-        date = ['13/05/20 00:00:00', '13/09/10 00:00:00']
+        date1 = ['13/05/01 00:00:00', '13/06/05 00:00:00']
+        date2 = ['13/06/05 00:00:00', '13/09/20 00:00:00']
+        date3 = ['13/09/20 00:00:00', '13/11/01 00:00:00']
+        datearr = [date1, date2, date3]
+
+        for date in datearr:
+            dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
+            start_num = dates.date2num(dt)
+            dt = datetime.datetime.strptime(date[1], "%y/%m/%d %H:%M:%S")
+            end_num = dates.date2num(dt)
+            path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/ClimateMap'
+            timeavg = Upwelling.window_hour
+            print "Start date %s:" % date[0]
+            print "==================================="
+            upw.calculate_avg_maxgrd_max_min(path, [start_num, end_num], timeavg, upw.windows[1])
+
+    if upwelling_anim:
+        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/ClimateMap'
+        timeavg = Upwelling.window_hour
+        # no_of_interv = 48 # 6 hours interval
+        no_of_interv = 288  # 1 hours interval
+
+        date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
         dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
         start_num = dates.date2num(dt)
         dt = datetime.datetime.strptime(date[1], "%y/%m/%d %H:%M:%S")
         end_num = dates.date2num(dt)
-        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/ClimateMap'
-        timeavg = Upwelling.window_hour
-        upw.calculate_avg_maxgrd_max_min(path, [start_num, end_num], timeavg, upw.windows[1])
+
+        [X, Y, name, snap_temp] = upw.get_temp_snapshots(path, [start_num, end_num], no_of_interv, timeavg, upw.windows[1])
+        ofile = open('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/' + 'TempSnapshots_1H.csv', "wb")
+        writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+        locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+        for i in range(0, len(name)):
+            row = []
+            row.append(X[i])
+            row.append(Y[i])
+            row.append(name[i])
+            for j in range(0, len(snap_temp[i])):
+                dt = dates.num2date(start_num + j / 24.0)
+                timestampstr = dt.strftime("%y-%m-%d %H:%M:%S")
+                row.append(timestampstr)
+                row.append(snap_temp[i][j])
+            writer.writerow(row)
+        ofile.close()
+        print "Done Upwelling animation!"
+
+    if slide_timestamp:
+        # try to get attibutes from the shapefiles
+        # import shapefile
+        # shf_name = "/home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/TorontoHarbourMapFiles/Temp_loggers_1h_snapshots_somefake.shp"
+        # input = shapefile.Reader(shf_name)
+        # shapes = input.shapes()  # -> the geometries in a list
+        # fields = input.fields[1:]  # -> the fields definition in a list
+        # fields_name = [field[0] for field in fields]  # -> the fields names in a list
+        # attributes = input.records()  # -> the attributes in a list
+
+        # dates teken drom csv file
+        csv_name = "/home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/tor_harb_instr_snap_dates.csv"
+        ifile = open(csv_name, 'rb')
+        reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
+        ts = []
+        for row in reader:
+            i = 1
+            for col in row:
+                if i % 2 == 0:
+                    pass
+                else :
+                    ts.append(str(col))
+                i += 1
+            # end for col
+        # end for row
+        ifile.close()
+
+
+        imgdir = "/home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/TorHarb_1h_HeatMaps_TS"
+        imgdir_out = "/home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/TorHarb_1h_HeatMaps_TS_OUT"
+
+        # convert /home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/TorHarb_1h_HeatMaps_TS/TH_1h_001.png -size 800x506 -font Bookman-DemiItalic -pointsize 16 -draw "text 50,100 '13-08-12 00:00:00'" /home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/TorHarb_1h_HeatMaps_TS/TH_1h_001_1.png
+        for j in range(0, len(ts)):
+            text = "text 50,100 '" + ts[j] + "'"
+            fn = imgdir + "/TH_1h_%03d.png" % (j + 1)
+            fn_out = imgdir_out + "/TH_1h_%03d.png" % (j + 1)
+            arg = fn + " -size 800x506 -font Bookman-DemiItalic -pointsize 16 -draw \"" + text + "\" " + fn_out
+            cmd = "convert " + arg
+            os.popen(cmd)
+
+        print "Done Upwelling animation TIMESTAMP!"
 
     if gradient:
-
         percent = True
         date = ['13/06/17 00:00:00', '13/10/01 00:00:00']
         dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
@@ -527,11 +648,11 @@ if __name__ == '__main__':
         maxdepth = 10
         firstlogdepth = 8
         maxtemp = 30
-        upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp)
+        upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp, title = "Cherry Beach")
 
-    if EG_heatmap:
+    if EG_heatmap or WG_heatmap:
         # draw the temperature heatmap for 3 Cherry Beach goggers spaced 1 m apart on vertical starting from bottom
-        ipath = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap'
+
         startdate = '13/05/01 00:00:00'
         enddate = '13/10/24 00:00:00'
 
@@ -545,7 +666,13 @@ if __name__ == '__main__':
         maxdepth = 5
         firstlogdepth = 0
         maxtemp = 30
-        upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp)
+
+        if EG_heatmap:
+            ipath = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap'
+            upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp, title = "Eastern Gap")
+        if WG_heatmap:
+            ipath = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/WGap'
+            upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp, title = "Western Gap")
 
     if JarvDock_heatmap:
         # draw the temperature heatmap for 3 Cherry Beach goggers spaced 1 m apart on vertical starting from bottom

@@ -100,6 +100,9 @@ def plot_regression(x, y, slope, intercept, point_labels = None, x_label = None,
     if title != None:
         plt.title(title).set_fontsize(fontsize + 2)
 
+    plt.xticks(fontsize = fontsize - 1)
+    plt.yticks(fontsize = fontsize - 1)
+
     xeps = abs((xmax - xmin) / 10.)
     yeps = abs((ymax - ymin) / 10.)
 

@@ -286,31 +286,35 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
     [dateTime, temp] = read_data(reader, timeinterv)
 
-    if span != None:
-        # check if span is correct
-        dt = dateTime[2] - dateTime[1]  # usually days
-        if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
-            nspan = 6. / (dt * 24)
-        elif span == "window_hour":  # 30 for a 2 minute sampling
-            nspan = 1. / (dt * 24)
-        elif span == "window_1/2hour":  # 30 for a 2 minute sampling
-            nspan = 0.5 / (dt * 24)
-        elif span == "window_day":  # 30 * 24 for a 2 minute sampling
-            nspan = 24. / (dt * 24)
-        elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
-            nspan = 12. / (dt * 24)
-        elif span == "window_3days":  # 3 * 30 * 24 for a 2 minute sampling
-            nspan = 24. * 3 / (dt * 24)
-        elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
-            nspan = 24. * 7 / (dt * 24)
+    try:
+        if span != None:
+            # check if span is correct
+            dt = dateTime[2] - dateTime[1]  # usually days
+            if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
+                nspan = 6. / (dt * 24)
+            elif span == "window_hour":  # 30 for a 2 minute sampling
+                nspan = 1. / (dt * 24)
+            elif span == "window_1/2hour":  # 30 for a 2 minute sampling
+                nspan = 0.5 / (dt * 24)
+            elif span == "window_day":  # 30 * 24 for a 2 minute sampling
+                nspan = 24. / (dt * 24)
+            elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
+                nspan = 12. / (dt * 24)
+            elif span == "window_3days":  # 3 * 30 * 24 for a 2 minute sampling
+                nspan = 24. * 3 / (dt * 24)
+            elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
+                nspan = 24. * 7 / (dt * 24)
+            else:
+                print "Error, window span not defined"
+                return
+            results = smooth.smoothfit(dateTime, temp, nspan, window)
         else:
-            print "Error, window span not defined"
-            return
-        results = smooth.smoothfit(dateTime, temp, nspan, window)
-    else:
-        results = {}
-        results['smoothed'] = temp
-
+            results = {}
+            results['smoothed'] = temp
+    except:
+        print "Date not available"
+        ifile.close()
+        return [None, None, None]
     # print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
     # writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
     ifile.close()
@@ -445,6 +449,15 @@ def read_files(span = None, window = windows[1], timeinterv = None, rpath = None
             continue
 
         dateTime, temp, results = get_data_from_file(fname, span, window, timeinterv, ppath)
+
+        if dateTime == None:  # this fixes data that is too short for certain loggers, it is basically replacing it with the data from another logger
+            dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTimeArr[i - 1])
+            resultsArr[i] = numpy.append(resultsArr[i], resultsArr[i - 1])
+            tempArr[i] = numpy.append(tempArr[i], tempArr[i - 1])
+            k[i] = numpy.append(k[i], i)
+            fnames[i] = fname
+            i += 1
+            continue
 
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
         resultsArr[i] = numpy.append(resultsArr[i], results)

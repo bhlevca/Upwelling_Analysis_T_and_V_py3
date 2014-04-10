@@ -26,6 +26,8 @@ path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC
 # path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed'
 path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013'
 path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013/csv_processed'
+path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/TRCA_Data_2013'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/TRCA_Data_2013/csv_processed'
 
 # export to date file
 
@@ -50,9 +52,10 @@ def write_datefile(writer, depth, dateTime):
 
         # TRCA Format
         try:
-            # dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
-            dt = datetime.strptime(dateTime[idx], "%m/%d/%y %I:%M:%S %p")
+            dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
+            # dt = datetime.strptime(dateTime[idx], "%m/%d/%y %I:%M:%S %p")
         except :
+            print "Date fromat is wrong!"
             continue
 
         dn = date2num(dt)
