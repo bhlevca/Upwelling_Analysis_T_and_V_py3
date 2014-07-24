@@ -16,6 +16,7 @@ import matplotlib.dates as dates
 import upwelling
 import readTempHoboFiles
 import display_data
+import spectral_analysis
 
 
 class Upwelling(object):
@@ -100,26 +101,54 @@ class Upwelling(object):
         return dateTime, temp, results, k, fnames
 
 
-    def draw_isotherms(self, path, timeint, tick, maxdepth, firstlogdepth, maxtemp, title = None):
+    def draw_isotherms(self, path, timeint, tick, maxdepth, firstlogdepth, maxtemp, title = None,
+                       thermocline = True, interpolate = None):
         # dirlist needs to be sorted in ascending order
         # Separate directories from files
         base, dirs, files = iter(os.walk(path)).next()
 
         sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
-        dateTimeArr = np.zeros(len(sorted_files), dtype = np.ndarray)
-        tempArr = np.zeros(len(sorted_files), dtype = np.ndarray)
-        resultsArr = np.zeros(len(sorted_files), dtype = np.ndarray)
-        k = np.zeros(len(sorted_files), dtype = np.ndarray)
-        i = 0
+
+        # dateTimeArr = np.zeros(len(sorted_files), dtype = np.ndarray)
+        # tempArr = np.zeros(len(sorted_files), dtype = np.ndarray)
+        # resultsArr = np.zeros(len(sorted_files), dtype = np.ndarray)
+        # k = np.zeros(len(sorted_files), dtype = np.ndarray)
+
+        dateTimeArr = []
+        tempArr = []
+        resultsArr = []
+        k = []
+
+        j = i = 0
+        nsorted_files = sorted_files[:]
         for fname in sorted_files:
-            dateTime, temp, results = readTempHoboFiles.get_data_from_file(fname, self.window_hour, self.windows[1], timeinterv = timeint, rpath = path)
-            maxidx = 30000
-            dateTimeArr[i] = np.append(dateTimeArr[i], dateTime[:maxidx])
-            resultsArr[i] = np.append(resultsArr[i], results[:maxidx])
-            tempArr[i] = np.append(tempArr[i], temp[:maxidx])
-            k[i] = np.append(k[i], i)
+            dateTime, temp, results = readTempHoboFiles.get_data_from_file(fname, self.window_6hour, self.windows[1], timeinterv = timeint, rpath = path)
+
+            dateTimeArr.append(dateTime)
+            resultsArr.append(results)
+            tempArr.append(temp)
+            k.append(j)
+
+            if interpolate:
+                if (i - 1) % 2 == 0 and i != 0 :  # interpolate & insert
+                    dateTimeArr.insert(j, dateTimeArr[j])
+                    k.insert(j, j)
+                    k[j + 1] = j + 1
+                    minlen = min(len(resultsArr[j]), len(resultsArr[j - 1]))
+                    resval = (np.array(resultsArr[j][:minlen]) + np.array(resultsArr[j - 1][:minlen])) / 2.0
+                    resultsArr.insert(j, resval)
+
+                    tempval = (np.array(tempArr[j][:minlen]) + np.array(tempArr[j - 1][:minlen])) / 2.0
+                    tempArr.insert(j, tempval)
+
+                    nsorted_files.insert(j, "mid")
+                    # increment j
+                    j += 1
+                # end if
+            # end if
             i += 1
+            j += 1
         # end for
 
         # plot the temperature not the smoothed ones
@@ -128,10 +157,22 @@ class Upwelling(object):
             custom = title
         else:
             custom = "Temperature Toronto Waterfront Zones"
-        display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = custom, \
+        ndateTimeArr = np.array(dateTimeArr)
+        ntempArr = np.array(tempArr)
+        nresultsArr = np.array(resultsArr)
+        nk = np.array(k)
+        display_data.display_temperatures(ndateTimeArr, ntempArr, nk, fnames = nsorted_files, custom = custom, \
                                       datetype = datetype, ylab = "Temperature ($^oC$")
 
-        display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, revert = True, fontsize = 18, datetype = datetype)
+
+        ycustom = "Depth [m]"  # "Stations"  #
+        revert = True
+        display_data.display_img_temperatures(ndateTimeArr, ntempArr, nresultsArr, nk, tick, maxdepth, firstlogdepth, maxtemp, revert = revert, \
+                                              fontsize = 22, datetype = datetype, thermocline = thermocline, interp = interpolate, ycustom = ycustom)
+
+        display_data.display_temperatures_subplot(ndateTimeArr, ntempArr, nresultsArr, nk, fnames = nsorted_files, revert = False, custom = None, \
+                                 maxdepth = None, tick = None, firstlog = None, yday = True, delay = None, group = 2, processed = True, \
+                                 limits = [0, 25], sharex = True)
 
 
     def detect_bottom_loggers_min_temp(self, path, date, filt, timeavg, peaks = False):
@@ -193,7 +234,7 @@ class Upwelling(object):
 
         return [station, lat, lon]
 
-    def determine_temp_gradient(self, dateTime, results, grad, tg):
+    def determine_temp_rate(self, dateTime, results, grad, tg, delta = 1):
         '''
         '''
 
@@ -213,7 +254,7 @@ class Upwelling(object):
                 hour += dt_hour
                 if j == 1:
                     Ti = T[j]
-                if hour >= 1:
+                if hour >= 1 * delta:
                     Tf = T[j]
                     grad[i] = np.append(grad[i], (Tf - Ti))
                     tg[i] = np.append(tg[i], t[j])
@@ -229,23 +270,20 @@ class Upwelling(object):
 
         return grad, tg, ymax, ymin
 
-    def plot_temp_gradient(self, path, date, filt, timeavg, window, tunits = 'day', percent = False):
+    def plot_temp_rate(self, path, date, timeavg, window, tunits = 'day', percent = False, delta = 1):
 
         startdate, enddate = date
-
-        lowcut = self.filter[filt]['lowcut']
-        highcut = self.filter[filt]['highcut']
-        filter = [lowcut, highcut]
 
         minorgrid = 'mondays'
         datetype = 'dayofyear'
         dateTime, temp, results, k, fnames = self.get_timeseries_data(path, date, timeavg, window)
 
-        grad = np.zeros(len(dateTime), dtype = np.ndarray)
-        tg = np.zeros(len(dateTime), dtype = np.ndarray)
-        ghist = np.zeros(len(dateTime), dtype = np.ndarray)
-        edges = np.zeros(len(dateTime), dtype = np.ndarray)
-        bins = np.zeros(len(dateTime), dtype = np.ndarray)
+        grad = np.zeros(len(dateTime), dtype = np.ndarray)  # rate
+        tg = np.zeros(len(dateTime), dtype = np.ndarray)  #
+        ghist = np.zeros(len(dateTime), dtype = np.ndarray)  # histogram
+        perc = np.zeros(len(dateTime), dtype = np.ndarray)  # histogram
+        edges = np.zeros(len(dateTime), dtype = np.ndarray)  # edges
+        bins = np.zeros(len(dateTime), dtype = np.ndarray)  # bins
 
         if tunits == 'day':
             factor = 86400
@@ -254,7 +292,7 @@ class Upwelling(object):
         else:
             factor = 1
 
-        grad, tg, ymax, ymin = self.determine_temp_gradient(dateTime, results, grad, tg)
+        grad, tg, ymax, ymin = self.determine_temp_rate(dateTime, results, grad, tg, delta)
 
         # put data in bins
         for i in range(len(dateTime)):
@@ -265,20 +303,29 @@ class Upwelling(object):
 
             bins[i] = edges[i][:-1]
 
+
             if percent:
                 total = 0.0
+                perc[i] = np.zeros(len(ghist[i]), dtype = np.double)
                 for j in range(0, len(ghist[i])):
                     total += ghist[i][j]
+                    print "TOTAL location:%s total:%d j:%d hist:%d" % (fnames[i], total, j, ghist[i][j])
                 for j in range(0, len(ghist[i])):
-                    ghist[i][j] = ghist[i][j] / total * 100.0
 
-        ylab = 'Temperature gradient ($^\circ$C/h)'
+                    perc[i][j] = ghist[i][j] * 100.0 / total
+                    print "PERCENT location:%s j:%d hist:%f" % (fnames[i], j, perc[i][j])
+
+        ylab = 'Temperature rate ($^\circ$C/h)'
         display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
-                                           tick = None, firstlog = None, fontsize = 16, ylim = [ymin - 1, ymax + 1], fill = False, \
+                                           tick = None, firstlog = None, fontsize = 22, ylim = [ymin - 1, ymax + 1], fill = False, \
                                            show = True, datetype = "dayofyear", minorgrid = "mondays", ylab = ylab)
 
-        display_data.display_marker_histogram(bins, ghist, fnames, xlabel = 'Temperature gradient ($^\circ$C/h)', ylabel = "Frequency (%)", \
-                                              title = None, log = True, grid = True, fontsize = 18)
+        if percent:
+            values = perc
+        else:
+            values = ghist
+        display_data.display_marker_histogram(bins, values, fnames, xlabel = 'Temperature rate ($^\circ$C/h)', ylabel = "Frequency (%)", \
+                                              title = None, log = True, grid = False, fontsize = 30)
 
 
         #=======================================================================
@@ -371,16 +418,16 @@ class Upwelling(object):
 
     def calculate_avg_maxgrd_max_min(self, path, date, timeavg, window):
         '''
-        Calculate average temperatures, max gradient, max temperature and min temperatures
+        Calculate average temperatures, max rate, max temperature and min temperatures
         '''
 
         # get the data
         dateTime, temp, results, k, fnames = self.get_timeseries_data(path, date, timeavg, window)
 
-        # calculate max & min gradient
+        # calculate max & min temperature hourly rate
         grad = np.zeros(len(dateTime), dtype = np.ndarray)
         tg = np.zeros(len(dateTime), dtype = np.ndarray)
-        grad, tg, ymax, ymin = self.determine_temp_gradient(dateTime, results, grad, tg)
+        grad, tg, ymax, ymin = self.determine_temp_rate(dateTime, results, grad, tg)
 
 
         maxidx = len(results)
@@ -448,12 +495,21 @@ class Upwelling(object):
         '''
         pass
 
-    def correlate_meteo_with_temperature_variability(self):
+    def correlate_meteo_with_temperature_variability(self, str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, wfile):
         '''
         get meteo : wind (speed and dir), air temp, solar radiation, arit pressure
         correlate (with time lag) with the water temperature (surface and benthic)
         '''
-        pass
+        upwelling.plot_weather_data(date, weather_path, wfile, windrose = True)
+        upwelling.subplot_weather_data(str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, wfile)
+
+    def spectral_analysis(self, path, files, names, log, withci = True):
+        draw = False
+        type = 'amplitude'
+        # type = 'power'
+        num_segments = 6
+        spectral_analysis.doMultipleSpectralAnalysis(path, files, names, draw, window = "hanning", num_segments = num_segments, \
+                                                     tunits = "day", funits = "cph", log = log, grid = False, type = type, withci = withci)
 
     def test(self):
         sal = np.array([0.1, 0.1])  #
@@ -472,17 +528,19 @@ if __name__ == '__main__':
 
     # set what we want to do - Shouldd be controlled by cmd line args
     ###########################################################
-    climate = True
-    gradient = False
+    climate = False
+    rate = False
     upwelling_anim = False
     slide_timestamp = False
     show_timeseries = False
     CB_heatmap = False
     EG_heatmap = False
     WG_heatmap = False
+    OutHarb_heatmap = False
     JarvDock_heatmap = False
     filter_data = False
-
+    weather_data = True
+    spectral_harbour = False
 
     ############################################################
     # initilize object
@@ -512,6 +570,34 @@ if __name__ == '__main__':
             print "Start date %s:" % date[0]
             print "==================================="
             upw.calculate_avg_maxgrd_max_min(path, [start_num, end_num], timeavg, upw.windows[1])
+
+    if weather_data:
+
+        # select one upwelling
+        # date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
+
+        date = ['13/05/10 00:00:00', '13/10/27 00:00:00']
+        # date = ['12/04/30 00:00:00', '12/10/27 00:00:00']  # 2012
+        # stratified profile
+        # date = ['13/06/30 00:00:00', '13/09/07 00:00:00']
+
+
+        dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
+        start_num = dates.date2num(dt)
+        dt = datetime.datetime.strptime(date[1], "%y/%m/%d %H:%M:%S")
+        end_num = dates.date2num(dt)
+
+        water_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
+        harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap-JarvisDock'
+        weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ClimateData/Weather'
+        # weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE deployment 18-07-2012/Data/ClimateData/all'  # 2012
+        cloud_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ClimateData/Radiation/HDF'
+        # cloud_path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ClimateData/Radiation/2012HDF"
+        wfile = 'eng-hourly-04012013-11302013.csv'
+        # wfile = 'eng-hourly-04012012-11302012-all.csv'  # 2012
+        lake_file = '10_2393006.csv'
+        upw.correlate_meteo_with_temperature_variability(date, [start_num, end_num], water_path, harbour_path, weather_path, cloud_path, lake_file, wfile)
+
 
     if upwelling_anim:
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/ClimateMap'
@@ -544,7 +630,7 @@ if __name__ == '__main__':
         print "Done Upwelling animation!"
 
     if slide_timestamp:
-        # try to get attibutes from the shapefiles
+        # try to get attributes from the shapefiles
         # import shapefile
         # shf_name = "/home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/TorontoHarbourMapFiles/Temp_loggers_1h_snapshots_somefake.shp"
         # input = shapefile.Reader(shf_name)
@@ -585,8 +671,9 @@ if __name__ == '__main__':
 
         print "Done Upwelling animation TIMESTAMP!"
 
-    if gradient:
+    if rate:
         percent = True
+        delta = 1  # delta = 6
         date = ['13/06/17 00:00:00', '13/10/01 00:00:00']
         dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
         start_num = dates.date2num(dt)
@@ -594,17 +681,16 @@ if __name__ == '__main__':
         end_num = dates.date2num(dt)
 
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/BottomGradient'
-        # upw.plot_temp_gradient(path, [start_num, end_num], filt, Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent=percent)
+        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
 
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/AboveBottomGradient'
-        # upw.plot_temp_gradient(path, [start_num, end_num], filt, Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent=percent)
+        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
 
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013/csv_processed/ShelteredOuterHarbour'
-        # upw.plot_temp_gradient(path, [start_num, end_num], filt, Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent=percent)
+        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
 
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013/csv_processed/InnerHarbour'
-        upw.plot_temp_gradient(path, [start_num, end_num], filt, Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent)
-
+        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
 
     if show_timeseries:
         exclude_min = { "Bot_TC4.csv":[3, 7], "Bot_St21.csv":[3] }
@@ -630,6 +716,7 @@ if __name__ == '__main__':
             [locations, lat, lon] = upw.get_lat_lon(location)
             upw.determine_velocity(a_max, a_min, afnames, locations, lat, lon, exclude_min)
         # end if
+    # endif
 
     if CB_heatmap:
         # draw the temperature heatmap for 3 Cherry Beach goggers spaced 1 m apart on vertical starting from bottom
@@ -692,6 +779,31 @@ if __name__ == '__main__':
         maxtemp = 30
         upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp)
 
+    if OutHarb_heatmap:
+        # draw the temperature heatmap for 3 Cherry Beach goggers spaced 1 m apart on vertical starting from bottom
+        ipath = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/colormap/bot'
+
+        # full timeseries
+        startdate = '13/04/30 00:00:00'
+        enddate = '13/10/27 00:00:00'
+
+        # 1 upwellings
+        # startdate = '13/09/02 00:00:00'
+        # enddate = '13/09/07 00:00:00'
+
+
+        dt = datetime.datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+        start_num = dates.date2num(dt)
+        dt = datetime.datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+        end_num = dates.date2num(dt)
+        t11 = ['TC4', 'St21', 'TC3', 'TC2', 'TC1', 'CB']
+        t12 = [ 11, 9, 7, 5, 3, 1]
+        tick = [t11, t12]
+        maxdepth = 12
+        firstlogdepth = 0
+        maxtemp = 20
+        interpolate = 6
+        upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp, thermocline = False, interpolate = interpolate)
 
     if filter_data:
         timeavg = None
@@ -709,3 +821,16 @@ if __name__ == '__main__':
         filt = 'k10_15'
         ylim = [-3, 3]
         upw.plot_filtered_data(dateTimeArr, tempArr, fnames, k, filt, ylim)
+
+    if spectral_harbour:
+        path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Spectral_Temp/Deep"
+        # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Spectral_Temp/Surface"
+        names = ['Cherry B' , 'Jarvis', 'L Ontario']
+        # names = ['Cherry B', 'Ferry', 'L Ontario']
+        log = True
+        withci = True
+        base, dirs, files = iter(os.walk(path)).next()
+        sorted_files = sorted(files, key = lambda x: x.split('.')[0])
+
+        upw.spectral_analysis(path, sorted_files, names, log, withci)
+

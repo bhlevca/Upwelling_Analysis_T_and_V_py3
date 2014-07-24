@@ -15,9 +15,9 @@ weather_path = '/home/bogdan/Documents/UofT/PhD/Research-docs/Data_Files/Hobo_Fi
 path_in = '/home/bogdan/Documents/UofT/PhD/Research-docs/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2011/csv_processed'
 path_out = '/home/bogdan/Documents/UofT/PhD/Research-docs/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2011/csv_interpolated'
 
-weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData'
-path_in = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData/in'
-path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData/out'
+weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE deployment 18-07-2012/Data/ClimateData'
+path_in = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE deployment 18-07-2012/Data/ClimateData/in'
+path_out = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE deployment 18-07-2012/Data/ClimateData/out'
 
 years = matplotlib.dates.YearLocator()  # every year
 months = matplotlib.dates.MonthLocator()  # every month
@@ -273,6 +273,7 @@ def read_stringdatefile(reader):
             else:
                 colnum = 0
                 for col in row:
+                    # print "colnum: %d, rownum: %d" % (colnum, rownum)
                     if len(header[colnum]) > 4 and header[colnum][:6] == "Temp (":
                         try:
                             fcol = float(col)
@@ -437,7 +438,7 @@ def main ():
     dt_end = date2num(datetime.strptime(date_end, "%Y/%m/%d %H:%M:%S"))
 
     # wfile = open(weather_path + '/eng-hourly-aug_nov_2011.csv', 'rb')
-    wfile = open(weather_path + '/eng-hourly-07012012-11302012.csv', 'rb')
+    wfile = open(weather_path + '/all/eng-hourly-07012012-11302012-all.csv', 'rb')
 
     wreader = csv.reader(wfile, delimiter = ',', quotechar = '"')
     [temp, dateTime, windDir, windSpd, press] = read_stringdatefile(wreader)
@@ -480,7 +481,7 @@ def main ():
     print results_windspd['smoothed']
 
     # uncomment the followinf to estimate upwelling in a crude raw manner ( sould be cross spectra)
-    # [intv_sec, upw_idx] = read_interp_temp_files(dt_begin, dt_end, [iwdateTime, results_temp['smoothed'], iwdateTime, results_winddir['smoothed'], iwdateTime, results_windspd['smoothed']], legend)
+    [intv_sec, upw_idx] = read_interp_temp_files(dt_begin, dt_end, [iwdateTime, results_temp['smoothed'], iwdateTime, results_winddir['smoothed'], iwdateTime, results_windspd['smoothed']], legend)
 
     # 6) find the wind patterns that cause upwelling
     # 1. select 4-5 days before upwelling

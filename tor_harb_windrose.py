@@ -13,19 +13,20 @@ def new_axes():
     fig.add_axes(wax)
     return wax
 
-def set_legend(wax, fontsize = 10):
-    l = wax.legend(axespad = -0.10)
+def set_legend(wax, loc, fontsize = 10, unit = "[m/s]"):
+    l = wax.legend(loc = loc, unit = unit)  # axespad = -0.10)
     plt.setp(l.get_texts(), fontsize = fontsize)
 
 
-def draw_windrose(wd, ws, type, fontsize = 10):
+def draw_windrose(wd, ws, type, loc = 'best', fontsize = 10, unit = "[m/s]"):
     if type == 'bar':
         # windrose like a stacked histogram with normed (displayed in percent) results
         wax = new_axes()
         # for i in range(0, len(wd)):
         #    print "%d) direction: %f,  speed: %f " % (i, wd[i], ws[i])
         wax.bar(wd, ws, nsector = 32, normed = True, opening = 0.8, edgecolor = 'white')
-        set_legend(wax, fontsize)
+        plt.xticks(fontsize = fontsize)
+        set_legend(wax, loc, fontsize - 4, unit)
 
     if type == 'contour':
 
@@ -33,12 +34,12 @@ def draw_windrose(wd, ws, type, fontsize = 10):
         wax = new_axes()
         wax.contourf(wd, ws, nsector = 32, bins = arange(0, 40, 4), cmap = cm.hot)
         wax.contour(wd, ws, nsector = 32, bins = arange(0, 40, 4), colors = 'black')
-        set_legend(wax, fontsize)
+        set_legend(wax, loc, fontsize)
 
     if type == 'hist':
         wax = new_axes()
         wax.bar(wd, ws, normed = True, nsector = 32, opening = 0.8, edgecolor = 'white')
-        set_legend(wax, fontsize)
+        set_legend(wax, loc, fontsize)
 
         table = wax._info['table']
         wd_freq = numpy.sum(table, axis = 0)

@@ -448,7 +448,7 @@ def wind_airpress_airtemp_water_temp():
 
 
     # get hobo file
-    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
+    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
     hobofilename = '18_2393005.csv'
     print "Reading file %s" % hobofilename
     dateTime, temp, results = readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
@@ -456,8 +456,8 @@ def wind_airpress_airtemp_water_temp():
     HOBOresultsArr = results
     HOBOtempArr = temp
 
-    weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ClimateData/all'
-    wfile = open(weather_path + '/eng-hourly-07012012-11302012.csv', 'rb')
+    weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE deployment 18-07-2012/Data/ClimateData/all'
+    wfile = open(weather_path + '/eng-hourly-07012012-11302012-all.csv', 'rb')
 
     wreader = csv.reader(wfile, delimiter = ',', quotechar = '"')
     [temp, dateTime, windDir, windSpd, press] = envir.read_stringdatefile(wreader)
@@ -567,8 +567,8 @@ def wind_airpress_airtemp_water_temp():
     dateTime3, results3 = hdf.read_hdf_dir(path, var3, ix, iy, timeidx, startdate, enddate)
 
 
-    display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100],
-                                      fnames = [var1, var2, var3], difflines = None, custom = "Radiation data (W/m$^2$)")
+    display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [1, 2, 3],
+                                      fnames = [var1, var2, var3], difflines = False, custom = "Radiation data (W/m$^2$)")
 
 
 
@@ -1245,12 +1245,12 @@ if __name__ == '__main__':
     harbour_stats = False  # 0
     LO_hobot_rbrt_10m = False  # 1
     LO_isotherm = False  # 2
-    Toronto_harbour = True  # 3
+    Toronto_harbour = False  # 3
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
     Upwelling_zone = False  # 7
-    Fish_detection = False  # 8
+    Fish_detection = True  # 8
 
     exit_if = [False, False, False, False, False, False, False, False, False]
 
@@ -1505,18 +1505,25 @@ if __name__ == '__main__':
             os.abort()
 
     if Fish_detection:
-        path = "/home/bogdan/Documents/UofT/PhD/Data_Files/Fish-data-Apr-Dec-2012/April-Dec2012.csv"
+        path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2012/Fish-data-Apr-Dec-2012/NumDate-May-Nov2012.csv"
+
         startdate = '12/05/19 00:00:00'
         enddate = '12/10/24 00:00:00'
 
-        count_detect = False
-        draw = True
+        path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/FishData/numdate_bass_2013.csv"
+        startdate = '13/06/20 00:00:00'
+        enddate = '13/10/24 00:00:00'
+
+
+        count_detect = True
+        draw = False
+        year = 2013
         # this is just to estimate detection
         if count_detect:
-            fish_detection.fish_detection(path, [startdate, enddate])
+            fish_detection.fish_detection(path, [startdate, enddate], year)
 
         if draw:
-            upwelling.draw_upwelling_fish_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/SelectedZonesFishDetection.csv')
+            upwelling.draw_upwelling_fish_correlation('/home/bogdan/Documents/UofT/PhD/Data_Files/2012/UpwellingZones/SelectedZonesFishDetection.csv')
             # upwelling.draw_upwelling_fish_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZones.csv')
             # NO cells file is not good.
             # upwelling.draw_upwelling_fish_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZonesNoCells.csv')

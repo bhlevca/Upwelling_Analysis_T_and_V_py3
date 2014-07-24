@@ -10,29 +10,41 @@ import time, os, sys, inspect, locale, math
 import utils.read_csv as read_csv
 import utils.autovivification as ndict
 
-def fish_detection(filepath, timeint):
-    dict = sort_detections(filepath, timeint)
+def fish_detection(filepath, timeint, year):
+    dict = sort_detections(filepath, timeint, year)
 
     # detailed statistics
     values = dict.values()
     keys = dict.keys()
-    for i in range(0, len(keys)):
-        value = values[i]
-        key = value.keys()
-        vals = value.values()
-        for j in range (0, len(value)):
-            print "%s: (%s =  %d)" % (keys[i], key[j], vals[j])
 
-    # print the number of distinct fish that roamed in the receiver area
     print "\n-------------------------------------------------------"
-    print " Number of individual fish detections at each stations"
+    print " Number of total fish detections at each stations"
     print "-------------------------------------------------------"
 
     for i in range(0, len(keys)):
         value = values[i]
         key = value.keys()
         vals = value.values()
-        print "%s: #det= %d)" % (keys[i], len(value))
+        # print "\n-------------------------------------------------------"
+        # print " Number of individual fish detections at each stations"
+        # print "-------------------------------------------------------"
+        totaldet = 0
+        for j in range (0, len(value)):
+            # print "%s: (%s =  %d)" % (keys[i], key[j], vals[j])
+            totaldet += vals[j]
+
+        # print the number of total  fish # that roamed in the specifi receiver area
+        print "Station: %s,  Total detection = %d)" % (keys[i], totaldet)
+
+
+    # print the number of distinct fish that roamed in the receiver area
+    #===========================================================================
+    # for i in range(0, len(keys)):
+    #     value = values[i]
+    #     key = value.keys()
+    #     vals = value.values()
+    #     print "%s: #det= %d)" % (keys[i], len(value))
+    #===========================================================================
 
 
 #===============================================================================
@@ -44,7 +56,7 @@ def fish_detection(filepath, timeint):
 #                           r_value = r_value, p_value = p_value)
 #===============================================================================
 
-def sort_detections(filepath, timeint):
+def sort_detections(filepath, timeint, year):
     ########################################################
     #
     ########################################################
@@ -55,9 +67,8 @@ def sort_detections(filepath, timeint):
     dt = datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
     end_num = date2num(dt)
 
-    ifname = "/home/bogdan/Documents/UofT/PhD/Data_Files/Fish-data-Apr-Dec-2012/NumDate-May-Nov2012.csv"
 
-    [dateTime, TransmitterName, SensorValue, SensorUnit, StationName] = read_csv.read_fish_data(ifname, [start_num, end_num])
+    [dateTime, TransmitterName, SensorValue, SensorUnit, StationName] = read_csv.read_fish_data(filepath, [start_num, end_num], year)
 
     locdict = ndict.AutoVivification()
 
@@ -70,14 +81,16 @@ def sort_detections(filepath, timeint):
         # To make it count only one fish we will suse as a dictionary name only FishType+Number
 
         # split the string
-        strarr = TransmitterName[i].split(" ", 3)
-        Tn = strarr[0] + strarr[1]
-
+        try:
+            strarr = TransmitterName[i].split(" ", 3)
+            Tn = strarr[0] + strarr[1]
+        except:
+            Tn = TransmitterName[i]
         try:
             locdict[StationName[i]][Tn] = locdict[StationName[i]][Tn] + 1
         except:
             locdict[StationName[i]][Tn] = 1
-            print "Added station : %s, Fish: %s]" % (StationName[i], Tn)
+            print "Added station : %s, Fish: %s" % (StationName[i], Tn)
 
 
     return locdict

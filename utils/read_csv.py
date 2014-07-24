@@ -14,13 +14,14 @@ def isfloat(x):
     else:
         return True
 
-def read_instr_fish_data(reader):
+def read_instr_fish_data(reader, year):
     rownum = 0
     dateTime = []
     TransmitterName = []
     SensorValue = []
     SensorUnit = []
     StationName = []
+    Species = []
 
     printHeaderVal = False
 
@@ -46,26 +47,39 @@ def read_instr_fish_data(reader):
             colnum = 0
             # Date and Time (UTC),Receiver,Transmitter,Transmitter Name,Transmitter Serial,Sensor Value,Sensor Unit,Station Name,Latitude,Longitude
             for col in row:
-                if "Date" in header[colnum]:
-                    dateTime.append(str(col))
-                    print "date: %s" % col
-                elif header[colnum] == "Transmitter Name":
-                    TransmitterName.append(str(col))
-                elif header[colnum] == "Sensor Value":
-                    SensorValue.append(str(col))
-                elif header[colnum] == "Sensor Unit":
-                    SensorUnit.append(str(col))
-                elif header[colnum] == "Station Name":
-                    StationName.append(str(col))
-
+                if year == 2012:
+                    if "Date" in header[colnum]:
+                        dateTime.append(str(col))
+                        print "date: %s" % col
+                    elif header[colnum] == "Transmitter Name":
+                        TransmitterName.append(str(col))
+                    elif header[colnum] == "Sensor Value":
+                         SensorValue.append(str(col))
+                    elif header[colnum] == "Sensor Unit":
+                        SensorUnit.append(str(col))
+                    elif header[colnum] == "Station Name":
+                        StationName.append(str(col))
+                elif year == 2013 :
+                    if header[colnum] == 'ID':
+                        TransmitterName.append(str(col))
+                    elif "Date" in header[colnum] :
+                        dateTime.append(str(col))
+                        print "date: %s" % col
+                    elif header[colnum] == 'Species' :
+                        Species.append(str(col))
+                    elif header[colnum] == 'Station' :
+                        StationName.append(str(col))
                 colnum += 1
 
         rownum += 1
 
     print "Reading End!"
-    return [dateTime, TransmitterName, SensorValue, SensorUnit, StationName]
+    if year == 2012:
+        return [dateTime, TransmitterName, SensorValue, SensorUnit, StationName]
+    if year == 2013:
+        return [dateTime, TransmitterName, Species, StationName]
 
-def write_converted_date_fish_data(writer, dateTime, TransmitterName, SensorValue, SensorUnit, StationName):
+def write_converted_date_fish_data(writer, dateTime, TransmitterName, SensorValue, SensorUnit, StationName, Species, year):
     idx = 0
     numdat = []
     prev = 0
@@ -86,37 +100,52 @@ def write_converted_date_fish_data(writer, dateTime, TransmitterName, SensorValu
         # dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %H:%M")
         try:
             # 2012-04-16 17:27:40
-            dt = datetime.strptime(dateTime[idx], "%Y-%m-%d %H:%M:%S")
+            if year == 2012:
+                dt = datetime.strptime(dateTime[idx], "%Y-%m-%d %H:%M:%S")
+            elif year == 2013:
+                dt = datetime.strptime(dateTime[idx], "%m/%d/%Y %I:%M:%S %p")
         except :
-            continue
+            print "Date conversion problem!"
 
         dn = date2num(dt)
         if prev > dn:
             print "Next value lower!"
-        print "Write: %s, %f %s %s %s %s " % (dateTime[idx], dn, TransmitterName[idx], SensorValue[idx], SensorUnit[idx], StationName[idx])
-        writer.writerow([dateTime[idx], dn, TransmitterName[idx], SensorValue[idx], SensorUnit[idx], StationName[idx]])
+        if year == 2012:
+            print "Write: %s, %f %s %s %s %s " % (dateTime[idx], dn, TransmitterName[idx], SensorValue[idx], SensorUnit[idx], StationName[idx])
+            writer.writerow([dateTime[idx], dn, TransmitterName[idx], SensorValue[idx], SensorUnit[idx], StationName[idx]])
+        elif year == 2013:
+            print "Write: %s, %f %s %s %s " % (dateTime[idx], dn, TransmitterName[idx], Species[idx], StationName[idx])
+            writer.writerow([dateTime[idx], dn, TransmitterName[idx], Species[idx], StationName[idx]])
         prev = dn
         prevtxt = dateTime[idx]
         idx += 1
     print "Writing End!"
 
-def convert_to_numeric_date (ifname, ofname):
+def convert_to_numeric_date (ifname, ofname, year):
     ifile = open(ifname, 'rb')
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
     print "reading file: %s" % ifname
-    [dateTime, TransmitterName, SensorValue, SensorUnit, StationName] = read_instr_fish_data(reader)
+
+    Species = None
+    SensorValue = None
+    SensorUnit = None
+
+    if year == 2012:
+        [dateTime, TransmitterName, SensorValue, SensorUnit, StationName] = read_instr_fish_data(reader, year)
+    elif year == 2013:
+        [dateTime, TransmitterName, Species, StationName] = read_instr_fish_data(reader, year)
 
     print "writing file: %s" % ofname
 
     ofile = open(ofname, "wb")
     writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
-    write_converted_date_fish_data(writer, dateTime, TransmitterName, SensorValue, SensorUnit, StationName)
+    write_converted_date_fish_data(writer, dateTime, TransmitterName, SensorValue, SensorUnit, StationName, Species, year)
     ifile.close()
     ofile.close()
 
 
 
-def read_fish_data(fname, timeinterv = None):
+def read_fish_data(fname, timeinterv, year):
 
     ifile = open(fname, 'rb')
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
@@ -141,11 +170,16 @@ def read_fish_data(fname, timeinterv = None):
             if timeinterv != None:
                 if time < startt or time > endt:
                     continue
-            dateTime.append(float(row[1]))
-            TransmitterName.append(str(row[2]))
-            SensorValue.append(str(row[3]))
-            SensorUnit.append(str(row[4]))
-            StationName.append(str(row[5]))
+            if year == 2012:
+                dateTime.append(time)
+                TransmitterName.append(str(row[2]))
+                SensorValue.append(str(row[3]))
+                SensorUnit.append(str(row[4]))
+                StationName.append(str(row[5]))
+            elif year == 2013:
+                dateTime.append(time)
+                TransmitterName.append(str(row[2]))
+                StationName.append(str(row[4]))
         except:
             pass
 
@@ -205,7 +239,13 @@ if __name__ == "__main__":
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
     dt = datetime.strptime(strg, "%Y-%m-%d %H:%M:%S")
     print dt
+    year = 2013
 
-    ifname = "/home/bogdan/Documents/UofT/PhD/Data_Files/Fish-data-Apr-Dec-2012/April-Dec2012.csv"
-    ofname = "/home/bogdan/Documents/UofT/PhD/Data_Files/Fish-data-Apr-Dec-2012/NumDate-May-Nov2012.csv"
-    convert_to_numeric_date (ifname, ofname)
+    if year == 2012:
+        ifname = "/home/bogdan/Documents/UofT/PhD/Data_Files/2012/Fish-data-Apr-Dec-2012/April-Dec2012.csv"
+        ofname = "/home/bogdan/Documents/UofT/PhD/Data_Files/2012/Fish-data-Apr-Dec-2012/NumDate-May-Nov2012.csv"
+    elif year == 2013:
+        ifname = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/FishData/pike_2013.csv"
+        ofname = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/FishData/numdate_pike_2013.csv"
+    convert_to_numeric_date (ifname, ofname, year)
+    print "Done"

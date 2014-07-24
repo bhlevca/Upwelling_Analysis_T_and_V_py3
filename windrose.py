@@ -89,7 +89,7 @@ class WindroseAxes(PolarAxes):
         self.set_radii_angle(angle = self.radii_angle)
 
 
-    def legend(self, loc = 'lower left', **kwargs):
+    def legend(self, loc = 'lower left', unit = "[m/s]", **kwargs):
         """
         Sets the legend location and her properties.
         The location codes are
@@ -136,12 +136,17 @@ class WindroseAxes(PolarAxes):
                     raise AttributeError("Can't handle patches")
                 handles.append(Rectangle((0, 0), 0.2, 0.2,
                     facecolor = color, edgecolor = 'black'))
+            # add handle for unit
+            handles.append(Rectangle((0, 0), 0.2, 0.2,
+                    facecolor = 'white', edgecolor = 'white'))
             return handles
 
         def get_labels():
             labels = np.copy(self._info['bins'])
-            labels = ["[%.1f : %0.1f]" % (labels[i], labels[i + 1]) \
+            # labels = ["[%.1f : %0.1f]" % (labels[i], labels[i + 1]) \
+            labels = ["%.1f : %0.1f" % (labels[i], labels[i + 1]) \
                       for i in range(len(labels) - 1)]
+            labels.append(unit)
             return labels
 
         null = kwargs.pop('labels', None)
@@ -536,7 +541,7 @@ if __name__ == '__main__':
 #    ax.contour(dv, vv, bins=np.arange(0,8,1), colors='k')
 #    ax.bar(dv, vv, normed=True, opening=0.8, edgecolor='white')
     ax.box(dv, vv, normed = True)
-    l = ax.legend(axespad = -0.10)
+    l = ax.legend()  # axespad = -0.10)
     setp(l.get_texts(), fontsize = 8)
     draw()
     # print ax._info

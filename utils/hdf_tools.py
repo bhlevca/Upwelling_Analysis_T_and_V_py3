@@ -30,42 +30,46 @@ typeTab = {
 '''
 http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset.pl => IAU 2d surfacea and TOA radiation fluxes (tavg1_2d_rad_Nx)
 
-EMIS = Surface emissivity
-TS = Surface temperature
-ALBEDO = Surface albedo
+------------------------------------------------------------
+Extent Tor Tarb :W =-79.449  N=43.715 S=43.575 E= -79.259
+------------------------------------------------------------
+
+*EMIS = Surface emissivity
+*TS = Surface temperature
+*ALBEDO = Surface albedo
 ALBNIRDF = Diffuse beam NIR surface albedo
 ALBNIRDR = Direct beam NIR surface albedo
 ALBVISDF = Diffuse beam VIS-UV surface albedo
 ALBVISDR = Direct beam VIS-UV surface albedo
-LWGEM = Emitted longwave at the surface
-LWGAB = Absorbed longwave at the surface
-LWGABCLR = Absorbed longwave at the surface with no clouds
-LWGABCLRCLN = Absorbed longwave at the surface with no clouds or aerosol
-LWGNT = Net downward longwave flux at the surface
-LWGNTCLR = Net downward longwave flux at the surface for cloud-free sky
-LWGNTCLRCLN = Net downward longwave flux at the surface for clear sky
-LWTUP = Upward longwave flux at top of atmosphere (TOA)
-LWTUPCLR = Upward longwave flux at TOA assuming clear sky
+*LWGEM = Emitted longwave at the surface
+*LWGAB = Absorbed longwave at the surface
+*LWGABCLR = Absorbed longwave at the surface with no clouds
+*LWGABCLRCLN = Absorbed longwave at the surface with no clouds or aerosol
+*LWGNT = Net downward longwave flux at the surface
+*LWGNTCLR = Net downward longwave flux at the surface for cloud-free sky
+*LWGNTCLRCLN = Net downward longwave flux at the surface for clear sky
+*LWTUP = Upward longwave flux at top of atmosphere (TOA)
+*LWTUPCLR = Upward longwave flux at TOA assuming clear sky
 LWTUPCLRCLN = Upward longwave flux at TOA assuming clear clean sky
 SWTDN = TOA incident shortwave flux
-SWGDN = Surface incident shortwave flux
-SWGDNCLR = Surface incident shortwave flux assuming clear sky
-SWGNT = Surface net downward shortwave flux
-SWGNTCLR = Surface net downward shortwave flux assuming clear sky
-SWGNTCLN = Surface net downward shortwave flux assuming clean sky
-SWGNTCLRCLN = Surface net downward shortwave flux assuming clear clean sky
+*SWGDN = Surface incident shortwave flux
+*SWGDNCLR = Surface incident shortwave flux assuming clear sky
+*SWGNT = Surface net downward shortwave flux
+*SWGNTCLR = Surface net downward shortwave flux assuming clear sky
+*SWGNTCLN = Surface net downward shortwave flux assuming clean sky
+8SWGNTCLRCLN = Surface net downward shortwave flux assuming clear clean sky
 SWTNT = TOA net downward shortwave flux
 SWTNTCLR = TOA net downward shortwave flux assuming clear sky
 SWTNTCLN = TOA net downward shortwave flux assuming clean sky
 SWTNTCLRCLN = TOA net downward shortwave flux assuming clear clean sky
-TAUHGH = Optical thickness of high clouds
-TAULOW = Optical thickness of low clouds
-TAUMID = Optical thickness of mid-level clouds
-TAUTOT = Optical thickness of all clouds
-CLDHGH = High-level (above 400 hPa) cloud fraction
-CLDLOW = Low-level (1000-700 hPa) cloud fraction
-CLDMID = Mid-level (700-400 hPa) cloud fraction
-CLDTOT = Total cloud fraction
+*TAUHGH = Optical thickness of high clouds
+*TAULOW = Optical thickness of low clouds
+*TAUMID = Optical thickness of mid-level clouds
+*TAUTOT = Optical thickness of all clouds
+*CLDHGH = High-level (above 400 hPa) cloud fraction
+*CLDLOW = Low-level (1000-700 hPa) cloud fraction
+*CLDMID = Mid-level (700-400 hPa) cloud fraction
+*CLDTOT = Total cloud fraction
 '''
 
 def read_netcdf(filename):
@@ -264,8 +268,9 @@ def read_hdf_dir(dirname, var, ix, iy, timeidx, startdate, enddate):
     # dirList = os.listdir(dirname)
     # or
     # Separate directories from files
+    dn = '/home/bogdan/Documents/UofT/PhD/Data_Files/CloudData/Toronto-Jan-Dec-2012/HDF'
     base, dirs, files = iter(os.walk(dirname)).next()
-    sorted_files = sorted(files, key = lambda x: x.split('.')[4])  # the fourth group after the 3rd dot
+    sorted_files = sorted(files, key = lambda f: f.split('.')[4])  # the fourth group after the 3rd dot
 
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
     start_num = date2num(dt)
@@ -301,8 +306,10 @@ def read_hdf_dir(dirname, var, ix, iy, timeidx, startdate, enddate):
 
 if __name__ == '__main__':
     path = "/home/bogdan/Documents/UofT/PhD/Data_Files/CloudData/Toronto-Jan-Dec-2012/HDF"
+    path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ClimateData/Radiation/HDF"
     # read_netcdf('/home/bogdan/Documents/UofT/PhD/Data_Files/CloudData/Toronto-Mar-Nov-2012/MERRA300.prod.assim.tavgM_2d_rad_Nx.201203.SUB.nc')
-    fn = '/home/bogdan/Documents/UofT/PhD/Data_Files/CloudData/Toronto-Jan-Dec-2012/HDF/MERRA300.prod.assim.tavg1_2d_rad_Nx.20120101.SUB.hdf'
+    # fn = '/home/bogdan/Documents/UofT/PhD/Data_Files/CloudData/Toronto-Jan-Dec-2012/HDF/MERRA300.prod.assim.tavg1_2d_rad_Nx.20120101.SUB.hdf'
+    fn = path + "/MERRA300.prod.assim.tavg1_2d_rad_Nx.20130430.SUB.hdf"
     [f, dsets, attr] = read_hdf_datasets_info(fn)
     read_hdf_datasets(f, dsets, attr)
     arr = read_hdf_variable(fn, 'cldtot', 0, 1, [0, 23])
@@ -310,6 +317,10 @@ if __name__ == '__main__':
 
     startdate = '12/07/19 00:00:00'
     enddate = '12/10/24 00:00:00'
+    startdate = '13/07/19 00:00:00'
+    enddate = '13/10/24 00:00:00'
+
+
     var = 'lwgnt'
     ix = 0
     iy = 1

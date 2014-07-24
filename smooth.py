@@ -60,7 +60,7 @@ def smooth(x, window_len = 11, window = 'hanning'):
     return [y[window_len - 1:-window_len + 1], dy[window_len - 1:-window_len + 1]]
 
 
-def smoothfit(x, y, winsize, window):
+def smoothfit(x, y, winsize, window = 'hanning'):
     '''
     returns the residuals            in results['residual']
                 determination coeff  in results['determination']
@@ -127,6 +127,28 @@ def smooth_demo():
     title("Smoothing a noisy signal")
     show()
 
+def smoothed_by_window(dateTime, temp, span):
+    # check if span is correct
+    dt = dateTime[2] - dateTime[1]  # usually days
+    if span == "window_6hour":  # 30 * 6 for a 2 minute sampling
+        nspan = 6. / (dt * 24)
+    elif span == "window_hour":  # 30 for a 2 minute sampling
+        nspan = 1. / (dt * 24)
+    elif span == "window_1/2hour":  # 30 for a 2 minute sampling
+        nspan = 0.5 / (dt * 24)
+    elif span == "window_day":  # 30 * 24 for a 2 minute sampling
+        nspan = 24. / (dt * 24)
+    elif span == "window_half_day":  # 30 * 12 for a 2 minute sampling
+        nspan = 12. / (dt * 24)
+    elif span == "window_3days":  # 3 * 30 * 24 for a 2 minute sampling
+        nspan = 24. * 3 / (dt * 24)
+    elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
+        nspan = 24. * 7 / (dt * 24)
+    else:
+        print "Error, window span not defined"
+        return
+    results = smoothfit(dateTime, temp, nspan)
+    return results['smoothed']
 
 if __name__ == '__main__':
     smooth_demo()
