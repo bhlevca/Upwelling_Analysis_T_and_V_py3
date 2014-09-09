@@ -587,7 +587,7 @@ def display_depths_subplot(dateTimes, depths, maxdepth, fnames = None, yday = No
         minx = 10000000.
         maxx = 0.
 
-        # find maxx and minX of the X axis
+        # find maxX and minX of the X axis
         for k in range(0, len(dateTimes)):
             d = dateTimes[k]
             dmax = dates.num2date(d[len(d) - 1])
@@ -867,7 +867,7 @@ def display_mixed_subplot(dateTimes1 = [], data = [] , varnames = [], ylabels1 =
             if j == length - 1:
                 ax[j].set_xlabel("Day of the year").set_fontsize(fontsize + 4)
             # end
-            ax[j].set_xlim(xmin = dofy1[0], xmax = dofy1[len(dofy1) - 1])
+            # ax[j].set_xlim(xmin = dofy1[0], xmax = dofy1[len(dofy1) - 1])
 
         # limits
         if limits != None:

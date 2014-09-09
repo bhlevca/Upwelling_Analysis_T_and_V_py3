@@ -17,7 +17,8 @@ import upwelling
 import readTempHoboFiles
 import display_data
 import spectral_analysis
-
+import utils.timeseries_correlation
+import utils.custom_csv_readers
 
 class Upwelling(object):
     '''
@@ -539,8 +540,9 @@ if __name__ == '__main__':
     OutHarb_heatmap = False
     JarvDock_heatmap = False
     filter_data = False
-    weather_data = True
+    weather_data = False
     spectral_harbour = False
+    correlation_curr_temp = True
 
     ############################################################
     # initilize object
@@ -834,3 +836,64 @@ if __name__ == '__main__':
 
         upw.spectral_analysis(path, sorted_files, names, log, withci)
 
+    if correlation_curr_temp:
+
+        # full timeseries
+        startdate = '13/06/25 00:00:00'
+        enddate = '13/10/09 00:00:00'
+        dt = datetime.datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
+        start_num = dates.date2num(dt)
+        dt = datetime.datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
+        end_num = dates.date2num(dt)
+
+        window = '1H'
+
+        # ADCP velocity data path
+        path = "/software/SAGEwork/rdradcp"
+        # bin_no = [1, 2, 3, 4]
+        bin_no = [4]
+
+        reader_obj = utils.custom_csv_readers.Read_ADCP_WrittenData(path, 'northVel.csv', start_num, end_num, bin_no)
+        nvel_ts = utils.timeseries_correlation.LimnologyTimesSeries(reader_obj, window)
+
+        # Temperature data path EGap 2 m depth S/N 10098821
+        path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed"
+        filenames = ['10098822.csv']
+        # filenames = ['10098822.csv', '10098823.csv', '10098821.csv', '10098825.csv']
+
+        # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed"
+        # filenames = '10298872.csv',
+
+        reader_obj = utils.custom_csv_readers.Read_Temp_Data_2013(path, filenames, start_num, end_num)
+        temp_ts = utils.timeseries_correlation.LimnologyTimesSeries(reader_obj, window)
+
+        method = 'pearson'
+        # method = 'spearman'
+
+        # best with pandas
+        # '10098822.csv', 'northVel.csv' +  bin 4, window = 1H lag= 14  avarage_int = hour => corr =31%
+
+        # best with Emery & Thomson
+        # '10098822.csv', 'northVel.csv' +  bin 4, window = 1H lag= 66  avarage_int = hour => corr =60.96%
+
+
+        lag = 13
+        # average_interval = 'hour'
+        # average_interval = 'second'
+        # average_interval = 'minute'
+        # average_interval = 'day'
+        average_interval = None
+
+        r = utils.timeseries_correlation.LimnologyTimesSeries.cross_corr(nvel_ts, temp_ts, 150)
+        print "cross corr R", r
+
+        r = utils.timeseries_correlation.LimnologyTimesSeries.pearson_corr_coeff(nvel_ts, temp_ts, lag)
+        print "pearson corr coef r=%f" % r
+
+        r = utils.timeseries_correlation.LimnologyTimesSeries.cross_corr_coeff(nvel_ts, temp_ts, 100)
+
+        r = utils.timeseries_correlation.LimnologyTimesSeries.corr(nvel_ts, temp_ts, method, lag, average_interval)
+        print "Pandas r=%f" % r
+        cv = utils.timeseries_correlation.LimnologyTimesSeries.cov(nvel_ts, temp_ts, lag)
+        print "Pandas cov=%f" % cv
+        print "r coef =%f" % (cv / (np.std(nvel_ts.data) * np.std(temp_ts.data)))
