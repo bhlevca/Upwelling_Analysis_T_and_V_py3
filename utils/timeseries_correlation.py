@@ -103,7 +103,10 @@ class LimnologyTimesSeries(object):
 
         # end
         LimnologyTimesSeries.display(range(0, lag), ra, "lag", "r coeff")
-        return ra
+        if np.max(ra) < 0 :
+            return np.min(ra)
+        else:
+            return np.max(ra)
 
     @staticmethod
     def pearson_corr_coeff(ts1, ts2, lag = None):
@@ -134,8 +137,8 @@ class LimnologyTimesSeries(object):
 
 
     @staticmethod
-    def cross_corr_coeff(ts1, ts2, lag = 100):
-        '''Calculate the correlation between series
+    def normalized_cross_corr_coeff(ts1, ts2, lag = 100):
+        '''Calculate the normalized cross correlation between series
            based on pairwise complete observations.
 
         :param ts1: original time series
@@ -180,6 +183,11 @@ class LimnologyTimesSeries(object):
            # r is the correlation coefficient at "delay"
         # end
         LimnologyTimesSeries.display(range(0, lag), ra, "lag", "r coeff")
+
+        if np.max(ra) < 0 :
+            return np.min(ra)
+        else:
+            return np.max(ra)
 
     @staticmethod
     def display(x, y, xlabel, ylabel):
@@ -252,7 +260,7 @@ class LimnologyTimesSeries(object):
         # (getting the "as of" value)
         ts1.reindex(ts2, 'ffill')
         if lag != None:
-            ts1.ts = ts1.ts.shift(lag)
+            ts2.ts = ts2.ts.shift(lag)
 
 
         return ts1.ts.cov(ts2.ts, min_periods)

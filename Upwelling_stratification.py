@@ -878,22 +878,23 @@ if __name__ == '__main__':
 
 
         lag = 13
-        # average_interval = 'hour'
-        # average_interval = 'second'
-        # average_interval = 'minute'
-        # average_interval = 'day'
-        average_interval = None
 
         r = utils.timeseries_correlation.LimnologyTimesSeries.cross_corr(nvel_ts, temp_ts, 150)
-        print "cross corr R", r
+        print "cross corr f(lag) = %f" % r
 
         r = utils.timeseries_correlation.LimnologyTimesSeries.pearson_corr_coeff(nvel_ts, temp_ts, lag)
         print "pearson corr coef r=%f" % r
 
-        r = utils.timeseries_correlation.LimnologyTimesSeries.cross_corr_coeff(nvel_ts, temp_ts, 100)
+        r = utils.timeseries_correlation.LimnologyTimesSeries.normalized_cross_corr_coeff(nvel_ts, temp_ts, 150)
+        print "normalized cross corr f(lag) = %f" % r
 
+        average_interval = 'hour'
+        # average_interval = 'second'
+        # average_interval = 'minute'
+        # average_interval = 'day'
+        # average_interval = None
         r = utils.timeseries_correlation.LimnologyTimesSeries.corr(nvel_ts, temp_ts, method, lag, average_interval)
         print "Pandas r=%f" % r
+
         cv = utils.timeseries_correlation.LimnologyTimesSeries.cov(nvel_ts, temp_ts, lag)
         print "Pandas cov=%f" % cv
-        print "r coef =%f" % (cv / (np.std(nvel_ts.data) * np.std(temp_ts.data)))
