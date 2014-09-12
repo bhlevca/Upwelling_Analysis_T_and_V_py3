@@ -7,7 +7,7 @@ from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, datetime, sys
 from scipy.interpolate import UnivariateSpline
-import display_data
+from utils import display_data
 
 sys.path.insert(0, '/software/SAGEwork/Seiches')
 import fft.filters as filters
@@ -16,7 +16,7 @@ import fft.fft_utils as fft_utils
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-import smooth
+from utils import smooth
 
 
 
@@ -251,9 +251,9 @@ def analyze_data(pair, name, id, writer):
             elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
                 nspan = 24. * 7 / (dt * 24)
 
-            results = smooth.smoothfit(dateTime, temp, nspan, windows[1])
+            results = utils.smooth.smoothfit(dateTime, temp, nspan, windows[1])
 
-            display_data.display2(dateTime, temp, results['smoothed'], k)
+            utils.display_data.display2(dateTime, temp, results['smoothed'], k)
 
             print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
             writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
@@ -307,7 +307,7 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
             else:
                 print "Error, window span not defined"
                 return
-            results = smooth.smoothfit(dateTime, temp, nspan, window)
+            results = utils.smooth.smoothfit(dateTime, temp, nspan, window)
         else:
             results = {}
             results['smoothed'] = temp
@@ -411,7 +411,7 @@ def read_files_and_display(rpath = None):
 
     # plot the temperature not the smoothed ones
     datetype = 'dayofyear'
-    display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$", \
+    utils.display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$", \
                                       datetype = datetype)
     t11 = ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27']
     t12 = [27, 24, 21, 18, 15, 12, 9, 6, 3, 0]
@@ -419,10 +419,10 @@ def read_files_and_display(rpath = None):
     maxdepth = 27
     firstlogdepth = 3
     maxtemp = 25
-    display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, fontsize = 18, datetype = datetype)
+    utils.display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, fontsize = 18, datetype = datetype)
     profiles = [1000, 3500, 4000, 5500, 10000, 15000, 20000, 25000]
 
-    display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles)
+    utils.display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles)
 
 def read_files(span = None, window = windows[1], timeinterv = None, rpath = None):
     if rpath != None:
@@ -539,7 +539,7 @@ def plot_upwelling_multiple_locations():
     dateTime = [dateTime1, dateTime2, dateTime3, dateTime4]
     temp = [temp1, temp2, temp3, temp4]
     k = [21, 17, 31, 44]
-    display_data.display_upwelling(dateTime, temp, results, k)
+    utils.display_data.display_upwelling(dateTime, temp, results, k)
 
 
 

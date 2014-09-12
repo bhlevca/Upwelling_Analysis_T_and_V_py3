@@ -8,11 +8,11 @@ from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, sys, inspect, locale, math
 from scipy.interpolate import UnivariateSpline
-import display_data
+from utils import display_data
 import read_RBR
 import readTempHoboFiles
 # import scikits.bootstrap as bootstrap
-import env_can_weather_data_processing as envir
+from utils import env_can_weather_data_processing as envir
 from matplotlib import rcParams
 
 sys.path.insert(0, '/software/SAGEwork/Seiches')
@@ -34,7 +34,7 @@ import utils.stats as stat
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-import smooth
+from utils import smooth
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
 window_6hour = "window_6hour"  # 30 * 6 for a 2 minute sampling
@@ -58,7 +58,7 @@ def calculate_30days_running_mean(dateTime, temp, tunits):
     else:
         raise Exception("time unit unsupported")
 
-    mean_month = smooth.smoothfit(dateTime, temp, nspan, windows[1])
+    mean_month = utils.smooth.smoothfit(dateTime, temp, nspan, windows[1])
 
 #===============================================================================
 #     mean_month = numpy.zeros(len(temp))
@@ -153,7 +153,7 @@ def calculate_Upwelling_indices(time, temp, fnames, tunits, zoneName):
 
         UCI_mean = uci.sum() / len(uci)
         print "name=%s UCI=%f" % (fnames[i], UCI_mean)
-        display_data.display_temperatures_and_peaks([time[i][trim:-trim], time[i][trim:-trim]], [month_mean[trim:-trim], temp[i][trim:-trim]],
+        utils.display_data.display_temperatures_and_peaks([time[i][trim:-trim], time[i][trim:-trim]], [month_mean[trim:-trim], temp[i][trim:-trim]],
                                                        [_max], [_min], [], fnames = ['30 day mean', fnames[i]], custom = zoneName, fill = True)
 
 
@@ -995,11 +995,11 @@ def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filte
             a_max.append(_max)
             a_min.append(_min)
 
-        display_data.display_temperatures_and_peaks(numpy.array(atime), numpy.array(aresults), \
+        utils.display_data.display_temperatures_and_peaks(numpy.array(atime), numpy.array(aresults), \
                                                     numpy.array(a_max), numpy.array(a_min), [], fnames = numpy.array(afname), \
                                                     custom = "Upweling maxima", fill = False, minorgrid = 'hour', datetype = datetype)
     else:
-        display_data.display_temperatures(numpy.array(atime), numpy.array(aresults), [], fnames = numpy.array(afname), \
+        utils.display_data.display_temperatures(numpy.array(atime), numpy.array(aresults), [], fnames = numpy.array(afname), \
                                                     custom = "", fill = False, minorgrid = 'hour', datetype = datetype)
 
     return [a_max, a_min, afname]
@@ -1072,12 +1072,12 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = F
         # Plot temperature time series time averages or not
         if not fft:
             if timeavg != None:
-                display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = fnames, difflines = difflines, custom = zoneName)
+                utils.display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = fnames, difflines = difflines, custom = zoneName)
             else:
-                display_data.display_temperatures(HOBOdateTimeArr, HOBOtempArr, k, fnames = fnames, difflines = difflines, custom = zoneName)
+                utils.display_data.display_temperatures(HOBOdateTimeArr, HOBOtempArr, k, fnames = fnames, difflines = difflines, custom = zoneName)
 
             if len(HOBOdateTimeArr) <= 9 and subplot != None:
-                display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
+                utils.display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
             # end if len
         else:
             # fft
@@ -1246,13 +1246,13 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
         print "Start display wind_airpress_airtemp_water_temp plot "
-        display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
+        utils.display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
         # 7) Draw subplot
         # rcParams['text.usetex'] = True
         custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', 'Wind spd(km/h)', 'Air p(hPa)', 'Water T($^\circ$C)'])
         # ToDO: Add short and long radiation
         print "Start display wind_airpress_airtemp_water_temp subplots "
-        display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
+        utils.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
     # end if filter
 
 
@@ -1261,7 +1261,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     # ToDO: Add short and long radiation
     print "Start display mixed subplots "
     dateTimes1 = [iwdateTime]
-    data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day")]
+    data = [utils.smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day")]
     varnames = ["Wind speed"]
     ylabels1 = ["Wind spd [km/h]"]
     dateTimes2 = [iwdateTime, HOBOdateTimeArr]
@@ -1281,7 +1281,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     maxtemp = [25, 26]
     mintemps = [0, 0]
     mindepths = [3, 0]
-    display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data, varnames = varnames, ylabels1 = ylabels1,
+    utils.display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data, varnames = varnames, ylabels1 = ylabels1,
                                        dateTimes2 = dateTimes2, groups = groups, groupnames = groupnames, ylabels2 = ylabels2,
                                        dateTimes3 = dateTimes3, imgs = imgs, ylabels3 = ylabels3, ticks = tick, maxdepths = maxdepth, \
                                         mindepths = mindepths, mintemps = mintemps, firstlogs = firstlogdepth, maxtemps = maxtemp,
@@ -1301,7 +1301,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     dateTime3, results3 = hdf.read_hdf_dir(cloud_path, var3, ix, iy, timeidx, str_date[0], str_date[1])
 
 
-    display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [1, 2, 3],
+    utils.display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [1, 2, 3],
                                       fnames = [var1, var2, var3], difflines = False, custom = "Radiation data (W/m$^2$)")
 
     # 10) Temperature profiles in lake and harbour
@@ -1313,8 +1313,8 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     dtnum2 = matplotlib.dates.date2num(dt)
     profiledates = [ dtnum1, dtnum2]
 
-    display_data.display_avg_vertical_temperature_profiles_err_bar_range(dateTimeArr, resultsArr, startdepth = 3, profiledates = profiledates, revert = False, legendloc = 4)
-    display_data.display_avg_vertical_temperature_profiles_err_bar_range(TH_dateTimeArr, TH_resultsArr, startdepth = 0 , profiledates = profiledates, revert = False, legendloc = 4)
+    utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range(dateTimeArr, resultsArr, startdepth = 3, profiledates = profiledates, revert = False, legendloc = 4)
+    utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range(TH_dateTimeArr, TH_resultsArr, startdepth = 0 , profiledates = profiledates, revert = False, legendloc = 4)
 
 
 def plot_buterworth_filtered_data(HOBOdateTimeArr, HOBOtempArr, fnames, k, filter, ylim = None, stats = False):
@@ -1368,7 +1368,7 @@ def plot_buterworth_filtered_data(HOBOdateTimeArr, HOBOtempArr, fnames, k, filte
 
 
             # Plot BAND buterworth filtered time series to capture only the frequencies of interest.: diurnal , poincare, upwelling etc.
-            display_data.display_temperatures([HOBOdateTimeArr_res[i][300:-100]], [Filtered_data[i][300:-100]], k, fnames = fnames[i],
+            utils.display_data.display_temperatures([HOBOdateTimeArr_res[i][300:-100]], [Filtered_data[i][300:-100]], k, fnames = fnames[i],
                                               difflines = difflines, custom = custom, ylim = ylim)
 
         # statistics SD, max, avg, min

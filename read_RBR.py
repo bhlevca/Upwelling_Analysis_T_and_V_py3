@@ -11,8 +11,8 @@ from scipy.interpolate import UnivariateSpline
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-import smooth
-import display_data
+from utils import smooth
+from utils import display_data
 
 header = '''
 RBR TR-1060  6.77 019518 (Windows: 6.13 - Minimum required: 6.13)
@@ -180,7 +180,7 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
         elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
             nspan = 24. * 7 / (dt * 24)
 
-        results = smooth.smoothfit(dateTime, temp, nspan, window)
+        results = utils.smooth.smoothfit(dateTime, temp, nspan, window)
     else:
         results = {}
         results['smoothed'] = temp
@@ -226,7 +226,7 @@ def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
     revert = True
 
     # display_data.display_temperatures(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], fNameArr[:-dirNo], revert)
-    display_data.display_temperatures(dateTimeArr, tempArr, k, fNameArr, revert)
+    utils.display_data.display_temperatures(dateTimeArr, tempArr, k, fNameArr, revert)
 
     t11 = ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20']
     t12 = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0]
@@ -235,13 +235,13 @@ def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
     firstlogdepth = 4
     maxtemp = 25
     # display_data.display_img_temperatures(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], tick, maxdepth, firstlogdepth, maxtemp, revert)
-    display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, revert)
+    utils.display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, revert)
 
     # profile is specific to the files read and needs to be modified for other readings
     profiles = [80000, 120000, 350000, 540000, 730000, 920000, 1110000, 1300000]
     legendpos = 2  # upper left
     # display_data.display_vertical_temperature_profiles(dateTimeArr[:-dirNo], tempArr[:-dirNo], resultsArr[:-dirNo], k[:-dirNo], firstlogdepth, profiles, revert, legendpos)
-    display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles, revert, legendpos)
+    utils.display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles, revert, legendpos)
 
 
 def read_files(span = None, window = windows[1], dateinterval = None, path = None):

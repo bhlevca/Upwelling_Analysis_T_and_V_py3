@@ -8,7 +8,7 @@ import matplotlib.dates
 import time, os
 import csv
 import numpy
-import smooth
+from utils import smooth
 import tor_harb_windrose
 
 weather_path = '/home/bogdan/Documents/UofT/PhD/Research-docs/Data_Files/Hobo_Files_Bogdan'
@@ -472,9 +472,9 @@ def main ():
     window_6hour = 6
     window_12hour = 12
     window_day = 24
-    results_temp = smooth.smoothfit(iwdateTime, iwtemp, window_day, windows[1])
-    results_winddir = smooth.smoothfit(iwdateTime, iwindDir, window_day, windows[1])
-    results_windspd = smooth.smoothfit(iwdateTime, iwindSpd, window_day, windows[1])
+    results_temp = utils.smooth.smoothfit(iwdateTime, iwtemp, window_day, windows[1])
+    results_winddir = utils.smooth.smoothfit(iwdateTime, iwindDir, window_day, windows[1])
+    results_windspd = utils.smooth.smoothfit(iwdateTime, iwindSpd, window_day, windows[1])
 
     print iwtemp
     print results_winddir['smoothed']

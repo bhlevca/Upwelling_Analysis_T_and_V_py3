@@ -15,7 +15,7 @@ import matplotlib.dates as dates
 # local
 import upwelling
 import readTempHoboFiles
-import display_data
+from utils import display_data
 import spectral_analysis
 import utils.timeseries_correlation
 import utils.custom_csv_readers
@@ -162,16 +162,16 @@ class Upwelling(object):
         ntempArr = np.array(tempArr)
         nresultsArr = np.array(resultsArr)
         nk = np.array(k)
-        display_data.display_temperatures(ndateTimeArr, ntempArr, nk, fnames = nsorted_files, custom = custom, \
+        utils.display_data.display_temperatures(ndateTimeArr, ntempArr, nk, fnames = nsorted_files, custom = custom, \
                                       datetype = datetype, ylab = "Temperature ($^oC$")
 
 
         ycustom = "Depth [m]"  # "Stations"  #
         revert = True
-        display_data.display_img_temperatures(ndateTimeArr, ntempArr, nresultsArr, nk, tick, maxdepth, firstlogdepth, maxtemp, revert = revert, \
+        utils.display_data.display_img_temperatures(ndateTimeArr, ntempArr, nresultsArr, nk, tick, maxdepth, firstlogdepth, maxtemp, revert = revert, \
                                               fontsize = 22, datetype = datetype, thermocline = thermocline, interp = interpolate, ycustom = ycustom)
 
-        display_data.display_temperatures_subplot(ndateTimeArr, ntempArr, nresultsArr, nk, fnames = nsorted_files, revert = False, custom = None, \
+        utils.display_data.display_temperatures_subplot(ndateTimeArr, ntempArr, nresultsArr, nk, fnames = nsorted_files, revert = False, custom = None, \
                                  maxdepth = None, tick = None, firstlog = None, yday = True, delay = None, group = 2, processed = True, \
                                  limits = [0, 25], sharex = True)
 
@@ -317,7 +317,7 @@ class Upwelling(object):
                     print "PERCENT location:%s j:%d hist:%f" % (fnames[i], j, perc[i][j])
 
         ylab = 'Temperature rate ($^\circ$C/h)'
-        display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
+        utils.display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
                                            tick = None, firstlog = None, fontsize = 22, ylim = [ymin - 1, ymax + 1], fill = False, \
                                            show = True, datetype = "dayofyear", minorgrid = "mondays", ylab = ylab)
 
@@ -325,7 +325,7 @@ class Upwelling(object):
             values = perc
         else:
             values = ghist
-        display_data.display_marker_histogram(bins, values, fnames, xlabel = 'Temperature rate ($^\circ$C/h)', ylabel = "Frequency (%)", \
+        utils.display_data.display_marker_histogram(bins, values, fnames, xlabel = 'Temperature rate ($^\circ$C/h)', ylabel = "Frequency (%)", \
                                               title = None, log = True, grid = False, fontsize = 30)
 
 

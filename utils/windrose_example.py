@@ -1,4 +1,4 @@
-from windrose import WindroseAxes
+from utils.windrose import WindroseAxes
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 from numpy.random import random

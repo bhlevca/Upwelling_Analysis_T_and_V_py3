@@ -6,8 +6,8 @@ from matplotlib.dates import date2num, num2date
 from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, datetime, sys
-import display_data
-import smooth
+from utils import display_data
+from utils import smooth
 import readTempHoboFiles
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
@@ -117,7 +117,7 @@ class Read_ADCP_WrittenData(object):
                 else:
                     print "Error, window span not defined"
                     return
-                results = smooth.smoothfit(dateTime, temp, nspan, window)
+                results = utils.smooth.smoothfit(dateTime, temp, nspan, window)
             else:
                 results = {}
                 results['smoothed'] = temp

@@ -8,11 +8,11 @@ from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, sys, inspect, locale, math
 from scipy.interpolate import UnivariateSpline
-import display_data
+from utils import display_data
 import read_RBR
 import readTempHoboFiles
 # import scikits.bootstrap as bootstrap
-import env_can_weather_data_processing as envir
+from utils import env_can_weather_data_processing as envir
 from matplotlib import rcParams
 
 
@@ -44,7 +44,7 @@ Logging end   12/11/22 07:49:04
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-import smooth
+from utils import smooth
 
 
 def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = None, bfilter = False, bkelvin = False):
@@ -76,12 +76,12 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
     if zNames == None:
         zNames = ["Hobo ", "RBR "]
     if chain == "all":
-        display_data.display_temperatures_subplot([HOBOdateTimeArr, RBRdateTimeArr], [HOBOtempArr, RBRtempArr], [HOBOresultsArr, RBRresultsArr], k, fnames = ["Hobo-10m", "RBR-10m"])
-        display_data.display_temperatures([HOBOdateTimeArr, RBRdateTimeArr], [HOBOtempArr, RBRtempArr], k, fnames = zNames)
+        utils.display_data.display_temperatures_subplot([HOBOdateTimeArr, RBRdateTimeArr], [HOBOtempArr, RBRtempArr], [HOBOresultsArr, RBRresultsArr], k, fnames = ["Hobo-10m", "RBR-10m"])
+        utils.display_data.display_temperatures([HOBOdateTimeArr, RBRdateTimeArr], [HOBOtempArr, RBRtempArr], k, fnames = zNames)
     elif chain == "hobo":
-        display_data.display_temperatures([HOBOdateTimeArr], [HOBOtempArr], k, fnames = zNames[0])
+        utils.display_data.display_temperatures([HOBOdateTimeArr], [HOBOtempArr], k, fnames = zNames[0])
     elif chain == "rbr":
-        display_data.display_temperatures([RBRdateTimeArr], [RBRtempArr], k, fnames = zNames[1])
+        utils.display_data.display_temperatures([RBRdateTimeArr], [RBRtempArr], k, fnames = zNames[1])
 
     if bkelvin and chain == 'all':
         [hobo, rbr] = [ [HOBOdateTimeArr[1:], HOBOtempArr[1:]], [RBRdateTimeArr[1:], RBRtempArr[1:]] ]
@@ -152,17 +152,17 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
         if chain == "all":
             legend1 = [strg1, strg2]
             # legend1 = ["Hobo-10m-filter-24h", "RBR-10m-filter-24h"]
-            display_data.display_temperatures_subplot([HOBOdateTimeArr_res1, RBRdateTimeArr_res2], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1, yday = yday, delay = [delay1, delay2])
-            display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2)], [data1, data2], k, fnames = legend1)
+            utils.display_data.display_temperatures_subplot([HOBOdateTimeArr_res1, RBRdateTimeArr_res2], [data1, data2], [HOBOresultsArr, RBRresultsArr], k, fnames = legend1, yday = yday, delay = [delay1, delay2])
+            utils.display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2)], [data1, data2], k, fnames = legend1)
         elif chain == "hobo":
             legend1 = [strg1]
             # legend1 = ["Hobo-10m-filter-24h"]
 
-            display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1)], [data1], k, fnames = legend1)
+            utils.display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res1, delay1)], [data1], k, fnames = legend1)
         elif chain == "rbr":
             legend1 = [strg2]
             # legend1 = ["RBR-10m-filter-24h"]
-            display_data.display_temperatures([numpy.subtract(RBRdateTimeArr_res2, delay2)], [data2], k, fnames = legend1)
+            utils.display_data.display_temperatures([numpy.subtract(RBRdateTimeArr_res2, delay2)], [data2], k, fnames = legend1)
 
 
 
@@ -198,15 +198,15 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
         if chain == "all":
             legend2 = [strg1, strg2]
 
-            display_data.display_temperatures_subplot([HOBOdateTimeArr_res3, RBRdateTimeArr_res4], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2, yday = yday, delay = [delay3, delay4])
-            display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)], [data3, data4], k, fnames = legend2)
+            utils.display_data.display_temperatures_subplot([HOBOdateTimeArr_res3, RBRdateTimeArr_res4], [data3, data4], [HOBOresultsArr, RBRresultsArr], k, fnames = legend2, yday = yday, delay = [delay3, delay4])
+            utils.display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)], [data3, data4], k, fnames = legend2)
         elif chain == "hobo":
             legend2 = [strg1]
-            display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3)], [data3], k, fnames = legend2, custom = "Filtered Temperature Oscillation")
+            utils.display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res3, delay3)], [data3], k, fnames = legend2, custom = "Filtered Temperature Oscillation")
 
         elif chain == "rbr":
             legend2 = [strg2]
-            display_data.display_temperatures([numpy.subtract(RBRdateTimeArr_res4, delay4)], [data4], k, fnames = legend2, custom = "Filtered Temperature Oscillation")
+            utils.display_data.display_temperatures([numpy.subtract(RBRdateTimeArr_res4, delay4)], [data4], k, fnames = legend2, custom = "Filtered Temperature Oscillation")
 
 
 
@@ -217,8 +217,8 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
             legend = [legend1[0], legend1[1], legend2[0], legend2[1]]
             timeint = [numpy.subtract(HOBOdateTimeArr_res1, delay1), numpy.subtract(RBRdateTimeArr_res2, delay2), numpy.subtract(HOBOdateTimeArr_res3, delay3), numpy.subtract(RBRdateTimeArr_res4, delay4)]
 
-            display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay1, delay2, delay3, delay4], custom = "Filtered Temperature Oscillation")
-            display_data.display_temperatures(timeint, Data, k, fnames = legend, custom = "Filtered Temperature Oscillation")
+            utils.display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay1, delay2, delay3, delay4], custom = "Filtered Temperature Oscillation")
+            utils.display_data.display_temperatures(timeint, Data, k, fnames = legend, custom = "Filtered Temperature Oscillation")
         elif chain == "hobo":
             legend = [legend1[0], legend2[0]]
             trim = int(len(HOBOdateTimeArr_res1) / 10)
@@ -229,15 +229,15 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
             timeint = [numpy.subtract(HOBOdateTimeArr_res1, delay1)[trim:-trim], numpy.subtract(HOBOdateTimeArr_res3, delay3)[trim2:-trim2]]
 
             # display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay1, delay3], custom = "Filtered Temperature Oscillation")
-            display_data.display_temperatures(timeint, Data, k, fnames = legend, custom = "Filtered Temperature Oscillation", ylim = [-4, 8])
+            utils.display_data.display_temperatures(timeint, Data, k, fnames = legend, custom = "Filtered Temperature Oscillation", ylim = [-4, 8])
         elif chain == "rbr":
             Data = [data2, data4]
             Result = [RBRresultsArr, RBRresultsArr]
             legend = [legend1[1], legend2[1]]
             timeint = [numpy.subtract(RBRdateTimeArr_res2, delay2), numpy.subtract(RBRdateTimeArr_res4, delay4)]
 
-            display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay2, delay4])
-            display_data.display_temperatures(timeint, Data, k, fnames = legend, custom = "Filtered Temperature Oscillation")
+            utils.display_data.display_temperatures_subplot(timeint, Data, Result, k, fnames = legend, yday = yday, delay = [delay2, delay4])
+            utils.display_data.display_temperatures(timeint, Data, k, fnames = legend, custom = "Filtered Temperature Oscillation")
 
     # end bfilter
 
@@ -330,7 +330,7 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
 
         print "Start display"
         # display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = locnames, yday = yday, delay = delay)
-        display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = locnames, difflines = True, custom = "Temperature Timseries - Toronto Harbour")
+        utils.display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = locnames, difflines = True, custom = "Temperature Timseries - Toronto Harbour")
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
         # cut the 1/10 atc each end with bad filtered data
@@ -341,7 +341,7 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
                 Filtered_data[i] = Filtered_data[i][trim:-trim];
                 HOBOdateTimeArr_res[i] = HOBOdateTimeArr_res[i][trim:-trim]
 
-            display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = locnames, difflines = difflines, custom = "Filtered Temperature Timeseries - Toronto Harbour")
+            utils.display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = locnames, difflines = difflines, custom = "Filtered Temperature Timeseries - Toronto Harbour")
     # end for path
 
 def read_TRCA_files(paths):
@@ -428,10 +428,10 @@ def read_TRCA_files(paths):
 
         print "Start display"
         if len(HOBOdateTimeArr) <= 9:
-            display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
+            utils.display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = False
-        display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = fnames, difflines = difflines)
+        utils.display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = fnames, difflines = difflines)
     # end for path
 
 
@@ -544,12 +544,12 @@ def wind_airpress_airtemp_water_temp():
     custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', 'Wind spd(m/s)', 'Air p(hPa)', 'Water T($^\circ$C)'])
     # ToDO: Add short and long radiation
     print "Start display wind_airpress_airtemp_water_temp subplots "
-    display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
+    utils.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
 
     # superimposed filtered data for 1-3 days oscillation freq
     difflines = True
     print "Start display wind_airpress_airtemp_water_temp plot "
-    display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
+    utils.display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
 
 
     print "Start display  Atmospheric radiation "
@@ -567,7 +567,7 @@ def wind_airpress_airtemp_water_temp():
     dateTime3, results3 = hdf.read_hdf_dir(path, var3, ix, iy, timeidx, startdate, enddate)
 
 
-    display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [1, 2, 3],
+    utils.display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [1, 2, 3],
                                       fnames = [var1, var2, var3], difflines = False, custom = "Radiation data (W/m$^2$)")
 
 
@@ -765,14 +765,14 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
 
     print "Start display: isoterm_oscillation"
 
-    display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [HOBODepthArr[1:], RBRDepthArr[1:]], maxdepth = wdepths, \
+    utils.display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [HOBODepthArr[1:], RBRDepthArr[1:]], maxdepth = wdepths, \
                                        fnames = fnames, yday = yday, revert = revert, tick = tick, custom = custom, firstlog = None)
 
 
     tick = [tick1]
     revert_y = True  # this will revert only depths tick on the y axis
 
-    display_data.display_depths_subplot([HOBOdateTimeArr_res[1:]], [HOBODepthArr[1:]], maxdepth = [wdepths[0]], \
+    utils.display_data.display_depths_subplot([HOBOdateTimeArr_res[1:]], [HOBODepthArr[1:]], maxdepth = [wdepths[0]], \
                                          fnames = [fnames[0]], yday = yday, revert = revert_y, tick = tick, custom = [custom[0]], firstlog = None)
 
 
@@ -780,7 +780,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
     revert_y = True
 
 
-    display_data.display_depths_subplot([RBRdateTimeArr_res[1:]], [RBRDepthArr[1:]], maxdepth = [wdepths[1]], \
+    utils.display_data.display_depths_subplot([RBRdateTimeArr_res[1:]], [RBRDepthArr[1:]], maxdepth = [wdepths[1]], \
                                          fnames = [fnames[1]], yday = yday, revert = revert_y, tick = tick, custom = [custom[1]], firstlog = None)
 
     return [ [HOBOdateTimeArr[0][1:], HOBODepthArr[1:]], [RBRdateTimeArr[0][1:], RBRDepthArr[1:]] ]
@@ -854,7 +854,7 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
 
 
 
-    display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [Filtered_data[1:], Filtered_data_rbr[1:]], maxdepth = None, \
+    utils.display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [Filtered_data[1:], Filtered_data_rbr[1:]], maxdepth = None, \
                                        fnames = fnames, yday = yday, revert = False, tick = None, custom = custom, firstlog = None)
 
     debug = False;
@@ -862,7 +862,7 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
         # tick = [tick1]
         revert_y = True  # this will revert only depths tick on the y axis
 
-        display_data.display_depths_subplot([HOBOdateTimeArr[1:], HOBOdateTimeArr_res[1:]], [HOBODepthArr[1:], Filtered_data[1:]], maxdepth = None, \
+        utils.display_data.display_depths_subplot([HOBOdateTimeArr[1:], HOBOdateTimeArr_res[1:]], [HOBODepthArr[1:], Filtered_data[1:]], maxdepth = None, \
                                              fnames = fnames, yday = yday, revert = False, tick = None, custom = [custom1, "FFT"], firstlog = None)
 
 def kelvin_wave_in_lontario(data, fnames):
@@ -937,7 +937,7 @@ def kelvin_wave_in_lontario(data, fnames):
 
     # superimposed filtered data for the period oscillation freq
     difflines = True
-    display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res[1:], delay1), numpy.subtract(RBRdateTimeArr_res[1:], delay1)], [Filtered_data[1:], Filtered_data_rbr[1:]],
+    utils.display_data.display_temperatures([numpy.subtract(HOBOdateTimeArr_res[1:], delay1), numpy.subtract(RBRdateTimeArr_res[1:], delay1)], [Filtered_data[1:], Filtered_data_rbr[1:]],
                                        [], fnames = fnames, difflines = difflines, custom = custom)
 
 
@@ -1004,12 +1004,12 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
 
         print "Start display ####### SHOULD BE display_depths??????? "
         # SHOULD BE display_depths ?????
-        display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday)
+        utils.display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday)
 
         # superimposed filtered data for the period oscillation freq
         difflines = True
         custom = "%sh filter- Temperature " % str(period)
-        display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, k, fnames = fnames, difflines = difflines, custom = custom)
+        utils.display_data.display_temperatures(HOBOdateTimeArr, Filtered_data, k, fnames = fnames, difflines = difflines, custom = custom)
     # end for path
 
 def calculate_statistics(arr):
@@ -1184,7 +1184,7 @@ def draw_harbour_statistics(path, timeinterv, selector, all = False):
         if all:
             difflines = False
             custom = "%s - Temperature " % type
-            display_data.display_temperatures(numpy.array([dateTime[1:]]), numpy.array([temp[1:]]), \
+            utils.display_data.display_temperatures(numpy.array([dateTime[1:]]), numpy.array([temp[1:]]), \
                                               numpy.array([result[1:]]), k, fnames = [ type], difflines = difflines, custom = custom)
 
         else:
@@ -1201,10 +1201,10 @@ def draw_harbour_statistics(path, timeinterv, selector, all = False):
             custom = "%s - Temperature " % type
 
             if type == 'avg':
-                display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0][1:], HOBOdateTimeArr[0][1:], HOBOdateTimeArr[0][1:]]), numpy.array([HOBOtempArr[0][1:], x05, x95]), \
+                utils.display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0][1:], HOBOdateTimeArr[0][1:], HOBOdateTimeArr[0][1:]]), numpy.array([HOBOtempArr[0][1:], x05, x95]), \
                                               numpy.array([HOBOresultsArr[0][1:], HOBOresultsArr[0][1:], HOBOresultsArr[0][1:]]), k, fnames = [ type, '5%', '95%'], difflines = difflines, custom = custom)
             else:
-                display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0][1:]]), numpy.array([HOBOtempArr[0][1:]]), \
+                utils.display_data.display_temperatures(numpy.array([HOBOdateTimeArr[0][1:]]), numpy.array([HOBOtempArr[0][1:]]), \
                                               numpy.array([HOBOresultsArr[0][1:]]), k, fnames = [ type], difflines = difflines, custom = custom)
 
 def harbour_statistics(all = False):
