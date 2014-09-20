@@ -7,6 +7,7 @@ import matplotlib.dates as dates
 import time, os, datetime, math, sys
 import matplotlib.gridspec as gridspec
 
+import zero_to_nan as z2n
 sys.path.insert(0, '/software/SAGEwork/Seiches')
 import fft.filters as filters
 import fft.fft_utils as fft_utils
@@ -299,47 +300,72 @@ def display_temperatures(dateTimes, temps, k, fnames = None, revert = False, dif
         plt.show()
     return ax
 
-def display_marker_histogram(x, y, fnames, xlabel, ylabel, title = None, log = False, grid = True, fontsize = 22):
+def display_marker_histogram(xarr, yarr, fnamesarr, xlabel, ylabel, title = None, log = False, grid = True, fontsize = 18):
     '''
     Display the array as histogram with markers.
     '''
 
-    params = {'legend.fontsize': fontsize - 4}
+    format = 100 * len(xarr) + 10
+
+    params = {'legend.fontsize': fontsize - 6}
     plt.rcParams.update(params)
 
+    lenght = len(xarr)
+    ax = numpy.zeros(lenght, dtype = matplotlib.axes.Subplot)
+    fig = plt.figure(facecolor = 'w', edgecolor = 'k')
+
     marker = ['o', '*', '^', 'd', 's', 'p', 'o']
-    colour = ['MediumTurquoise', 'Chartreuse', 'Yellow', 'Fuchsia', 'Red', 'b', 'aqua', 'r', 'g', 'k', 'm', 'c', 'y']
-    legend = []
-    for i in range(0, len(x)):
-        if log:
-            plt.yscale('log')
+    colour = ['MediumTurquoise', 'Chartreuse', 'Yellow', 'Fuchsia', 'k', 'b', 'aqua', 'r', 'g', 'k', 'm', 'c', 'y']
 
-        # plt.plot(x[i], y[i])
-        plt.plot(x[i], y[i], marker = marker[i], markersize = 9, lw = 2.2, color = colour[i],
-                 markerfacecolor = 'None', markeredgecolor = colour[i])
 
-        # Plot legend
-        if fnames == None:
-            legend.append("Sensor %s" % k[i][1])
+    for j in range(0, lenght):
+        legend = []
+        if j == 0 :
+            ax[j] = fig.add_subplot(format + j + 1)
         else:
-            if fnames[i].rfind('.') == -1:
-                legend.append("%s" % (fnames[i]))
+            ax[j] = fig.add_subplot(format + j + 1, sharex = ax[0])
+
+        fnames = fnamesarr[j]
+        x = xarr[j]
+        y = yarr[j]
+        for i in range(0, len(x)):
+            if log:
+                plt.yscale('log')
+
+            # Filter out
+            yvalues = z2n.zero_to_nan(y[i])
+            ax[j].plot(x[i], yvalues, marker = marker[i], markersize = 8, lw = 1.3, color = colour[i], \
+                      markerfacecolor = 'None', markeredgecolor = colour[i])
+
+            # Plot legend
+            if fnames == None:
+                legend.append("Sensor %s" % k[i][1])
             else:
-                fileName, fileExtension = os.path.splitext(fnames[i])
-                legend.append('%s' % fileName)
+                if fnames[i].rfind('.') == -1:
+                    legend.append("%s" % (fnames[i]))
+                else:
+                    fileName, fileExtension = os.path.splitext(fnames[i])
+                    legend.append('%s' % fileName)
 
-    plt.legend(legend)
-    # Set the fontsize
-    # for label in plt.legend().get_texts():
-    #    label.set_fontsize('large')
+        # end for i
+        ax[j].legend(legend)
+        # Set the fontsize
+        # for label in plt.legend().get_texts():
+        #    label.set_fontsize('large')
 
-    if title != None:
-        plt.title(title).set_fontsize(fontsize + 2)
-    plt.xlabel(xlabel).set_fontsize(fontsize + 18)
-    plt.ylabel(ylabel).set_fontsize(fontsize + 18)
-    plt.xticks(fontsize = fontsize - 4)
-    plt.yticks(fontsize = fontsize - 4)
-    plt.grid(grid, axis = 'both')
+        if title != None:
+            plt.title(title).set_fontsize(fontsize + 2)
+        if j == lenght - 1:
+            ax[j].set_xlabel(xlabel).set_fontsize(fontsize)
+        ax[j].set_ylabel(ylabel).set_fontsize(fontsize + 2)
+        for tick in ax[j].xaxis.get_major_ticks():
+                tick.label.set_fontsize(fontsize - 4)
+        for tick in ax[j].yaxis.get_major_ticks():
+                tick.label.set_fontsize(fontsize - 4)
+        ax[j].grid(grid, axis = 'both')
+
+
+    # end for j
     plt.show()
 
 
@@ -739,7 +765,10 @@ def display_mixed_subplot(dateTimes1 = [], data = [] , varnames = [], ylabels1 =
     gs1 = gridspec.GridSpec(length, 1)
 
     for j in range(0, length):
-        ax[j] = fig.add_subplot(gs1[j])
+        if j == 0:
+            ax[j] = fig.add_subplot(gs1[j])
+        else:
+            ax[j] = fig.add_subplot(gs1[j], sharex = ax[0])
         if j < len1 and il < len1:
             if revert != True:
                 temp = data[il][:]
@@ -1030,7 +1059,7 @@ def display_img_temperatures_sub(fig, ax, axb, dateTimes, temps, tick, maxdepth,
             fig.autofmt_xdate()
         else:
             plt.xticks(fontsize = fontsize)
-            # plt.xlabel("day of year").set_fontsize(fontsize)
+            # plt.xlabel("Day of year").set_fontsize(fontsize)
 
         ax.xaxis.set_minor_locator(hour)
 
@@ -1236,79 +1265,100 @@ def display_vertical_temperature_profiles(dateTimes, temps, coeffs, k, startdept
     # fig.autofmt_xdate()
     plt.show()
 
-def display_avg_vertical_temperature_profiles_err_bar_range(dateTimes, temps, startdepth, revert = False, profiledates = None, \
-                                                            legendloc = 4, grid = False, title = None):
+def display_avg_vertical_temperature_profiles_err_bar_range(dateTimes, tempsarr, startdeptharr, revert = False, profiledates = None, \
+                                                            legendloc = 4, grid = False, title = None, sharex = True):
 
-    temp = numpy.zeros(len(dateTimes))
-    depth = numpy.linspace(startdepth, len(dateTimes) + startdepth, len(dateTimes))
     fig = plt.figure(facecolor = 'w', edgecolor = 'k')
-    ax = fig.add_subplot(111)
 
-    legend = []
-    ls = ['-', '--', ':', '-.', '-', '--', ':', '-.']
+    format = 100 * len(dateTimes) + 10
+    matplotlib.rcParams['legend.fancybox'] = True
 
-    lidx = 0
-    avg_temp_arr = []
-    avg_temp_arr_range_min = []
-    avg_temp_arr_range_max = []
-    avg_temp_arr_std = []
+    ax = numpy.zeros(len(dateTimes), dtype = matplotlib.axes.Subplot)
 
-    for j in range(0, len(dateTimes)):  # depth
-        if j != 18:
-            temp_at_depth_j = temps[j][1:]
+    i = 0
+    for dateTime in dateTimes:
+        temps = tempsarr[i]
+        startdepth = startdeptharr[i]
+
+        temp = numpy.zeros(len(dateTime))
+        depth = numpy.linspace(startdepth, len(dateTime) + startdepth, len(dateTime))
+
+
+        if sharex and i == 0:
+            ax[i] = fig.add_subplot(format + i + 1)
         else:
-            temp_at_depth_j = (temps[j - 1][1:] + temps[j + 1][1:]) / 2.
-        avg_temp = numpy.mean(temp_at_depth_j, axis = 0)
-        avg_temp_std = numpy.std(temp_at_depth_j, axis = 0)
-        avg_temp_min = numpy.min(temp_at_depth_j, axis = 0)
-        avg_temp_max = numpy.max(temp_at_depth_j, axis = 0)
+            ax[i] = fig.add_subplot(format + i + 1, sharex = ax[0])
 
-        avg_temp_arr.append(avg_temp)
-        avg_temp_arr_std.append(avg_temp_std)
-        avg_temp_arr_range_min.append(avg_temp - avg_temp_min)
-        avg_temp_arr_range_max.append(avg_temp_max - avg_temp)
-        print "depth %d,  max:%f min:%f" % (j, avg_temp_max, avg_temp_min)
 
-    if revert == True:
-        reversed_temp = avg_temp_arr[::-1]
-    else:
-        reversed_temp = avg_temp_arr
+        legend = []
+        ls = ['-', '--', ':', '-.', '-', '--', ':', '-.']
 
-    ax.plot(reversed_temp, depth, linestyle = ls[lidx], linewidth = 3.2)
-    ax.errorbar(reversed_temp, depth, xerr = avg_temp_arr_std, linewidth = 2.8, color = 'r', capthick = 3)  # , fmt = 'o')
-    ax.errorbar(reversed_temp, depth, xerr = [avg_temp_arr_range_min, avg_temp_arr_range_max], color = 'k', linewidth = 1.2, capthick = 2)  # , fmt = 'd')
-    lidx += 1
-    # lg = '%s' % datetime.date.fromordinal(int(dateTimes[0][j]))
-    # legend.append(lg)
+        lidx = 0
+        avg_temp_arr = []
+        avg_temp_arr_range_min = []
+        avg_temp_arr_range_max = []
+        avg_temp_arr_std = []
 
-    if profiledates != None:
-        dt = dateTimes[0][2] - dateTimes[0][1]
-        # get indices
+        for j in range(0, len(dateTime)):  # depth
+            if j != 18:
+                temp_at_depth_j = temps[j][1:]
+            else:
+                temp_at_depth_j = (temps[j - 1][1:] + temps[j + 1][1:]) / 2.
+            avg_temp = numpy.mean(temp_at_depth_j, axis = 0)
+            avg_temp_std = numpy.std(temp_at_depth_j, axis = 0)
+            avg_temp_min = numpy.min(temp_at_depth_j, axis = 0)
+            avg_temp_max = numpy.max(temp_at_depth_j, axis = 0)
 
-        occurence = []
-        for k in profiledates:
-            occurence.append(numpy.where(abs(dateTimes[0] - k) < dt))
+            avg_temp_arr.append(avg_temp)
+            avg_temp_arr_std.append(avg_temp_std)
+            avg_temp_arr_range_min.append(avg_temp - avg_temp_min)
+            avg_temp_arr_range_max.append(avg_temp_max - avg_temp)
+            print "depth %d,  max:%f min:%f" % (j, avg_temp_max, avg_temp_min)
 
-        temp1 = []
-        temp2 = []
-        for tm in temps:  # depth
-            temp1.append(tm[occurence[0][0][0]])
-            temp2.append(tm[occurence[1][0][0]])
+        if revert == True:
+            reversed_temp = avg_temp_arr[::-1]
+        else:
+            reversed_temp = avg_temp_arr
 
-        ax.plot(temp1, depth, linestyle = ':', linewidth = 1.8, color = 'r')
-        ax.plot(temp2, depth, linestyle = ':', linewidth = 1.8, color = 'b')
+        ax[i].plot(reversed_temp, depth, linestyle = ls[lidx], linewidth = 3.2)
+        ax[i].errorbar(reversed_temp, depth, xerr = avg_temp_arr_std, linewidth = 2.8, color = 'r', capthick = 3)  # , fmt = 'o')
+        ax[i].errorbar(reversed_temp, depth, xerr = [avg_temp_arr_range_min, avg_temp_arr_range_max], color = 'k', linewidth = 1.2, capthick = 2)  # , fmt = 'd')
+        lidx += 1
+        # lg = '%s' % datetime.date.fromordinal(int(dateTimes[0][j]))
+        # legend.append(lg)
 
-    ax.grid(grid)
+        if profiledates != None:
+            dt = dateTime[0][2] - dateTime[0][1]
+            # get indices
 
-    xlabel = ' Temperature ($^\circ$C)'
-    plt.xlabel(xlabel).set_fontsize(20)
-    ylabel = ' Depth (m)'
-    plt.ylabel(ylabel).set_fontsize(20)
+            occurence = []
+            for k in profiledates:
+                occurence.append(numpy.where(abs(dateTime[0] - k) < dt))
+
+            temp1 = []
+            temp2 = []
+            for tm in temps:  # depth
+                temp1.append(tm[occurence[0][0][0]])
+                temp2.append(tm[occurence[1][0][0]])
+
+            ax[i].plot(temp1, depth, linestyle = ':', linewidth = 1.8, color = 'r')
+            ax[i].plot(temp2, depth, linestyle = ':', linewidth = 1.8, color = 'b')
+
+        ax[i].grid(grid)
+
+        xlabel = ' Temperature ($^\circ$C)'
+        plt.xlabel(xlabel).set_fontsize(20)
+        ylabel = ' Depth (m)'
+        plt.ylabel(ylabel).set_fontsize(20)
+
+        ax[i].set_ylim(ax[i].get_ylim()[::-1])  # [::1] reverses the array
+
+        i += 1
+    # end for
+
     if title != None:
         plt.title(title).set_fontsize(22)
     # reverse
-
-    ax.set_ylim(ax.get_ylim()[::-1])  # [::1] reverses the array
 
 
 

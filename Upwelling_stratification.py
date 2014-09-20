@@ -167,9 +167,9 @@ class Upwelling(object):
 
 
         ycustom = "Depth [m]"  # "Stations"  #
-        revert = True
+        revert = False  # True
         utils.display_data.display_img_temperatures(ndateTimeArr, ntempArr, nresultsArr, nk, tick, maxdepth, firstlogdepth, maxtemp, revert = revert, \
-                                              fontsize = 22, datetype = datetype, thermocline = thermocline, interp = interpolate, ycustom = ycustom)
+                                              fontsize = 20, datetype = datetype, thermocline = thermocline, interp = interpolate, ycustom = ycustom)
 
         utils.display_data.display_temperatures_subplot(ndateTimeArr, ntempArr, nresultsArr, nk, fnames = nsorted_files, revert = False, custom = None, \
                                  maxdepth = None, tick = None, firstlog = None, yday = True, delay = None, group = 2, processed = True, \
@@ -271,62 +271,74 @@ class Upwelling(object):
 
         return grad, tg, ymax, ymin
 
-    def plot_temp_rate(self, path, date, timeavg, window, tunits = 'day', percent = False, delta = 1):
+    def plot_temp_rate(self, paths, date, timeavg, window, tunits = 'day', percent = False, delta = 1):
 
         startdate, enddate = date
 
         minorgrid = 'mondays'
         datetype = 'dayofyear'
-        dateTime, temp, results, k, fnames = self.get_timeseries_data(path, date, timeavg, window)
+        binsarr = []
+        valuearr = []
+        fnamesarr = []
 
-        grad = np.zeros(len(dateTime), dtype = np.ndarray)  # rate
-        tg = np.zeros(len(dateTime), dtype = np.ndarray)  #
-        ghist = np.zeros(len(dateTime), dtype = np.ndarray)  # histogram
-        perc = np.zeros(len(dateTime), dtype = np.ndarray)  # histogram
-        edges = np.zeros(len(dateTime), dtype = np.ndarray)  # edges
-        bins = np.zeros(len(dateTime), dtype = np.ndarray)  # bins
+        for path in paths:
+            dateTime, temp, results, k, fnames = self.get_timeseries_data(path, date, timeavg, window)
 
-        if tunits == 'day':
-            factor = 86400
-        elif tunits == 'hour':
-            factor = 3600
-        else:
-            factor = 1
+            grad = np.zeros(len(dateTime), dtype = np.ndarray)  # rate
+            tg = np.zeros(len(dateTime), dtype = np.ndarray)  #
+            ghist = np.zeros(len(dateTime), dtype = np.ndarray)  # histogram
+            perc = np.zeros(len(dateTime), dtype = np.ndarray)  # histogram
+            edges = np.zeros(len(dateTime), dtype = np.ndarray)  # edges
+            bins = np.zeros(len(dateTime), dtype = np.ndarray)  # bins
 
-        grad, tg, ymax, ymin = self.determine_temp_rate(dateTime, results, grad, tg, delta)
+            if tunits == 'day':
+                factor = 86400
+            elif tunits == 'hour':
+                factor = 3600
+            else:
+                factor = 1
 
-        # put data in bins
-        for i in range(len(dateTime)):
+            grad, tg, ymax, ymin = self.determine_temp_rate(dateTime, results, grad, tg, delta)
+
             # put data in bins
-            edges[i] = [-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5 , 6, 7]
-            grange = [ymin, ymax]
-            ghist[i], edges[i] = np.histogram(grad[i], bins = edges[i], range = grange)
+            for i in range(len(dateTime)):
+                # put data in bins
+                edges[i] = [-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5 , 6, 7]
+                grange = [ymin, ymax]
+                ghist[i], edges[i] = np.histogram(grad[i], bins = edges[i], range = grange)
 
-            bins[i] = edges[i][:-1]
+                bins[i] = edges[i][:-1]
 
 
+                if percent:
+                    total = 0.0
+                    perc[i] = np.zeros(len(ghist[i]), dtype = np.double)
+                    for j in range(0, len(ghist[i])):
+                        total += ghist[i][j]
+                        print "TOTAL location:%s total:%d j:%d hist:%d" % (fnames[i], total, j, ghist[i][j])
+                    for j in range(0, len(ghist[i])):
+
+                        perc[i][j] = ghist[i][j] * 100.0 / total
+                        print "PERCENT location:%s j:%d hist:%f" % (fnames[i], j, perc[i][j])
+            # end for i
+
+            ylab = 'Temperature rate ($^\circ$C/h)'
+            utils.display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
+                                               tick = None, firstlog = None, fontsize = 20, ylim = [ymin - 1, ymax + 1], fill = False, \
+                                               show = True, datetype = "dayofyear", minorgrid = "mondays", ylab = ylab)
             if percent:
-                total = 0.0
-                perc[i] = np.zeros(len(ghist[i]), dtype = np.double)
-                for j in range(0, len(ghist[i])):
-                    total += ghist[i][j]
-                    print "TOTAL location:%s total:%d j:%d hist:%d" % (fnames[i], total, j, ghist[i][j])
-                for j in range(0, len(ghist[i])):
+                values = perc
+            else:
+                values = ghist
 
-                    perc[i][j] = ghist[i][j] * 100.0 / total
-                    print "PERCENT location:%s j:%d hist:%f" % (fnames[i], j, perc[i][j])
+            binsarr.append(bins[:])
+            valuearr.append(values[:])
+            fnamesarr.append(fnames[:])
+        # end for k paths
 
-        ylab = 'Temperature rate ($^\circ$C/h)'
-        utils.display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
-                                           tick = None, firstlog = None, fontsize = 22, ylim = [ymin - 1, ymax + 1], fill = False, \
-                                           show = True, datetype = "dayofyear", minorgrid = "mondays", ylab = ylab)
 
-        if percent:
-            values = perc
-        else:
-            values = ghist
-        utils.display_data.display_marker_histogram(bins, values, fnames, xlabel = 'Temperature rate ($^\circ$C/h)', ylabel = "Frequency (%)", \
-                                              title = None, log = True, grid = False, fontsize = 30)
+        utils.display_data.display_marker_histogram(binsarr, valuearr, fnamesarr, xlabel = 'Temperature rate ($^\circ$C/h)', ylabel = "Frequency (%)", \
+                                              title = None, log = True, grid = False, fontsize = 18)
 
 
         #=======================================================================
@@ -541,8 +553,8 @@ if __name__ == '__main__':
     JarvDock_heatmap = False
     filter_data = False
     weather_data = False
-    spectral_harbour = False
-    correlation_curr_temp = True
+    spectral_harbour = True
+    correlation_curr_temp = False
 
     ############################################################
     # initilize object
@@ -682,17 +694,27 @@ if __name__ == '__main__':
         dt = datetime.datetime.strptime(date[1], "%y/%m/%d %H:%M:%S")
         end_num = dates.date2num(dt)
 
-        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/BottomGradient'
-        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
-
-        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/AboveBottomGradient'
-        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
+        paths = []
 
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013/csv_processed/ShelteredOuterHarbour'
-        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
+        # upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
+        paths.append(path)
+
+        path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/BottomGradient'
+        # upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
+        paths.append(path)
+
+        # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/AboveBottomGradient'
+        # upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
+        # paths.append(path)
 
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Carleton-Nov2013/csv_processed/InnerHarbour'
-        upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
+        # upw.plot_temp_rate(path, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', percent = percent, delta = delta)
+        paths.append(path)
+
+        upw.plot_temp_rate(paths, [start_num, end_num], Upwelling.window_halfhour, Upwelling.windows[1], tunits = 'hour', \
+                            percent = percent, delta = delta)
+
 
     if show_timeseries:
         exclude_min = { "Bot_TC4.csv":[3, 7], "Bot_St21.csv":[3] }
@@ -804,7 +826,7 @@ if __name__ == '__main__':
         maxdepth = 12
         firstlogdepth = 0
         maxtemp = 20
-        interpolate = 6
+        interpolate = 5
         upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp, thermocline = False, interpolate = interpolate)
 
     if filter_data:
@@ -827,9 +849,9 @@ if __name__ == '__main__':
     if spectral_harbour:
         path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Spectral_Temp/Deep"
         # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Spectral_Temp/Surface"
-        names = ['Cherry B' , 'Jarvis', 'L Ontario']
-        # names = ['Cherry B', 'Ferry', 'L Ontario']
-        log = True
+        names = ['Cherry Beach' , 'Jarvis Dock', 'Lake Ontario']
+        # names = ['Cherry Beach', 'Ferry Term.', 'Lake Ontario']
+        log = False
         withci = True
         base, dirs, files = iter(os.walk(path)).next()
         sorted_files = sorted(files, key = lambda x: x.split('.')[0])

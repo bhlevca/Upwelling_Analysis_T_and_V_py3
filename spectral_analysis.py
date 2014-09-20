@@ -94,7 +94,7 @@ def doMultipleSpectralAnalysis(path, files, names, draw, window = "hanning", num
         ci = None
     fftGraphs.plotSingleSideSpectrumFreqMultiple(lake_name, names, data, freq, ci, type, \
                                                          num_segments, funits, y_label = ylabel, title = None, \
-                                                         log = log, fontsize = 20, tunits = tunits)
+                                                         log = log, fontsize = 24, tunits = tunits)
 
 
 def doCospectralAnalysis(data1, data2):

@@ -307,7 +307,7 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
             else:
                 print "Error, window span not defined"
                 return
-            results = utils.smooth.smoothfit(dateTime, temp, nspan, window)
+            results = smooth.smoothfit(dateTime, temp, nspan, window)
         else:
             results = {}
             results['smoothed'] = temp

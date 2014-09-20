@@ -22,10 +22,8 @@ import fft.peakdetect as peakdetect
 import spectral_analysis
 import tor_harb_windrose
 import scipy.integrate
-
-
 import utils.interpolate as interpolate
-
+import utils
 sys.path.insert(0, '/software/SAGEwork/Pressure_analysis')
 import utils.hdf_tools as hdf
 import utils.read_csv as read_csv
@@ -1124,7 +1122,7 @@ def plot_weather_data(date, weather_path, wfile, windrose):
                             [wdateTime[1:]], [wtemp[1:]], [wdateTime[1:]], [windir], \
                             ['r'], ['b', 'g'], [" Temp", "Wind dir"], linewidth1 = [1.8], linewidth2 = [0.6])
         if windrose:
-            tor_harb_windrose.draw_windrose(windir, winspd, 'bar', loc = (1, 0.05), fontsize = 16, unit = "[km/h]")
+            tor_harb_windrose.draw_windrose(windir, winspd, 'bar', loc = (1, 0.05), fontsize = 20, unit = "[km/h]")
             plt.show()
         # end if
 
@@ -1146,7 +1144,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     i = 0
     for fname in sorted_files:
         dateTime, temp, results = readTempHoboFiles.get_data_from_file(fname, window_hour, windows[1], timeinterv = date, rpath = water_path)
-        maxidx = 30000
+        maxidx = 300000
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime[:maxidx])
         resultsArr[i] = numpy.append(resultsArr[i], results[:maxidx])
         tempArr[i] = numpy.append(tempArr[i], temp[:maxidx])
@@ -1165,7 +1163,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     i = 0
     for fname in sorted_files:
         dateTime, temp, results = readTempHoboFiles.get_data_from_file(fname, window_hour, windows[1], timeinterv = date, rpath = harbour_path)
-        maxidx = 30000
+        maxidx = 300000
         TH_dateTimeArr[i] = numpy.append(TH_dateTimeArr[i], dateTime[:maxidx])
         TH_resultsArr[i] = numpy.append(TH_resultsArr[i], results[:maxidx])
         TH_tempArr[i] = numpy.append(TH_tempArr[i], temp[:maxidx])
@@ -1200,8 +1198,9 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     # 4) interplate every 10 minutes
     [iwtemp, iwdateTime, iwindDir, iwindSpd, iPress] = envir.interpolateData(10, wtemp, wdateTime, windDir, windSpd, press)
 
-    dataArray = numpy.array([iwtemp, iwindDir, iwindSpd, iPress, HOBOtempArr])
-    timeArray = numpy.array([iwdateTime, iwdateTime, iwdateTime, iwdateTime, HOBOdateTimeArr])
+    dataArray = numpy.array([iwtemp[1:], iwindDir[1:], windSpd[1:], press[1:], HOBOtempArr[1:]])
+
+    timeArray = numpy.array([iwdateTime[1:], iwdateTime[1:], iwdateTime[1:], iwdateTime[1:], HOBOdateTimeArr[1:]])
     names = numpy.array(["Air Temp", "Wind Dir", "Wind spd", "Atm press", "Water temp"])
     labels = numpy.array(["Air Temp ($^\circ$C)", "Wind Dir ($^\circ$)", "Wind spd (km/h)", "Atm press (hPa)", "Water Temp ($^\circ$C)"])
 
@@ -1261,7 +1260,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     # ToDO: Add short and long radiation
     print "Start display mixed subplots "
     dateTimes1 = [iwdateTime]
-    data = [utils.smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day")]
+    data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day")]
     varnames = ["Wind speed"]
     ylabels1 = ["Wind spd [km/h]"]
     dateTimes2 = [iwdateTime, HOBOdateTimeArr]
@@ -1273,18 +1272,18 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     imgs = [resultsArr, TH_resultsArr]
     t11 = ['0', '4', '9', '13', '18', '22', '27']
     t12 = [27, 22.5, 18, 13.5, 9, 4.5, 0]
-    t21 = ['0', '3', '6', '9']
-    t22 = [9, 6, 3, 0]
+    t21 = ['0', '3', '6', '10']
+    t22 = [10, 6, 3, 0]
     tick = [[t11, t12], [t21, t22]]
     maxdepth = [27, 9]
     firstlogdepth = [3, 0]
     maxtemp = [25, 26]
     mintemps = [0, 0]
-    mindepths = [3, 0]
-    utils.display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data, varnames = varnames, ylabels1 = ylabels1,
-                                       dateTimes2 = dateTimes2, groups = groups, groupnames = groupnames, ylabels2 = ylabels2,
+    mindepths = [0, 0]
+    utils.display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data, varnames = varnames, ylabels1 = ylabels1, \
+                                       dateTimes2 = dateTimes2, groups = groups, groupnames = groupnames, ylabels2 = ylabels2, \
                                        dateTimes3 = dateTimes3, imgs = imgs, ylabels3 = ylabels3, ticks = tick, maxdepths = maxdepth, \
-                                        mindepths = mindepths, mintemps = mintemps, firstlogs = firstlogdepth, maxtemps = maxtemp,
+                                        mindepths = mindepths, mintemps = mintemps, firstlogs = firstlogdepth, maxtemps = maxtemp, \
                           fnames = None, revert = False, custom = None, maxdepth = None, tick = None, firstlog = None, yday = True, \
                           title = False, grid = False, limits = None, sharex = True, fontsize = 18)
 
@@ -1313,8 +1312,14 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     dtnum2 = matplotlib.dates.date2num(dt)
     profiledates = [ dtnum1, dtnum2]
 
-    utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range(dateTimeArr, resultsArr, startdepth = 3, profiledates = profiledates, revert = False, legendloc = 4)
-    utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range(TH_dateTimeArr, TH_resultsArr, startdepth = 0 , profiledates = profiledates, revert = False, legendloc = 4)
+    #===========================================================================
+    # utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range([dateTimeArr], [resultsArr], startdeptharr = [3], \
+    #                                                                            profiledates = profiledates, revert = False, legendloc = 4)
+    # utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range([TH_dateTimeArr], [TH_resultsArr], startdeptharr = [0] , \
+    #                                                                            profiledates = profiledates, revert = False, legendloc = 4)
+    #===========================================================================
+    utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range([TH_dateTimeArr, dateTimeArr], [TH_resultsArr, resultsArr], startdeptharr = [0, 3], \
+                                                                                profiledates = profiledates, revert = False, legendloc = 4)
 
 
 def plot_buterworth_filtered_data(HOBOdateTimeArr, HOBOtempArr, fnames, k, filter, ylim = None, stats = False):
