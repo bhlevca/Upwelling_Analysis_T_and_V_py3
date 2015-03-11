@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from numpy import arange
 import numpy
-from utils.windrose import WindroseAxes
+from utools.windrose import WindroseAxes
 
 
 

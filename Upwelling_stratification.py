@@ -6,6 +6,7 @@ Created on Dec 21, 2013
 
 # libraries
 import numpy as np
+import scipy as sp
 import gsw
 import csv
 import os, locale
@@ -14,11 +15,11 @@ import matplotlib.dates as dates
 
 # local
 import upwelling
-import readTempHoboFiles
-from utils import display_data
-import spectral_analysis
-import utils.timeseries_correlation
-import utils.custom_csv_readers
+from utools import readTempHoboFiles
+from utools import display_data
+import ufft.spectral_analysis
+import utools.timeseries_correlation
+import utools.custom_csv_readers
 
 class Upwelling(object):
     '''
@@ -97,13 +98,13 @@ class Upwelling(object):
 
     def get_timeseries_data(self, path, date, moving_avg, window):
 
-        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, window, [date[0], date[1]], path)
+        dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(moving_avg, window, [date[0], date[1]], path)
 
         return dateTime, temp, results, k, fnames
 
 
     def draw_isotherms(self, path, timeint, tick, maxdepth, firstlogdepth, maxtemp, title = None,
-                       thermocline = True, interpolate = None):
+                       thermocline = True, interpolate = None, draw_lines = False, line_divisor = 2):
         # dirlist needs to be sorted in ascending order
         # Separate directories from files
         base, dirs, files = iter(os.walk(path)).next()
@@ -124,30 +125,33 @@ class Upwelling(object):
         j = i = 0
         nsorted_files = sorted_files[:]
         for fname in sorted_files:
-            dateTime, temp, results = readTempHoboFiles.get_data_from_file(fname, self.window_6hour, self.windows[1], timeinterv = timeint, rpath = path)
+            print "Filename = %s" % fname
+            dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(fname, self.window_6hour, self.windows[1], timeinterv = timeint, rpath = path)
 
             dateTimeArr.append(dateTime)
             resultsArr.append(results)
             tempArr.append(temp)
             k.append(j)
 
-            if interpolate:
-                if (i - 1) % 2 == 0 and i != 0 :  # interpolate & insert
-                    dateTimeArr.insert(j, dateTimeArr[j])
-                    k.insert(j, j)
-                    k[j + 1] = j + 1
-                    minlen = min(len(resultsArr[j]), len(resultsArr[j - 1]))
-                    resval = (np.array(resultsArr[j][:minlen]) + np.array(resultsArr[j - 1][:minlen])) / 2.0
-                    resultsArr.insert(j, resval)
-
-                    tempval = (np.array(tempArr[j][:minlen]) + np.array(tempArr[j - 1][:minlen])) / 2.0
-                    tempArr.insert(j, tempval)
-
-                    nsorted_files.insert(j, "mid")
-                    # increment j
-                    j += 1
-                # end if
-            # end if
+#===============================================================================
+#             if interpolate != None:
+#                 if (i - 1) % 2 == 0 and i != 0 :  # interpolate & insert
+#                     dateTimeArr.insert(j, dateTimeArr[j])
+#                     k.insert(j, j)
+#                     k[j + 1] = j + 1
+#                     minlen = min(len(resultsArr[j]), len(resultsArr[j - 1]))
+#                     resval = (np.array(resultsArr[j][:minlen]) + np.array(resultsArr[j - 1][:minlen])) / 2.0
+#                     resultsArr.insert(j, resval)
+#
+#                     tempval = (np.array(tempArr[j][:minlen]) + np.array(tempArr[j - 1][:minlen])) / 2.0
+#                     tempArr.insert(j, tempval)
+#
+#                     nsorted_files.insert(j, "mid")
+#                     # increment j
+#                     j += 1
+#                 # end if
+#             # end if
+#===============================================================================
             i += 1
             j += 1
         # end for
@@ -163,16 +167,21 @@ class Upwelling(object):
         nresultsArr = np.array(resultsArr)
         nk = np.array(k)
         utils.display_data.display_temperatures(ndateTimeArr, ntempArr, nk, fnames = nsorted_files, custom = custom, \
-                                      datetype = datetype, ylab = "Temperature ($^oC$")
+                                      datetype = datetype, ylab = "Temperature [$^\circ$C]")
+
+        diffarr = np.array(ntempArr[1]) - np.array(ntempArr[0])
+        utils.display_data.display_temperatures(np.array([ndateTimeArr[1]]), np.array([diffarr]), nk, fnames = ["$\Delta$T ($\Delta$H = 1m)"], custom = custom, \
+                                      datetype = datetype, ylab = "Temperature [$^\circ$C]", draw_xaxis = True, fontsize = 22)
 
 
-        ycustom = "Depth [m]"  # "Stations"  #
-        revert = False  # True
+        ycustom = "Stations"
+        revert = True
         utils.display_data.display_img_temperatures(ndateTimeArr, ntempArr, nresultsArr, nk, tick, maxdepth, firstlogdepth, maxtemp, revert = revert, \
-                                              fontsize = 20, datetype = datetype, thermocline = thermocline, interp = interpolate, ycustom = ycustom)
+                                              fontsize = 22, datetype = datetype, thermocline = thermocline, interp = interpolate, ycustom = ycustom, \
+                                              cblabel = "Temp [$^\circ$C]", draw_hline = draw_lines, hline_freq = line_divisor)
 
         utils.display_data.display_temperatures_subplot(ndateTimeArr, ntempArr, nresultsArr, nk, fnames = nsorted_files, revert = False, custom = None, \
-                                 maxdepth = None, tick = None, firstlog = None, yday = True, delay = None, group = 2, processed = True, \
+                                 maxdepth = None, tick = None, firstlog = None, yday = True, delay = None, group = 2, processed = False, \
                                  limits = [0, 25], sharex = True)
 
 
@@ -322,7 +331,8 @@ class Upwelling(object):
                         print "PERCENT location:%s j:%d hist:%f" % (fnames[i], j, perc[i][j])
             # end for i
 
-            ylab = 'Temperature rate ($^\circ$C/h)'
+            ylab = 'Temperature rate [$^\circ$C$h^-1$]'
+
             utils.display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
                                                tick = None, firstlog = None, fontsize = 20, ylim = [ymin - 1, ymax + 1], fill = False, \
                                                show = True, datetype = "dayofyear", minorgrid = "mondays", ylab = ylab)
@@ -337,7 +347,7 @@ class Upwelling(object):
         # end for k paths
 
 
-        utils.display_data.display_marker_histogram(binsarr, valuearr, fnamesarr, xlabel = 'Temperature rate ($^\circ$C/h)', ylabel = "Frequency (%)", \
+        utils.display_data.display_marker_histogram(binsarr, valuearr, fnamesarr, xlabel = r'Temperature rate [$\mathsf{^\circ C\cdot h^{-1}}$]', ylabel = "Frequency [%]", \
                                               title = None, log = True, grid = False, fontsize = 18)
 
 
@@ -345,7 +355,7 @@ class Upwelling(object):
 
     def determine_velocity(self, a_max, a_min, afnames, location, lat, lon, exclusions):
 
-        # reareange a_min eliminating exclusions
+        # rearrange a_min eliminating exclusions
 
         for i in range(0, len (a_min)):
             name = afnames[i]
@@ -372,7 +382,7 @@ class Upwelling(object):
         for i in range(0, len (a_min) - 1):  # iterate on places
             for j in range(0, len(a_min[0])):  # iterate on min points at each place
                 v[i].append(distances[0][i] / dt[i][j])
-                print "velocity at %s to %s (dist = %f)  event[%d] = %f (m/s)" % (afnames[i], afnames[i + 1], distances[0][i], j, v[i][j])
+                print "velocity at %s to %s (dist = %f)  event[%d] = %f [m/s]" % (afnames[i], afnames[i + 1], distances[0][i], j, v[i][j])
 
         print "------------------------------------------------------------------------------"
 
@@ -521,7 +531,7 @@ class Upwelling(object):
         type = 'amplitude'
         # type = 'power'
         num_segments = 6
-        spectral_analysis.doMultipleSpectralAnalysis(path, files, names, draw, window = "hanning", num_segments = num_segments, \
+        ufft.spectral_analysis.doMultipleSpectralAnalysis(path, files, names, draw, window = "hanning", num_segments = num_segments, \
                                                      tunits = "day", funits = "cph", log = log, grid = False, type = type, withci = withci)
 
     def test(self):
@@ -543,7 +553,7 @@ if __name__ == '__main__':
     ###########################################################
     climate = False
     rate = False
-    upwelling_anim = False
+    upwelling_anim = True
     slide_timestamp = False
     show_timeseries = False
     CB_heatmap = False
@@ -553,7 +563,7 @@ if __name__ == '__main__':
     JarvDock_heatmap = False
     filter_data = False
     weather_data = False
-    spectral_harbour = True
+    spectral_harbour = False
     correlation_curr_temp = False
 
     ############################################################
@@ -593,7 +603,7 @@ if __name__ == '__main__':
         date = ['13/05/10 00:00:00', '13/10/27 00:00:00']
         # date = ['12/04/30 00:00:00', '12/10/27 00:00:00']  # 2012
         # stratified profile
-        # date = ['13/06/30 00:00:00', '13/09/07 00:00:00']
+        date = ['13/06/30 00:00:00', '13/09/07 00:00:00']
 
 
         dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
@@ -616,10 +626,18 @@ if __name__ == '__main__':
     if upwelling_anim:
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/ClimateMap'
         timeavg = Upwelling.window_hour
-        # no_of_interv = 48 # 6 hours interval
-        no_of_interv = 288  # 1 hours interval
+         #date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
+        #
+        # must be correlated with the total length of the interval
+        #
+        # no_of_interv = 48 # 6 hours interval 
+        no_of_interv = 288  # 1 hours interval -  
 
-        date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
+       
+        date = ['13/09/09 10:00:00', '13/09/09 18:00:00']
+        no_of_interv = 10  # 1 hours interval -  9 points  + 1 truncation 
+
+        
         dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
         start_num = dates.date2num(dt)
         dt = datetime.datetime.strptime(date[1], "%y/%m/%d %H:%M:%S")
@@ -805,7 +823,8 @@ if __name__ == '__main__':
 
     if OutHarb_heatmap:
         # draw the temperature heatmap for 3 Cherry Beach goggers spaced 1 m apart on vertical starting from bottom
-        ipath = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/colormap/bot'
+        # ipath = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/colormap/bot'
+        ipath = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/colormap'
 
         # full timeseries
         startdate = '13/04/30 00:00:00'
@@ -821,13 +840,16 @@ if __name__ == '__main__':
         dt = datetime.datetime.strptime(enddate, "%y/%m/%d %H:%M:%S")
         end_num = dates.date2num(dt)
         t11 = ['TC4', 'St21', 'TC3', 'TC2', 'TC1', 'CB']
-        t12 = [ 11, 9, 7, 5, 3, 1]
+        t12 = [ 1, 3, 5 , 7, 9, 11 ]
         tick = [t11, t12]
         maxdepth = 12
         firstlogdepth = 0
         maxtemp = 20
-        interpolate = 5
-        upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp, thermocline = False, interpolate = interpolate)
+        interpolate = None  # 4
+        draw_lines = True
+        line_divisor = 2
+        upw.draw_isotherms(ipath, [start_num, end_num], tick, maxdepth, firstlogdepth, maxtemp, thermocline = False, \
+                            interpolate = interpolate, draw_lines = draw_lines, line_divisor = line_divisor)
 
     if filter_data:
         timeavg = None
@@ -901,8 +923,8 @@ if __name__ == '__main__':
 
         lag = 13
 
-        r = utils.timeseries_correlation.LimnologyTimesSeries.cross_corr(nvel_ts, temp_ts, 150)
-        print "cross corr f(lag) = %f" % r
+        r = utils.timeseries_correlation.LimnologyTimesSeries.cross_corr_func(nvel_ts, temp_ts, 150)
+        print "cross corr func (lag) = %f" % r
 
         r = utils.timeseries_correlation.LimnologyTimesSeries.pearson_corr_coeff(nvel_ts, temp_ts, lag)
         print "pearson corr coef r=%f" % r
@@ -920,3 +942,17 @@ if __name__ == '__main__':
 
         cv = utils.timeseries_correlation.LimnologyTimesSeries.cov(nvel_ts, temp_ts, lag)
         print "Pandas cov=%f" % cv
+
+#===============================================================================
+#         r = np.correlate(nvel_ts.data, temp_ts.data, mode = 'valid', old_behavior = False)
+#         print "scipy xcorr = ", r
+#
+#         r = sp.signal.fftconvolve(temp_ts.data, nvel_ts.data, mode = 'valid')
+#         print "scipy fftconv = ", r
+#
+#         xcorr = lambda x, y : np.fft.irfft(np.fft.rfft(x) * np.fft.rfft(y[::-1]))
+#         print "cross corr FFT", xcorr(temp_ts.data, nvel_ts.data)
+#===============================================================================
+
+        r = np.corrcoef(temp_ts.data[:-1], nvel_ts.data)
+        print "numpy xcorr coef = ", r

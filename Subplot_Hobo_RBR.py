@@ -9,8 +9,8 @@ import matplotlib.dates
 import time, os, sys, inspect, locale, math
 from scipy.interpolate import UnivariateSpline
 from utils import display_data
-import read_RBR
-import readTempHoboFiles
+from utools import read_RBR
+from utools import readTempHoboFiles
 # import scikits.bootstrap as bootstrap
 from utils import env_can_weather_data_processing as envir
 from matplotlib import rcParams
@@ -21,9 +21,7 @@ import tor_harb_windrose
 import upwelling
 import fish_detection
 
-import utils.hdf_tools as hdf
-
-sys.path.insert(0, '/software/SAGEwork/Seiches')
+import utools.hdf_tools as hdf
 import fft.filters as filters
 import fft.fft_utils as fft_utils
 
@@ -56,7 +54,7 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
         # get hobo file
         hobofilename = fnames[0]  # '18_2393005.csv'
         print "Reading file %s" % hobofilename
-        dateTime, temp, results = readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], dateinterval, paths[0])
+        dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], dateinterval, paths[0])
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
         HOBOtempArr = temp
@@ -65,7 +63,7 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
         # get RBR file
         RBRfilename = fnames[1]  # '019513.dat'
         print "Reading file %s" % RBRfilename
-        dateTime, temp, results = read_RBR.get_data_from_file(RBRfilename, window_hour, windows[1], [start_num, end_num], paths[1])
+        dateTime, temp, results = utools.read_RBR.get_data_from_file(RBRfilename, window_hour, windows[1], [start_num, end_num], paths[1])
         # index is specific to the files read and needs to be modified for other readings
         RBRdateTimeArr = dateTime
         RBRresultsArr = results
@@ -258,7 +256,7 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
 
     # get hobo file
     for path in paths:
-        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
+        dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
         HOBOtempArr = temp
@@ -303,7 +301,7 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
         # get L. Ontario hobo file
         # hobofilename = '18_2393005.csv'
         print "Reading file %s" % lo_file
-        dateTime2, temp2, results2 = readTempHoboFiles.get_data_from_file(lo_file, moving_avg, windows[1], [start_num, end_num], lo_path)
+        dateTime2, temp2, results2 = utools.readTempHoboFiles.get_data_from_file(lo_file, moving_avg, windows[1], [start_num, end_num], lo_path)
 
         HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
         HOBOresultsArr = numpy.resize(HOBOresultsArr, len(HOBOresultsArr) + 1)
@@ -361,7 +359,7 @@ def read_TRCA_files(paths):
 
 
     for path in paths:
-        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], [start_num, end_num], path)
+        dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(window_hour, windows[1], [start_num, end_num], path)
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
         HOBOtempArr = temp
@@ -403,7 +401,7 @@ def read_TRCA_files(paths):
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
         hobofilename = '18_2393005.csv'
         print "Reading file %s" % hobofilename
-        dateTime, temp, results = readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
+        dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
 
         HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
         HOBOresultsArr = numpy.resize(HOBOresultsArr, len(HOBOresultsArr) + 1)
@@ -451,7 +449,7 @@ def wind_airpress_airtemp_water_temp():
     path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
     hobofilename = '18_2393005.csv'
     print "Reading file %s" % hobofilename
-    dateTime, temp, results = readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
+    dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
     HOBOdateTimeArr = dateTime
     HOBOresultsArr = results
     HOBOtempArr = temp
@@ -657,7 +655,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
     # get hobo files
     print "Reading path %s" % paths[0]
 
-    dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], dateinterval, paths[0])
+    dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(window_hour, windows[1], dateinterval, paths[0])
     HOBOdateTimeArr = dateTime
     HOBOresultsArr = results
     HOBOtempArr = temp
@@ -670,7 +668,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
     # get RBR files
 
     print "Reading path %s" % paths[1]
-    dateTime, temp, results, k , fnames = read_RBR.read_files(window_hour, windows[1], dateinterval, paths[1])
+    dateTime, temp, results, k , fnames = utools.read_RBR.read_files(window_hour, windows[1], dateinterval, paths[1])
     # index is specific to the files read and needs to be modified for other readings
     RBRdateTimeArr = dateTime
     RBRresultsArr = results
@@ -947,7 +945,7 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
     print "Start poincare_wave_in_harbour()"
     for path in paths:
-        dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], dateinterval, path)
+        dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(window_hour, windows[1], dateinterval, path)
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
         HOBOtempArr = temp
@@ -985,7 +983,7 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
         hobofilename = '18_2393005.csv'  # 10m deep sensor
         print "Reading file %s" % hobofilename
-        dateTime, temp, results = readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
+        dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
 
         HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
         HOBOresultsArr = numpy.resize(HOBOresultsArr, len(HOBOresultsArr) + 1)
@@ -1053,7 +1051,7 @@ def calculate_harbour_statistics(path, path_out, timeinterv, all = False, NOVAPR
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(window_hour, windows[1], timeinterv, path)
+    dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(window_hour, windows[1], timeinterv, path)
     HOBOdateTimeArr = dateTime
     HOBOresultsArr = results
     HOBOtempArr = temp
@@ -1177,9 +1175,9 @@ def draw_harbour_statistics(path, timeinterv, selector, all = False):
         type = selector[i]
 
         if all:
-            dateTime, temp, result, k, fnames, x05, x95 = readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
+            dateTime, temp, result, k, fnames, x05, x95 = utools.readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
         else:
-            dateTime, temp, result, k, fnames = readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
+            dateTime, temp, result, k, fnames = utools.readTempHoboFiles.read_stat_files(window_hour, windows[1], timeinterv, path, type, all = all)
 
         if all:
             difflines = False

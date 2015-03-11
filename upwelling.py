@@ -8,31 +8,31 @@ from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, sys, inspect, locale, math
 from scipy.interpolate import UnivariateSpline
-from utils import display_data
-import read_RBR
-import readTempHoboFiles
+from utools import display_data
+from utools import read_RBR
+from utools import readTempHoboFiles
 # import scikits.bootstrap as bootstrap
-from utils import env_can_weather_data_processing as envir
+from utools import env_can_weather_data_processing as envir
 from matplotlib import rcParams
 
-sys.path.insert(0, '/software/SAGEwork/Seiches')
-import fft.filters as filters
-import fft.fft_utils as fft_utils
-import fft.peakdetect as peakdetect
-import spectral_analysis
+import ufft.filters as filters
+import ufft.fft_utils as fft_utils
+import ufft.peakdetect as peakdetect
+import ufft.spectral_analysis
 import tor_harb_windrose
 import scipy.integrate
-import utils.interpolate as interpolate
-import utils
-sys.path.insert(0, '/software/SAGEwork/Pressure_analysis')
-import utils.hdf_tools as hdf
-import utils.read_csv as read_csv
-import utils.stats as stat
+import utools.interpolate as interpolate
+import utools
+
+
+import utools.hdf_tools as hdf
+import utools.read_csv as read_csv
+import utools.stats as stat
 
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-from utils import smooth
+from utools import smooth
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
 window_6hour = "window_6hour"  # 30 * 6 for a 2 minute sampling
@@ -957,9 +957,9 @@ def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filte
 
     for path in dirList:
         if len(dirs) > 1 :
-            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
+            dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
         else:
-            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
+            dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
         HOBOtempArr = temp
@@ -1038,9 +1038,9 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = F
 
     for path in dirs:
         if len(dirs) > 1 :
-            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
+            dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], ppath + '/' + path)
         else:
-            dateTime, temp, results, k , fnames = readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
+            dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
 
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
@@ -1087,7 +1087,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = F
             # log = False
             # ylabel = "Spectral Density ($^oC$/cph$)"
             ylabel = "Amplitude ($^oC$)"
-            [Time, y, x05, x95] = spectral_analysis.doSpectralAnalysis(dat, zoneName, ylabel , title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False, log = log)
+            [Time, y, x05, x95] = fft.spectral_analysis.doSpectralAnalysis(dat, zoneName, ylabel , title, draw, window = "hanning", num_segments = numseg, tunits = tunits, funits = funits, b_wavelets = False, log = log)
         # end if fft
 
     # end (for path)
@@ -1122,11 +1122,12 @@ def plot_weather_data(date, weather_path, wfile, windrose):
                             [wdateTime[1:]], [wtemp[1:]], [wdateTime[1:]], [windir], \
                             ['r'], ['b', 'g'], [" Temp", "Wind dir"], linewidth1 = [1.8], linewidth2 = [0.6])
         if windrose:
-            tor_harb_windrose.draw_windrose(windir, winspd, 'bar', loc = (1, 0.05), fontsize = 20, unit = "[km/h]")
+            tor_harb_windrose.draw_windrose(windir, winspd, 'bar', loc = (1, 0.05), fontsize = 20, unit = r'[$\mathsf{km\cdot h^{-1}}$]')
             plt.show()
         # end if
 
-def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, weather_file, filter = False):
+def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, weather_file, \
+                          filter = False, delta_T_subplot = False):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     print "Start wind_airpress_airtemp_water_temp()"
@@ -1143,7 +1144,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     k = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
     i = 0
     for fname in sorted_files:
-        dateTime, temp, results = readTempHoboFiles.get_data_from_file(fname, window_hour, windows[1], timeinterv = date, rpath = water_path)
+        dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(fname, window_hour, windows[1], timeinterv = date, rpath = water_path)
         maxidx = 300000
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime[:maxidx])
         resultsArr[i] = numpy.append(resultsArr[i], results[:maxidx])
@@ -1162,7 +1163,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     TH_k = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
     i = 0
     for fname in sorted_files:
-        dateTime, temp, results = readTempHoboFiles.get_data_from_file(fname, window_hour, windows[1], timeinterv = date, rpath = harbour_path)
+        dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(fname, window_hour, windows[1], timeinterv = date, rpath = harbour_path)
         maxidx = 300000
         TH_dateTimeArr[i] = numpy.append(TH_dateTimeArr[i], dateTime[:maxidx])
         TH_resultsArr[i] = numpy.append(TH_resultsArr[i], results[:maxidx])
@@ -1172,20 +1173,49 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     # end for
 
 
+    # read one depth lake data
+    print "Reading file %s" % lake_file
+    dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(lake_file, window_hour, windows[1], date, water_path)
+    HOBOdateTimeArr = dateTime
+    HOBOresultsArr = results
+    HOBOtempArr = temp
 
+    # 1'') read temperature diff at TC4
+    diffpath = water_path + "/../../TC-OuterHarbour/colormap"
+    base, dirs, files = iter(os.walk(diffpath)).next()
+
+    sorted_files = sorted(files, key = lambda x: x.split('.')[0])
+
+    cmdateTimeArr = []
+    cmtempArr = []
+    cmresultsArr = []
+    cmk = []
+    j = i = 0
+    nsorted_files = sorted_files[:]
+    for fname in sorted_files:
+        print "Filename = %s" % fname
+        dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(fname, window_6hour, windows[1], timeinterv = date, rpath = diffpath)
+        cmdateTimeArr.append(dateTime)
+        cmresultsArr.append(results)
+        cmtempArr.append(temp)
+        cmk.append(j)
+        i += 1
+        j += 1
+    # end for
+
+    # plot the temperature not the smoothed ones
+    ndateTimeArr = numpy.array(cmdateTimeArr)
+    ntempArr = numpy.array(cmtempArr)
+    nresultsArr = numpy.array(cmresultsArr)
+    nk = numpy.array(cmk)
+    diffarr = numpy.array(ntempArr[1]) - numpy.array(ntempArr[0])
 
     # plot the temperature not the smoothed ones - ONLY for test
-    datetype = 'dayofyear'
+    # datetype = 'dayofyear'
     # display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$", \
     #                                  datetype = datetype)
     # display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, fontsize = 18, datetype = datetype)
 
-    # read one depth lake data
-    print "Reading file %s" % lake_file
-    dateTime, temp, results = readTempHoboFiles.get_data_from_file(lake_file, window_hour, windows[1], date, water_path)
-    HOBOdateTimeArr = dateTime
-    HOBOresultsArr = results
-    HOBOtempArr = temp
 
     # 2) read weather data
     wfile = open(weather_path + '/' + weather_file, 'rb')
@@ -1202,7 +1232,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
 
     timeArray = numpy.array([iwdateTime[1:], iwdateTime[1:], iwdateTime[1:], iwdateTime[1:], HOBOdateTimeArr[1:]])
     names = numpy.array(["Air Temp", "Wind Dir", "Wind spd", "Atm press", "Water temp"])
-    labels = numpy.array(["Air Temp ($^\circ$C)", "Wind Dir ($^\circ$)", "Wind spd (km/h)", "Atm press (hPa)", "Water Temp ($^\circ$C)"])
+    labels = numpy.array(["Air Temp ($^\circ$C)", "Wind Dir ($^\circ$)", r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', "Atm press (hPa)", "Water Temp ($^\circ$C)"])
 
     # 5) Time domain analysis
     lowcut = 1.0 / (24 * 10) / 3600
@@ -1216,7 +1246,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     else:
         factor = 1
 
-    # 6 Filered data
+    # 6 Filtered data
     if filter:
         Filtered_data = numpy.zeros(len(dataArray), dtype = numpy.ndarray)
         delay = numpy.zeros(len(dataArray) + 1, dtype = numpy.ndarray)
@@ -1248,7 +1278,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         utils.display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
         # 7) Draw subplot
         # rcParams['text.usetex'] = True
-        custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', 'Wind spd(km/h)', 'Air p(hPa)', 'Water T($^\circ$C)'])
+        custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', 'Air p(hPa)', 'Water T($^\circ$C)'])
         # ToDO: Add short and long radiation
         print "Start display wind_airpress_airtemp_water_temp subplots "
         utils.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
@@ -1256,28 +1286,36 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
 
 
     # 8) Mixed water, air ,img data
-    custom = numpy.array(['Wind spd(km/h)', 'Air (T($^\circ$C)', 'Water T($^\circ$C)', ])
+    custom = numpy.array([r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', 'Air [T($^\circ$C]', 'Water T[$^\circ$C]', ])
     # ToDO: Add short and long radiation
     print "Start display mixed subplots "
-    dateTimes1 = [iwdateTime]
-    data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day")]
-    varnames = ["Wind speed"]
-    ylabels1 = ["Wind spd [km/h]"]
+    if delta_T_subplot:
+        dateTimes1 = [iwdateTime, ndateTimeArr[0]]
+        data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day"), diffarr]
+        varnames = ["Wind speed", "$\Delta$T ($\Delta$H=1m)"]
+        ylabels1 = [r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', "Temp [$^\circ$C]"]
+    else :
+        dateTimes1 = [iwdateTime]
+        data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day")]
+        varnames = ["Wind speed"]
+        ylabels1 = [r'Wind spd [$\mathsf{km\cdot h^{-1}}$]']
+
     dateTimes2 = [iwdateTime, HOBOdateTimeArr]
     ylabels2 = ["Temp. [$^\circ$C]"]
     groups = [iwtemp, HOBOresultsArr]
     groupnames = ['Air Temp', 'Water Temp']
-    dateTimes3 = [dateTimeArr, TH_dateTimeArr]
+    dateTimes3 = [TH_dateTimeArr, dateTimeArr]
     ylabels3 = ["Depth [m]", "Depth [m]"]
-    imgs = [resultsArr, TH_resultsArr]
-    t11 = ['0', '4', '9', '13', '18', '22', '27']
-    t12 = [27, 22.5, 18, 13.5, 9, 4.5, 0]
-    t21 = ['0', '3', '6', '10']
-    t22 = [10, 6, 3, 0]
+    imgs = [TH_resultsArr, resultsArr]
+    t21 = ['0', '4', '9', '13', '18', '22', '27']
+    t22 = [27, 22.5, 18, 13.5, 9, 4.5, 0]
+    t11 = ['0', '3', '6', '10']
+    t12 = [10, 6, 3, 0]
     tick = [[t11, t12], [t21, t22]]
-    maxdepth = [27, 9]
-    firstlogdepth = [3, 0]
-    maxtemp = [25, 26]
+    limits = [None, None, [-1, 10], None, None ]
+    maxdepth = [9, 27]
+    firstlogdepth = [0, 3]
+    maxtemp = [26, 26]
     mintemps = [0, 0]
     mindepths = [0, 0]
     utils.display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data, varnames = varnames, ylabels1 = ylabels1, \
@@ -1285,7 +1323,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
                                        dateTimes3 = dateTimes3, imgs = imgs, ylabels3 = ylabels3, ticks = tick, maxdepths = maxdepth, \
                                         mindepths = mindepths, mintemps = mintemps, firstlogs = firstlogdepth, maxtemps = maxtemp, \
                           fnames = None, revert = False, custom = None, maxdepth = None, tick = None, firstlog = None, yday = True, \
-                          title = False, grid = False, limits = None, sharex = True, fontsize = 18)
+                          title = False, grid = False, limits = limits, sharex = True, fontsize = 18, group_first = delta_T_subplot)
 
     # 9) Draw radiation data
     print "Start display  Atmospheric radiation "
