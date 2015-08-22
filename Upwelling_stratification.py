@@ -2,6 +2,8 @@
 Created on Dec 21, 2013
 
 @author: bogdan
+This Script calulated adn draws figures for JGLR paper:
+    "Extreme temperature variability within a harbour connected to a large lake"
 '''
 
 # libraries
@@ -20,6 +22,8 @@ from utools import display_data
 import ufft.spectral_analysis
 import utools.timeseries_correlation
 import utools.custom_csv_readers
+import gsw
+
 
 class Upwelling(object):
     '''
@@ -166,21 +170,47 @@ class Upwelling(object):
         ntempArr = np.array(tempArr)
         nresultsArr = np.array(resultsArr)
         nk = np.array(k)
-        utils.display_data.display_temperatures(ndateTimeArr, ntempArr, nk, fnames = nsorted_files, custom = custom, \
+        utools.display_data.display_temperatures(ndateTimeArr, ntempArr, nk, fnames = nsorted_files, custom = custom, \
                                       datetype = datetype, ylab = "Temperature [$^\circ$C]")
 
-        diffarr = np.array(ntempArr[1]) - np.array(ntempArr[0])
-        utils.display_data.display_temperatures(np.array([ndateTimeArr[1]]), np.array([diffarr]), nk, fnames = ["$\Delta$T ($\Delta$H = 1m)"], custom = custom, \
-                                      datetype = datetype, ylab = "Temperature [$^\circ$C]", draw_xaxis = True, fontsize = 22)
+        diffarr = np.array(ntempArr[1]) - np.array(ntempArr[0]) # Tc4
+        diffarr = np.array(ntempArr[11]) - np.array(ntempArr[10]) # CB
+        # for TC4 ylim
+        ylim=[-0.5, 10]
+        #fnames = ["$\Delta$T ($\Delta$H = 1m)"]
+        utools.display_data.display_temperatures(np.array([ndateTimeArr[1]]), np.array([diffarr]), nk, ylim=ylim, custom = custom, \
+                                      datetype = datetype, ylab = "$\Delta$ Temperature [$^\circ$C]", draw_xaxis = True, fontsize = 22)
+
+
+        # 3) Mixed water, air ,img data
+        custom = np.array(["$\Delta$ T [$^\circ$C]", "$\Delta$ T [$^\circ$C]"])
+        # ToDO: Add short and long radiation
+        print "Inversions Start display mixed subplots  "
+        
+        data1 = [np.array(diffarr), np.array(diffarr)]
+        dateTimes1 = [ndateTimeArr[1],ndateTimeArr[1]]
+        ylabels = custom
+        limits1 = [[-0.5, 10], [-0.15, 0.0]]
+        limits1 = [[-0.5, 10], [-0.5, 0.0]]
+        
+        utools.display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data1, varnames = [], ylabels1 = ylabels, limits1 = limits1,\
+                                           dateTimes2 = [], groups = [], groupnames = [], ylabels2 = [], \
+                                           dateTimes3 = [], imgs = [], ylabels3 = [], ticks = [], maxdepths = None, \
+                                           mindepths = None, mintemps = None, firstlogs = None, maxtemps = None, \
+                              fnames = None, revert = False, custom = None, maxdepth = None, tick = None, firstlog = None, yday = True, \
+                              title = False, grid = False, limits = None, sharex = True, fontsize = 20, group_first = False, interp = None)
+
+        
+
 
 
         ycustom = "Stations"
         revert = True
-        utils.display_data.display_img_temperatures(ndateTimeArr, ntempArr, nresultsArr, nk, tick, maxdepth, firstlogdepth, maxtemp, revert = revert, \
+        utools.display_data.display_img_temperatures(ndateTimeArr, ntempArr, nresultsArr, nk, tick, maxdepth, firstlogdepth, maxtemp, revert = revert, \
                                               fontsize = 22, datetype = datetype, thermocline = thermocline, interp = interpolate, ycustom = ycustom, \
                                               cblabel = "Temp [$^\circ$C]", draw_hline = draw_lines, hline_freq = line_divisor)
 
-        utils.display_data.display_temperatures_subplot(ndateTimeArr, ntempArr, nresultsArr, nk, fnames = nsorted_files, revert = False, custom = None, \
+        utools.display_data.display_temperatures_subplot(ndateTimeArr, ntempArr, nresultsArr, nk, fnames = nsorted_files, revert = False, custom = None, \
                                  maxdepth = None, tick = None, firstlog = None, yday = True, delay = None, group = 2, processed = False, \
                                  limits = [0, 25], sharex = True)
 
@@ -244,37 +274,45 @@ class Upwelling(object):
 
         return [station, lat, lon]
 
+    def determine_temp_rate_per_loc(self, dateTime, results, grad, tg, delta = 1):
+        k = 0
+        t = dateTime
+        T = results
+            
+        dt_hour = (t[2] - t[1]) * 24
+
+        hour = 0
+        grad = []
+        tg = [] 
+        for j in range(1, len(t) - 1):
+            # cummulate an hour
+            hour += dt_hour
+            if j == 1:
+                Ti = T[j]
+            if hour >= 1 * delta:
+                Tf = T[j]
+                grad.append(Tf - Ti)
+                tg.append(t[j])
+                Ti = Tf
+                k += 1
+                hour = 0
+        
+        gmax = np.max(grad)
+        gmin = np.min(grad) 
+        return np.array(grad), np.array(tg), k, gmax, gmin
+
     def determine_temp_rate(self, dateTime, results, grad, tg, delta = 1):
         '''
         '''
-
         ymax = 0
         ymin = 0
 
         for i in range(len(dateTime)):
-            k = 0
-            t = dateTime[i]
-            T = results[i]
-            dt_hour = (t[2] - t[1]) * 24
-
-            hour = 0
-
-            for j in range(1, len(t) - 1):
-                # cummulate an hour
-                hour += dt_hour
-                if j == 1:
-                    Ti = T[j]
-                if hour >= 1 * delta:
-                    Tf = T[j]
-                    grad[i] = np.append(grad[i], (Tf - Ti))
-                    tg[i] = np.append(tg[i], t[j])
-                    Ti = Tf
-                    k += 1
-                    hour = 0
-
+            
+            grad[i],tg[i],k, gmax, gmin =  self.determine_temp_rate_per_loc(dateTime[i], results[i], grad[i], tg, delta = 1)
             # resize the array
-            grad[i] = np.resize(grad[i], k - 1)
-            tg[i] = np.resize(tg[i], k - 1)
+            #grad[i] = np.resize(grad[i], k - 1)
+            #tg[i] = np.resize(tg[i], k - 1)
             ymax = np.maximum(ymax, np.amax(grad[i], axis = 0))
             ymin = np.minimum(ymin, np.amin(grad[i], axis = 0))
 
@@ -292,7 +330,23 @@ class Upwelling(object):
 
         for path in paths:
             dateTime, temp, results, k, fnames = self.get_timeseries_data(path, date, timeavg, window)
+            
+            
+              #Create a table : Name | max rate | max temp | min temp " # > 4C
+            print "Station, Location, Max rate, Min rate, No events >+_ 4OC, Max temp, Min temp Avg temp"
+            
+            overrate= 0.3    
+            for i in range(0, len(fnames)):
+                locgrad = np.object
+                loctg = np.object
+                locgrad, tg, k, gmax, gmin = self.determine_temp_rate_per_loc(dateTime[i], results[i], locgrad, \
+                                                                              loctg, delta = 1) 
+                print "%s %s, %.2f, %.2f, %d, %.2f, %.2f, %.2f" % \
+                (fnames[i], "LOCAION", gmax, gmin, np.sum(np.abs(locgrad)>overrate), np.max(results[i]),\
+                 np.percentile(results[i],5), np.mean(results[i])) 
+                 #np.min(np.nonzero(results[i])))
 
+            #Histogram
             grad = np.zeros(len(dateTime), dtype = np.ndarray)  # rate
             tg = np.zeros(len(dateTime), dtype = np.ndarray)  #
             ghist = np.zeros(len(dateTime), dtype = np.ndarray)  # histogram
@@ -308,6 +362,8 @@ class Upwelling(object):
                 factor = 1
 
             grad, tg, ymax, ymin = self.determine_temp_rate(dateTime, results, grad, tg, delta)
+            
+          
 
             # put data in bins
             for i in range(len(dateTime)):
@@ -324,16 +380,16 @@ class Upwelling(object):
                     perc[i] = np.zeros(len(ghist[i]), dtype = np.double)
                     for j in range(0, len(ghist[i])):
                         total += ghist[i][j]
-                        print "TOTAL location:%s total:%d j:%d hist:%d" % (fnames[i], total, j, ghist[i][j])
+                        #print "TOTAL location:%s total:%d j:%d hist:%d" % (fnames[i], total, j, ghist[i][j])
                     for j in range(0, len(ghist[i])):
 
                         perc[i][j] = ghist[i][j] * 100.0 / total
-                        print "PERCENT location:%s j:%d hist:%f" % (fnames[i], j, perc[i][j])
+                        #print "PERCENT location:%s j:%d hist:%f" % (fnames[i], j, perc[i][j])
             # end for i
 
             ylab = 'Temperature rate [$^\circ$C$h^-1$]'
 
-            utils.display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
+            utools.display_data.display_temperatures(tg, grad, k, fnames, False, difflines = False, custom = '', maxdepth = None, \
                                                tick = None, firstlog = None, fontsize = 20, ylim = [ymin - 1, ymax + 1], fill = False, \
                                                show = True, datetype = "dayofyear", minorgrid = "mondays", ylab = ylab)
             if percent:
@@ -347,7 +403,7 @@ class Upwelling(object):
         # end for k paths
 
 
-        utils.display_data.display_marker_histogram(binsarr, valuearr, fnamesarr, xlabel = r'Temperature rate [$\mathsf{^\circ C\cdot h^{-1}}$]', ylabel = "Frequency [%]", \
+        utools.display_data.display_marker_histogram(binsarr, valuearr, fnamesarr, xlabel = r'Temperature rate [$\mathsf{^\circ C\cdot h^{-1}}$]', ylabel = "Frequency [%]", \
                                               title = None, log = True, grid = False, fontsize = 18)
 
 
@@ -509,15 +565,7 @@ class Upwelling(object):
         '''
         pass
 
-    def correlate_N2_with_upwelling_velocity(self):
-        '''
-        Create a correlation , unfortunately will be 5 or 6 points corresponding to the velocity of the upwelling
-        event and the N2 (stratification frequency) - either at thermocline or an average of the column?
-
-        Correlate with velocity and  temperature drop
-        '''
-        pass
-
+    
     def correlate_meteo_with_temperature_variability(self, str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, wfile):
         '''
         get meteo : wind (speed and dir), air temp, solar radiation, arit pressure
@@ -533,6 +581,93 @@ class Upwelling(object):
         num_segments = 6
         ufft.spectral_analysis.doMultipleSpectralAnalysis(path, files, names, draw, window = "hanning", num_segments = num_segments, \
                                                      tunits = "day", funits = "cph", log = log, grid = False, type = type, withci = withci)
+
+    
+    def spectral_PE(self, water_path, harbour_path, name, str_date):
+
+        dt = datetime.datetime.strptime(str_date[0], "%y/%m/%d %H:%M:%S")
+        start_num = dates.date2num(dt)
+        dt = datetime.datetime.strptime(str_date[1], "%y/%m/%d %H:%M:%S")
+        end_num = dates.date2num(dt)
+        
+        #sorted from surface to bottom
+        [dateTimeArr, resultsArr, tempArr, TH_dateTimeArr, TH_resultsArr, TH_tempArr] = \
+                    upwelling.read_lake_and_harbour_data(str_date, [start_num,end_num], water_path, harbour_path)
+        
+        
+        if name == "Lake Ontario":
+            time = dateTimeArr
+            z = range(3, len(time)+3,1)
+            t = resultsArr
+        elif name == "Toronto Harbour":
+            time = TH_dateTimeArr
+            z = range(1, len(time)+1, 1) 
+            t = TH_resultsArr
+        
+        g = 9.81
+        #calculate temperature spectrum based on Potential energy
+        
+                                                 
+        #SA  =   Absolute Salinity                  [ g/kg ]
+        #t   =   in-situ temperature (ITS-90)       [ deg C ]
+        #p   =   sea pressure                       [ dbar ]( i.e. absolute pressure - 10.1325 dbar )
+        #OPTIONAL:  
+        #p_ref = reference pressure                 [ dbar ]   ( i.e. absolute reference pressure - 10.1325 dbar )
+        #(If reference pressure is not given then it is assumed that reference pressure is zero).
+        #pt   =  potential temperature with                             [ deg C ]
+        pt = np.zeros(len(z), dtype=np.ndarray)
+        parr = np.zeros(len(time[0]))
+        p_ref = 0
+        SA = np.zeros(len(time[0]))
+        for i in range(0,len(z)):
+            pt[i] = np.zeros(len(time[i]))
+            #p  =  sea pressure [ dbar ] ( i.e. absolute pressure - 10.1325 dbar )
+            depth = -z[i]
+            p = gsw.p_from_z(depth,[43.4])
+            #parr.empty(len(time[i]))
+            #parr.fill(p[0])
+            #for j in range(0, len(time[i])):
+            #    pt[i][j] = gsw.pt_from_t(SA,t[i],p,p_ref)[0]
+            pt[i] = gsw.pt_from_t(SA,t[i],p[0],p_ref)
+        
+        
+        #SA  =  Absolute Salinity                               [ g/kg ]
+        #pt  =  potential temperature (ITS-90)                  [ deg C ]
+        #SA & pt need to have the same dimensions.
+        #CT  =  Conservative Temperature                        [ deg C ]
+               
+        CT = np.zeros(len(z), dtype=np.ndarray)
+        for i in range(0,len(z)):
+            CT[i] = np.zeros(len(time[i]))
+            #for j in range(0, len(time[i])):
+            #    CT[i][j] = gsw.CT_from_pt(SA,pt[i][j])[0]
+            CT[i] = gsw.CT_from_pt(SA,pt[i])
+            
+        #SA  =  Absolute Salinity          [ g/kg ]
+        #CT  =  Conservative Temperature   [ deg C ]
+        #p   =  sea pressure               [ dbar ](i.e. absolute pressure - 10.1325 dbar)
+        # rho  =  in-situ density     [ kg m^-3 ]
+        rho = np.zeros(len(z), dtype=np.ndarray)
+        for i in range(0,len(z)):
+            rho[i] = np.zeros(len(time[i]))
+            #for j in range(0, len(time[i])):
+            #    rho[i][j] = gsw.rho(SA,CT[i][j],p)[0]
+            rho[i] = gsw.rho(SA,CT[i],p)
+        
+        #integrate the PE
+        PE= np.zeros(len(time[0]))
+        for j in range(0, len(time[0])):
+            for i in range(0,len(z)-1):
+                PE[j]=rho[i][j]*g*z[i]*(z[i+1]-z[i])
+    
+        draw = False
+        type = 'amplitude'
+        # type = 'power'
+        label  = "PSD Potential Energy [($J m^{-2})^2cph^{-1}$]"
+        title =  ""
+        ufft.spectral_analysis.doSpectralAnalysis([time[0],PE], name, label, title, draw, window = "hanning", num_segments=6,\
+                                                  tunits = "day", funits = "cph", log = 'loglog', b_wavelets = False)
+
 
     def test(self):
         sal = np.array([0.1, 0.1])  #
@@ -553,17 +688,18 @@ if __name__ == '__main__':
     ###########################################################
     climate = False
     rate = False
-    upwelling_anim = True
+    upwelling_anim = False
     slide_timestamp = False
     show_timeseries = False
     CB_heatmap = False
     EG_heatmap = False
     WG_heatmap = False
-    OutHarb_heatmap = False
+    OutHarb_heatmap = True
     JarvDock_heatmap = False
     filter_data = False
     weather_data = False
     spectral_harbour = False
+    spectral_PE = False
     correlation_curr_temp = False
 
     ############################################################
@@ -572,7 +708,7 @@ if __name__ == '__main__':
     # upw.test()
     # upw.Nsquared()
 
-    # date = ['13/05/19 00:00:00', '13/10/24 00:00:00']
+    #date = ['13/05/19 00:00:00', '13/10/24 00:00:00']
     # exclude_min = []
 
 
@@ -598,12 +734,12 @@ if __name__ == '__main__':
     if weather_data:
 
         # select one upwelling
-        # date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
+        #date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
 
         date = ['13/05/10 00:00:00', '13/10/27 00:00:00']
         # date = ['12/04/30 00:00:00', '12/10/27 00:00:00']  # 2012
         # stratified profile
-        date = ['13/06/30 00:00:00', '13/09/07 00:00:00']
+        #date = ['13/06/30 00:00:00', '13/09/07 00:00:00']
 
 
         dt = datetime.datetime.strptime(date[0], "%y/%m/%d %H:%M:%S")
@@ -626,7 +762,7 @@ if __name__ == '__main__':
     if upwelling_anim:
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/ClimateMap'
         timeavg = Upwelling.window_hour
-         #date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
+        #date = ['13/08/12 00:00:00', '13/08/24 00:00:00']
         #
         # must be correlated with the total length of the interval
         #
@@ -704,6 +840,7 @@ if __name__ == '__main__':
         print "Done Upwelling animation TIMESTAMP!"
 
     if rate:
+        # Plot histogram of hourly rates
         percent = True
         delta = 1  # delta = 6
         date = ['13/06/17 00:00:00', '13/10/01 00:00:00']
@@ -735,20 +872,23 @@ if __name__ == '__main__':
 
 
     if show_timeseries:
+        date = ['13/06/30 00:00:00', '13/08/24 00:00:00']
         exclude_min = { "Bot_TC4.csv":[3, 7], "Bot_St21.csv":[3] }
-         # filtering
+        # filtering
         timeavg = Upwelling.window_hour
-        # timeavg = Upwelling.window_3days
+        timeavg = Upwelling.window_3days
+        timeavg = Upwelling.window_6hour
+        timeavg = Upwelling.window_day
 
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed'
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/Bottom'
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/AboveBottom'
         location = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/location.csv'
 
-        peaks = False
+        peaks = True # peaks nees to be True to calculate the velosities
         [a_max, a_min, afnames] = upw.detect_bottom_loggers_min_temp(path, date, filt, timeavg, peaks = peaks)
 
-        if timeavg == Upwelling.window_3days:
+        if timeavg == Upwelling.window_3days or timeavg == Upwelling.window_6hour or timeavg == Upwelling.window_day:
             for i in range(0, len(a_max)):
                 print "max : %s, len=%d" % (afnames[i], len(a_max[i]))
 
@@ -870,16 +1010,36 @@ if __name__ == '__main__':
 
     if spectral_harbour:
         path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Spectral_Temp/Deep"
-        # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Spectral_Temp/Surface"
-        names = ['Cherry Beach' , 'Jarvis Dock', 'Lake Ontario']
-        # names = ['Cherry Beach', 'Ferry Term.', 'Lake Ontario']
-        log = False
+        names = ['Tc3' , 'Jarvis Dock', 'Lake Ontario']
+        ##names = ['Cherry Beach' , 'Jarvis Dock', 'Lake Ontario']
+        
+        #path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Spectral_Temp/Surface"
+        #names = ['Embayment A', 'Ferry Term.', 'Lake Ontario']
+        ##names = ['Cherry Beach', 'Ferry Term.', 'Lake Ontario']
+        
+        
+        #log = False
+        log = 'log'
+        log='linear'
         withci = True
         base, dirs, files = iter(os.walk(path)).next()
         sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
         upw.spectral_analysis(path, sorted_files, names, log, withci)
 
+    if spectral_PE:
+        water_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
+        harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap-JarvisDock'
+        name = "Lake Ontario"
+        name = "Toronto Harbour"
+        
+        str_date = ['13/05/10 00:00:00', '13/10/27 00:00:00']
+        # date = ['12/04/30 00:00:00', '12/10/27 00:00:00']  # 2012
+        # stratified profile
+        #date = ['13/06/30 00:00:00', '13/09/07 00:00:00']
+        upw.spectral_PE(water_path, harbour_path, name, str_date)
+
+                    
     if correlation_curr_temp:
 
         # full timeseries
@@ -893,12 +1053,12 @@ if __name__ == '__main__':
         window = '1H'
 
         # ADCP velocity data path
-        path = "/software/SAGEwork/rdradcp"
+        path = "/software/SAGEwork/rdrADCP"
         # bin_no = [1, 2, 3, 4]
         bin_no = [4]
 
-        reader_obj = utils.custom_csv_readers.Read_ADCP_WrittenData(path, 'northVel.csv', start_num, end_num, bin_no)
-        nvel_ts = utils.timeseries_correlation.LimnologyTimesSeries(reader_obj, window)
+        reader_obj = utools.custom_csv_readers.Read_ADCP_WrittenData(path, 'northVel.csv', start_num, end_num, bin_no)
+        nvel_ts = utools.timeseries_correlation.LimnologyTimesSeries(reader_obj, window)
 
         # Temperature data path EGap 2 m depth S/N 10098821
         path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed"
@@ -908,8 +1068,8 @@ if __name__ == '__main__':
         # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed"
         # filenames = '10298872.csv',
 
-        reader_obj = utils.custom_csv_readers.Read_Temp_Data_2013(path, filenames, start_num, end_num)
-        temp_ts = utils.timeseries_correlation.LimnologyTimesSeries(reader_obj, window)
+        reader_obj = utools.custom_csv_readers.Read_Temp_Data_2013(path, filenames, start_num, end_num)
+        temp_ts = utools.timeseries_correlation.LimnologyTimesSeries(reader_obj, window)
 
         method = 'pearson'
         # method = 'spearman'
@@ -923,13 +1083,13 @@ if __name__ == '__main__':
 
         lag = 13
 
-        r = utils.timeseries_correlation.LimnologyTimesSeries.cross_corr_func(nvel_ts, temp_ts, 150)
+        r = utools.timeseries_correlation.LimnologyTimesSeries.cross_corr_func(nvel_ts, temp_ts, 150)
         print "cross corr func (lag) = %f" % r
 
-        r = utils.timeseries_correlation.LimnologyTimesSeries.pearson_corr_coeff(nvel_ts, temp_ts, lag)
+        r = utools.timeseries_correlation.LimnologyTimesSeries.pearson_corr_coeff(nvel_ts, temp_ts, lag)
         print "pearson corr coef r=%f" % r
 
-        r = utils.timeseries_correlation.LimnologyTimesSeries.normalized_cross_corr_coeff(nvel_ts, temp_ts, 150)
+        r = utools.timeseries_correlation.LimnologyTimesSeries.normalized_cross_corr_coeff(nvel_ts, temp_ts, 150)
         print "normalized cross corr f(lag) = %f" % r
 
         average_interval = 'hour'
@@ -937,10 +1097,10 @@ if __name__ == '__main__':
         # average_interval = 'minute'
         # average_interval = 'day'
         # average_interval = None
-        r = utils.timeseries_correlation.LimnologyTimesSeries.corr(nvel_ts, temp_ts, method, lag, average_interval)
+        r = utools.timeseries_correlation.LimnologyTimesSeries.corr(nvel_ts, temp_ts, method, lag, average_interval)
         print "Pandas r=%f" % r
 
-        cv = utils.timeseries_correlation.LimnologyTimesSeries.cov(nvel_ts, temp_ts, lag)
+        cv = utools.timeseries_correlation.LimnologyTimesSeries.cov(nvel_ts, temp_ts, lag)
         print "Pandas cov=%f" % cv
 
 #===============================================================================

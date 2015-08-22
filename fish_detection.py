@@ -7,8 +7,8 @@ from matplotlib.dates import date2num, num2date
 from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, sys, inspect, locale, math
-import utils.read_csv as read_csv
-import utils.autovivification as ndict
+import utools.read_csv as read_csv
+import utools.autovivification as ndict
 
 def fish_detection(filepath, timeint, year):
     dict = sort_detections(filepath, timeint, year)

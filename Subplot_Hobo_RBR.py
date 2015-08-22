@@ -8,22 +8,22 @@ from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, sys, inspect, locale, math
 from scipy.interpolate import UnivariateSpline
-from utils import display_data
+from utools import display_data
 from utools import read_RBR
 from utools import readTempHoboFiles
 # import scikits.bootstrap as bootstrap
-from utils import env_can_weather_data_processing as envir
+from utools import env_can_weather_data_processing as envir
 from matplotlib import rcParams
 
 
-import spectral_analysis
+import ufft.spectral_analysis
 import tor_harb_windrose
 import upwelling
 import fish_detection
 
 import utools.hdf_tools as hdf
-import fft.filters as filters
-import fft.fft_utils as fft_utils
+import ufft.filters as filters
+import ufft.fft_utils as fft_utils
 
 
 windows = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
@@ -42,7 +42,7 @@ Logging end   12/11/22 07:49:04
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-from utils import smooth
+from utools import smooth
 
 
 def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = None, bfilter = False, bkelvin = False):

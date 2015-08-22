@@ -72,12 +72,18 @@ try:
         # [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/MOE deployment 18-07-2012/Data/ADCP/ADCP-3rd-card/600NE003.000', 1, [1, 280086], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes')
         # [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2012-MOE-L.Ontario-data/ADCP data/3169_Ajax S Outfall/3169J000.000', 1, [500, 10400], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
 
-        #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/600mhz-DPL_002.000', 1, [700, 239800], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
-        name = "Tor Harb 600 MHz"
-        [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/RDADCP/TRCA/2009/east_gap-DS09_000.000' , 1, [100, 5726], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes');
-        name = "E-Gap"
-        # [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/600mhz-DPL_002.000', 1, [10000, 19800], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
 
+
+        #name = "Tor Harb 600 MHz"
+        # for the WCT figure
+        #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/600mhz-DPL_002.000', 1, [700, 239800], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
+
+        #reduced set 
+        #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/600mhz-DPL_002.000', 1, [10000, 19800], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
+
+        name = "E-Gap"
+        [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/RDADCP/TRCA/2009/east_gap-DS09_000.000' , 1, [100, 5726], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes');
+        
         
         # [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/1200mhz-EMBC_004.000', 1, [1, 262500], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
         # name = "Emb-C 1200 MHz"
@@ -134,7 +140,7 @@ if traditional:
 
         #-------------------------------------------------------------------
 
-        data_args2 = [adcp.north_vel, 'N v [m/s]']
+        data_args2 = [adcp.north_vel, 'N velocity [m/s]']
         print "North vel"
         subplot = True
         bins = [0, 3, 5, 7]
@@ -148,11 +154,11 @@ if traditional:
         bin = 1
         strg = '%s - N velocity bin:%d' % (name, bin)
         print strg
-        plot_depth_averaged_analysis(adcp, data_args2, strg, bin = bin, avg = False)
+        plot_depth_averaged_analysis(adcp, data_args2, strg, bin = bin, avg = False, scale = 'loglog')
         bin = 5
         strg = '%s - N velocity bin:%d' % (name, bin)
         print strg
-        plot_depth_averaged_analysis(adcp, data_args2, strg, bin = bin, avg = False)
+        plot_depth_averaged_analysis(adcp, data_args2, strg, bin = bin, avg = False, scale = 'loglog')
     # end if
     bin = 3
     counterclockwise = True
@@ -200,8 +206,8 @@ else:
     resample = True
     interp = True
 
-    plotwavelet = False
-    plotFFT = True
+    plotwavelet = True
+    plotFFT = False
     plotvelimg = False
     plotUVT = False
 
@@ -216,7 +222,7 @@ else:
 
     # 1') read all harbour data (EG + Jarvis Dock
 
-    # common deployment period
+    # common deployment period good for WCT as well
     date = ['13/06/25 00:00:00', '13/10/27 00:00:00']
 
     # zoom in
@@ -229,8 +235,8 @@ else:
     end_num = dates.date2num(dt)
 
     print "get temperature data"
-    harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap-JarvisDock'
-    # harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/corr_vel_temp'
+    #harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap-JarvisDock'
+    harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/corr_vel_temp'
     base, dirs, files = iter(os.walk(harbour_path)).next()
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -289,14 +295,15 @@ else:
         results_v = nvel
     # end if
 
+    bin = 0
+    tlogno = 1
 
     if plotUVT:
         rdradcp.plot_ADCP_velocity.plot_temp_u_v(adcp, time1, results_u, time2, results_v, TH_dateTimeArr, TH_resultsArr, interp = interp)
 
     if plotFFT:
         print "two plots on the same figure of FFT splectrograms"
-        bin = 3
-        tlogno = 2
+        
         drawslope = True
         # plot_FFT_twinx_W_T(time1[bin], results_u[bin] + 1j * results_v[bin], TH_dateTimeArr[tlogno], TH_resultsArr[tlogno], scale = 'log')
         plot_FFT_twinx_W_T(time1[bin], results_u[bin] + 1j * results_v[bin], TH_dateTimeArr[tlogno], TH_resultsArr[tlogno], scale = 'log', drawslope = drawslope)

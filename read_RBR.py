@@ -11,8 +11,8 @@ from scipy.interpolate import UnivariateSpline
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-from utils import smooth
-from utils import display_data
+from utools import smooth
+from utools import display_data
 
 header = '''
 RBR TR-1060  6.77 019518 (Windows: 6.13 - Minimum required: 6.13)

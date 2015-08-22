@@ -988,16 +988,16 @@ def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filte
         for i in range(0, len(atime)):
             trim = int (len(atime[i]) / 20)
             # calculate peaks
-            _max, _min = peakdetect.peakdetect(aresults[i][trim:-trim], atime[i][trim:-trim], 250, 0.80)
+            _max, _min = peakdetect.peakdetect(aresults[i][trim:-trim], atime[i][trim:-trim], 100, 1.90)
 
             a_max.append(_max)
             a_min.append(_min)
 
-        utils.display_data.display_temperatures_and_peaks(numpy.array(atime), numpy.array(aresults), \
+        utools.display_data.display_temperatures_and_peaks(numpy.array(atime), numpy.array(aresults), \
                                                     numpy.array(a_max), numpy.array(a_min), [], fnames = numpy.array(afname), \
                                                     custom = "Upweling maxima", fill = False, minorgrid = 'hour', datetype = datetype)
     else:
-        utils.display_data.display_temperatures(numpy.array(atime), numpy.array(aresults), [], fnames = numpy.array(afname), \
+        utools.display_data.display_temperatures(numpy.array(atime), numpy.array(aresults), [], fnames = numpy.array(afname), \
                                                     custom = "", fill = False, minorgrid = 'hour', datetype = datetype)
 
     return [a_max, a_min, afname]
@@ -1126,15 +1126,14 @@ def plot_weather_data(date, weather_path, wfile, windrose):
             plt.show()
         # end if
 
-def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, weather_file, \
-                          filter = False, delta_T_subplot = False):
+
+def read_lake_and_harbour_data(str_date, date, water_path, harbour_path):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     print "Start wind_airpress_airtemp_water_temp()"
     start_num = date[0]
     end_num = date[1]
-
-    # 1) read all lake data
+     # 1) read all lake data
     base, dirs, files = iter(os.walk(water_path)).next()
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -1152,7 +1151,6 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         k[i] = numpy.append(k[i], i)
         i += 1
     # end for
-
     # 1') read all harbour data (EG + Jarvis Dock
     base, dirs, files = iter(os.walk(harbour_path)).next()
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
@@ -1171,7 +1169,21 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         TH_k[i] = numpy.append(TH_k[i], i)
         i += 1
     # end for
+    return [dateTimeArr, resultsArr, tempArr, TH_dateTimeArr, TH_resultsArr, TH_tempArr]
 
+def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, weather_file, \
+                          filter = False, delta_T_subplot = False):
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+
+    print "Start wind_airpress_airtemp_water_temp()"
+    start_num = date[0]
+    end_num = date[1]
+
+    # 1) read all lake data
+    # 1') read all harbour data (EG + Jarvis Dock
+
+    [dateTimeArr, resultsArr, tempArr, TH_dateTimeArr, TH_resultsArr, TH_tempArr] = \
+        read_lake_and_harbour_data(str_date, date, water_path, harbour_path)
 
     # read one depth lake data
     print "Reading file %s" % lake_file
@@ -1275,13 +1287,13 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
         print "Start display wind_airpress_airtemp_water_temp plot "
-        utils.display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
+        utools.display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
         # 7) Draw subplot
         # rcParams['text.usetex'] = True
         custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', 'Air p(hPa)', 'Water T($^\circ$C)'])
         # ToDO: Add short and long radiation
         print "Start display wind_airpress_airtemp_water_temp subplots "
-        utils.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
+        utools.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
     # end if filter
 
 
@@ -1295,35 +1307,58 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         varnames = ["Wind speed", "$\Delta$T ($\Delta$H=1m)"]
         ylabels1 = [r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', "Temp [$^\circ$C]"]
     else :
-        dateTimes1 = [iwdateTime]
-        data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day")]
-        varnames = ["Wind speed"]
-        ylabels1 = [r'Wind spd [$\mathsf{km\cdot h^{-1}}$]']
+        ro_air = 1.2 # kg/m^3
+        Cd = 0.0013
+        #tau = ro_air * Cd * (iwindSpd/1.36)*(iwindSpd/1.36) * numpy.sin((iwindDir*10-61)*2*math.pi/360)
+        tau = ro_air * Cd * (iwindSpd/1.36)*(iwindSpd/1.36) * numpy.cos((iwindDir*10-61)*2*math.pi/360)
+        
+        dateTimes1 = [iwdateTime, iwdateTime, iwdateTime]
+        data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day"), \
+                smooth.smoothed_by_window(iwdateTime, iwindDir*10, "window_half_day"),\
+                smooth.smoothed_by_window(iwdateTime, tau, "window_half_day")]
+        
+        
+        varnames = ["Wind speed", "Wind direction", "Wind stress along"]
+        ylabels1 = [r'W. spd [$\mathsf{km\cdot h^{-1}}$]', r'W. dir [$^\circ$]', r'$\mathbf{\tau_{al}}$ [Pa]']
 
     dateTimes2 = [iwdateTime, HOBOdateTimeArr]
     ylabels2 = ["Temp. [$^\circ$C]"]
     groups = [iwtemp, HOBOresultsArr]
     groupnames = ['Air Temp', 'Water Temp']
-    dateTimes3 = [TH_dateTimeArr, dateTimeArr]
-    ylabels3 = ["Depth [m]", "Depth [m]"]
-    imgs = [TH_resultsArr, resultsArr]
-    t21 = ['0', '4', '9', '13', '18', '22', '27']
-    t22 = [27, 22.5, 18, 13.5, 9, 4.5, 0]
-    t11 = ['0', '3', '6', '10']
-    t12 = [10, 6, 3, 0]
+    #dateTimes3 = [TH_dateTimeArr, dateTimeArr] #Harbour first
+    dateTimes3 = [dateTimeArr,TH_dateTimeArr]
+    ylabels3 = ["Depth [m]", "Depth [m]"] 
+    #imgs = [TH_resultsArr, resultsArr] #Harbour first
+    imgs = [ resultsArr,TH_resultsArr]
+    t11 = ['0', '4', '9', '13', '18', '22', '27']
+    t12 = [27, 22.5, 18, 13.5, 9, 4.5, 0]
+    t11 = ['0', '6', '13', '20', '27']
+    t12 = [27, 20, 13.5, 6.5, 0]
+    
+    t21 = ['0', '3', '6', '10']
+    t22 = [10, 6, 3, 0]
     tick = [[t11, t12], [t21, t22]]
-    limits = [None, None, [-1, 10], None, None ]
-    maxdepth = [9, 27]
-    firstlogdepth = [0, 3]
+    
+    #limits = [None, None, [-1, 10], None, None ] <= this screws up the tickers 
+    limits = [None, [0,360], [-0.8, 0.8], None, None, None, None] 
+    
+        
+    #maxdepth = [9, 27] # Harbour first
+    maxdepth = [27, 9]
+    #firstlogdepth = [0, 3] Harbour first
+    firstlogdepth = [3, 0]
+    
     maxtemp = [26, 26]
     mintemps = [0, 0]
     mindepths = [0, 0]
-    utils.display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data, varnames = varnames, ylabels1 = ylabels1, \
+    
+    utools.display_data.display_mixed_subplot(dateTimes1 = dateTimes1, data = data, varnames = varnames, ylabels1 = ylabels1, \
                                        dateTimes2 = dateTimes2, groups = groups, groupnames = groupnames, ylabels2 = ylabels2, \
                                        dateTimes3 = dateTimes3, imgs = imgs, ylabels3 = ylabels3, ticks = tick, maxdepths = maxdepth, \
                                         mindepths = mindepths, mintemps = mintemps, firstlogs = firstlogdepth, maxtemps = maxtemp, \
                           fnames = None, revert = False, custom = None, maxdepth = None, tick = None, firstlog = None, yday = True, \
-                          title = False, grid = False, limits = limits, sharex = True, fontsize = 18, group_first = delta_T_subplot)
+                          title = False, grid = False, limits = limits, sharex = True, fontsize = 18, group_first = delta_T_subplot,
+                          cblabel = [None, None, None])
 
     # 9) Draw radiation data
     print "Start display  Atmospheric radiation "
@@ -1338,7 +1373,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     dateTime3, results3 = hdf.read_hdf_dir(cloud_path, var3, ix, iy, timeidx, str_date[0], str_date[1])
 
 
-    utils.display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [1, 2, 3],
+    utools.display_data.display_temperatures([dateTime1, dateTime2, dateTime3], [results1, results2, results3 * 100], [1, 2, 3],
                                       fnames = [var1, var2, var3], difflines = False, custom = "Radiation data (W/m$^2$)")
 
     # 10) Temperature profiles in lake and harbour
@@ -1356,7 +1391,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     # utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range([TH_dateTimeArr], [TH_resultsArr], startdeptharr = [0] , \
     #                                                                            profiledates = profiledates, revert = False, legendloc = 4)
     #===========================================================================
-    utils.display_data.display_avg_vertical_temperature_profiles_err_bar_range([TH_dateTimeArr, dateTimeArr], [TH_resultsArr, resultsArr], startdeptharr = [0, 3], \
+    utools.display_data.display_avg_vertical_temperature_profiles_err_bar_range([TH_dateTimeArr, dateTimeArr], [TH_resultsArr, resultsArr], startdeptharr = [0, 3], \
                                                                                 profiledates = profiledates, revert = False, legendloc = 4)
 
 

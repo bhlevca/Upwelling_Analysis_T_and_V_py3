@@ -7,16 +7,14 @@ from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
 import time, os, datetime, sys
 from scipy.interpolate import UnivariateSpline
-from utils import display_data
-
-sys.path.insert(0, '/software/SAGEwork/Seiches')
-import fft.filters as filters
-import fft.fft_utils as fft_utils
+from utools import display_data
+import ufft.filters as filters
+import ufft.fft_utils as fft_utils
 
 # turn off warning in polyfit
 import warnings
 warnings.simplefilter('ignore', numpy.RankWarning)
-from utils import smooth
+from utools import smooth
 
 
 
@@ -411,7 +409,7 @@ def read_files_and_display(rpath = None):
 
     # plot the temperature not the smoothed ones
     datetype = 'dayofyear'
-    utils.display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$", \
+    display_data.display_temperatures(dateTimeArr, tempArr, k, fnames = sorted_files, custom = "Temperature Toronto Waterfront Zones $^oC$", \
                                       datetype = datetype)
     t11 = ['0', '3', '6', '9', '12', '15', '18', '21', '24', '27']
     t12 = [27, 24, 21, 18, 15, 12, 9, 6, 3, 0]
@@ -419,10 +417,11 @@ def read_files_and_display(rpath = None):
     maxdepth = 27
     firstlogdepth = 3
     maxtemp = 25
-    utils.display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, fontsize = 18, datetype = datetype)
+    display_data.display_img_temperatures(dateTimeArr, tempArr, resultsArr, k, tick, maxdepth, firstlogdepth, maxtemp, \
+                                          fontsize = 22, datetype = datetype, cblabel = "Temp [$\circ$C]")
     profiles = [1000, 3500, 4000, 5500, 10000, 15000, 20000, 25000]
 
-    utils.display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles)
+    display_data.display_vertical_temperature_profiles(dateTimeArr, tempArr, resultsArr, k, firstlogdepth, profiles)
 
 def read_files(span = None, window = windows[1], timeinterv = None, rpath = None):
     if rpath != None:
