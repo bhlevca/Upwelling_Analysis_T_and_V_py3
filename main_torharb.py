@@ -18,8 +18,8 @@ import utools.windows
 from utools import readTempHoboFiles
 from utools import smooth
 
-print  '--> Default read 2011 data File:2011_west_gap_DPLWG000.000) \n'
-print '\n\n'
+print('--> Default read 2011 data File:2011_west_gap_DPLWG000.000) \n')
+print('\n\n')
 
 
 
@@ -52,11 +52,11 @@ def write_datefile(writer, velocity, date):
         # writer.writerow([date[0][i], velocity[:, i]])
         writer.writerow(newrow)
 
-    print "Done writing file"
+    print("Done writing file")
 
 def writeBins(date, data, path_out, fname):
 
-    ofile = open(path_out + '/' + fname, "wb")
+    ofile = open(path_out + '/' + fname, "wt")
     writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
     write_datefile(writer, data, date)
     ofile.close()
@@ -81,29 +81,29 @@ try:
         #reduced set 
         #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/600mhz-DPL_002.000', 1, [10000, 19800], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
 
-        name = "E-Gap"
-        [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/RDADCP/TRCA/2009/east_gap-DS09_000.000' , 1, [100, 5726], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes');
+        #name = "E-Gap"
+        #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/RDADCP/TRCA/2009/east_gap-DS09_000.000' , 1, [100, 5726], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes');
         
         
-        # [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/1200mhz-EMBC_004.000', 1, [1, 262500], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
-        # name = "Emb-C 1200 MHz"
+        [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/1200mhz-EMBC_004.000', 1, [1, 262500], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
+        name = "Emb-C 1200 MHz"
         
         
 finally:
-    print('Read took %.03f sec.' % t.interval)
+    print(('Read took %.03f sec.' % t.interval))
 
-print 'ADCP configuration'
-print '----------------------'
-print 'no of bins :%d' % adcp.config.n_cells
-print 'first bin distance :%f' % adcp.config.bin1_dist
-print 'no of beams :%d' % adcp.config.n_beams
-print 'system of coordinates :%s' % adcp.config.coord_sys
-print 'time between pings :%f' % adcp.config.time_between_ping_groups
-print 'no of pings per ensamble :%d' % adcp.config.pings_per_ensemble
+print('ADCP configuration')
+print('----------------------')
+print('no of bins :%d' % adcp.config.n_cells)
+print('first bin distance :%f' % adcp.config.bin1_dist)
+print('no of beams :%d' % adcp.config.n_beams)
+print('system of coordinates :%s' % adcp.config.coord_sys)
+print('time between pings :%f' % adcp.config.time_between_ping_groups)
+print('no of pings per ensamble :%d' % adcp.config.pings_per_ensemble)
 adcp.goodbins = numpy.int(adcp.depth[0][1000] - adcp.config.bin1_dist)
-print 'no of bins that have full water:%d' % adcp.goodbins
+print('no of bins that have full water:%d' % adcp.goodbins)
 # IMPORTANT to know for depth bin calculations adcp.config.ranges
-print '----------------------'
+print('----------------------')
 
 path_out = "/software/SAGEwork/rdrADCP"
 
@@ -128,36 +128,36 @@ if traditional:
         rdradcp.plot_ADCP_velocity.plot_ADCP_velocity_img(adcp, data_args1, 'Lake Ontario - East velocity profiles', \
                                                    interp = interp, echo = echo, doy = True)
         writeBins(adcp.mtime, adcp.east_vel, path_out, "eastVel.csv")
-        print "start FFT analysis ...East"
+        print("start FFT analysis ...East")
         bin = 1
         strg = '%s - E velocity bin:%d' % (name, bin)
-        print strg
+        print(strg)
         plot_depth_averaged_analysis(adcp, data_args1, strg, bin = bin, avg = False)
         bin = 5
         strg = '%s - E velocity bin:%d' % (name, bin)
-        print strg
+        print(strg)
         plot_depth_averaged_analysis(adcp, data_args1, strg, bin = bin, avg = False)
 
         #-------------------------------------------------------------------
 
         data_args2 = [adcp.north_vel, 'N velocity [m/s]']
-        print "North vel"
+        print("North vel")
         subplot = True
         bins = [0, 3, 5, 7]
         rdradcp.plot_ADCP_velocity.plot_ADCP_velocity(adcp, data_args2, 'Lake Ontario - North velocity profiles', subplot, bins, doy = True)
-        print "North vel img"
+        print("North vel img")
         rdradcp.plot_ADCP_velocity.plot_ADCP_velocity_img(adcp, data_args2, 'Lake Ontario - North velocity profiles', \
                                                   interp = interp, echo = echo, doy = True)
         writebins.writeBins(adcp.mtime, adcp.north_vel, path_out, "northVel.csv")
 
-        print "start FFT analysis ... North"
+        print("start FFT analysis ... North")
         bin = 1
         strg = '%s - N velocity bin:%d' % (name, bin)
-        print strg
+        print(strg)
         plot_depth_averaged_analysis(adcp, data_args2, strg, bin = bin, avg = False, scale = 'loglog')
         bin = 5
         strg = '%s - N velocity bin:%d' % (name, bin)
-        print strg
+        print(strg)
         plot_depth_averaged_analysis(adcp, data_args2, strg, bin = bin, avg = False, scale = 'loglog')
     # end if
     bin = 3
@@ -234,10 +234,10 @@ else:
     dt = datetime.datetime.strptime(date[1], "%y/%m/%d %H:%M:%S")
     end_num = dates.date2num(dt)
 
-    print "get temperature data"
+    print("get temperature data")
     #harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap-JarvisDock'
     harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/corr_vel_temp'
-    base, dirs, files = iter(os.walk(harbour_path)).next()
+    base, dirs, files = next(iter(os.walk(harbour_path)))
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
     TH_dateTimeArr = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
@@ -256,7 +256,7 @@ else:
         i += 1
     # end for
 
-    print "smooth velocity data"
+    print("smooth velocity data")
     time1, evel = rdradcp.plot_ADCP_velocity.select_dates(start_num, end_num, adcp.mtime[0, :], adcp.east_vel)
     time2, nvel = rdradcp.plot_ADCP_velocity.select_dates(start_num, end_num, adcp.mtime[0, :], adcp.north_vel)
 
@@ -302,7 +302,7 @@ else:
         rdradcp.plot_ADCP_velocity.plot_temp_u_v(adcp, time1, results_u, time2, results_v, TH_dateTimeArr, TH_resultsArr, interp = interp)
 
     if plotFFT:
-        print "two plots on the same figure of FFT splectrograms"
+        print("two plots on the same figure of FFT splectrograms")
         
         drawslope = True
         # plot_FFT_twinx_W_T(time1[bin], results_u[bin] + 1j * results_v[bin], TH_dateTimeArr[tlogno], TH_resultsArr[tlogno], scale = 'log')
@@ -323,17 +323,17 @@ else:
                 res_u = scipy.ndimage.interpolation.zoom(evel[bin], float(len(TH_dateTimeArr[tlogno])) / float(len(time1[bin])))
                 res_v = scipy.ndimage.interpolation.zoom(nvel[bin], float(len(TH_dateTimeArr[tlogno])) / float(len(time1[bin])))
 
-                print "plot vel wavelet"
+                print("plot vel wavelet")
                 plot_velocity_wavelet_spectrum(res_time1, res_u, scaleunit = scaleunit)
 
-                print "plot temp wavelet"
+                print("plot temp wavelet")
                 plot_velocity_wavelet_spectrum(TH_dateTimeArr[tlogno][1:], TH_resultsArr[tlogno][1:], scaleunit = scaleunit)
 
-                print "plot cross wavelet"
+                print("plot cross wavelet")
                 plot_cross_spectogram_w_T(res_time1, res_u, res_v, res_time1, TH_resultsArr[tlogno], scaleunit = scaleunit)
         else:
-            print "plot cross wavelet"
+            print("plot cross wavelet")
             plot_cross_spectogram_w_T(time1[bin], results_u[bin], results_v[bin], TH_dateTimeArr[tlogno], TH_resultsArr[tlogno], scaleunit = scaleunit)
         # endif
 
-print "Done"
+print("Done")

@@ -9,20 +9,20 @@ This Script calulated adn draws figures for JGLR paper:
 # libraries
 import numpy as np
 import scipy as sp
-import gsw
+from . import gsw
 import csv
 import os, locale
 import datetime
 import matplotlib.dates as dates
 
 # local
-import upwelling
+from . import upwelling
 from utools import readTempHoboFiles
 from utools import display_data
 import ufft.spectral_analysis
 import utools.timeseries_correlation
 import utools.custom_csv_readers
-import gsw
+from . import gsw
 
 
 class Upwelling(object):
@@ -111,7 +111,7 @@ class Upwelling(object):
                        thermocline = True, interpolate = None, draw_lines = False, line_divisor = 2):
         # dirlist needs to be sorted in ascending order
         # Separate directories from files
-        base, dirs, files = iter(os.walk(path)).next()
+        base, dirs, files = next(iter(os.walk(path)))
 
         sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -129,7 +129,7 @@ class Upwelling(object):
         j = i = 0
         nsorted_files = sorted_files[:]
         for fname in sorted_files:
-            print "Filename = %s" % fname
+            print("Filename = %s" % fname)
             dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(fname, self.window_6hour, self.windows[1], timeinterv = timeint, rpath = path)
 
             dateTimeArr.append(dateTime)
@@ -185,7 +185,7 @@ class Upwelling(object):
         # 3) Mixed water, air ,img data
         custom = np.array(["$\Delta$ T [$^\circ$C]", "$\Delta$ T [$^\circ$C]"])
         # ToDO: Add short and long radiation
-        print "Inversions Start display mixed subplots  "
+        print("Inversions Start display mixed subplots  ")
         
         data1 = [np.array(diffarr), np.array(diffarr)]
         dateTimes1 = [ndateTimeArr[1],ndateTimeArr[1]]
@@ -240,7 +240,7 @@ class Upwelling(object):
 
         '''
 
-        ifile = open(file, 'rb')
+        ifile = open(file, 'rt')
         reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
 
         hdr = ["location", "Lat", "Lon", "easting", "northing"]
@@ -333,7 +333,7 @@ class Upwelling(object):
             
             
               #Create a table : Name | max rate | max temp | min temp " # > 4C
-            print "Station, Location, Max rate, Min rate, No events >+_ 4OC, Max temp, Min temp Avg temp"
+            print("Station, Location, Max rate, Min rate, No events >+_ 4OC, Max temp, Min temp Avg temp")
             
             overrate= 0.3    
             for i in range(0, len(fnames)):
@@ -341,9 +341,9 @@ class Upwelling(object):
                 loctg = np.object
                 locgrad, tg, k, gmax, gmin = self.determine_temp_rate_per_loc(dateTime[i], results[i], locgrad, \
                                                                               loctg, delta = 1) 
-                print "%s %s, %.2f, %.2f, %d, %.2f, %.2f, %.2f" % \
+                print("%s %s, %.2f, %.2f, %d, %.2f, %.2f, %.2f" % \
                 (fnames[i], "LOCAION", gmax, gmin, np.sum(np.abs(locgrad)>overrate), np.max(results[i]),\
-                 np.percentile(results[i],5), np.mean(results[i])) 
+                 np.percentile(results[i],5), np.mean(results[i]))) 
                  #np.min(np.nonzero(results[i])))
 
             #Histogram
@@ -423,8 +423,8 @@ class Upwelling(object):
 
                 # calculate distances
         distances = gsw.distance(lon, lat, 0)
-        print "distances", distances,
-        print "names", afnames
+        print("distances", distances, end=' ')
+        print("names", afnames)
 
         # calculate velocities u=D/t  i is the location  the length of each a_min is the number of peaks
         dt = [[] for i in range(len (a_min))]
@@ -432,28 +432,28 @@ class Upwelling(object):
         for i in range(0, len (a_min) - 1):  # iterate on places
             name = afnames[i]
             for j in range(0, len(a_min[0])):  # iterate on min points at each place
-                print i, ':', j
+                print(i, ':', j)
                 dt[i].append((a_min[i + 1][j][0] - a_min[i][j][0]) * 3600 * 24)  # sec
-                print "a_min[%d ] (%f)- a_min[%d ] (%f) = %f" % (i + 1, a_min[i + 1][j][0], i, a_min[i][j][0], (a_min[i + 1][j][0] - a_min[i][j][0]) * 3600 * 24)
+                print("a_min[%d ] (%f)- a_min[%d ] (%f) = %f" % (i + 1, a_min[i + 1][j][0], i, a_min[i][j][0], (a_min[i + 1][j][0] - a_min[i][j][0]) * 3600 * 24))
         for i in range(0, len (a_min) - 1):  # iterate on places
             for j in range(0, len(a_min[0])):  # iterate on min points at each place
                 v[i].append(distances[0][i] / dt[i][j])
-                print "velocity at %s to %s (dist = %f)  event[%d] = %f [m/s]" % (afnames[i], afnames[i + 1], distances[0][i], j, v[i][j])
+                print("velocity at %s to %s (dist = %f)  event[%d] = %f [m/s]" % (afnames[i], afnames[i + 1], distances[0][i], j, v[i][j]))
 
-        print "------------------------------------------------------------------------------"
+        print("------------------------------------------------------------------------------")
 
         for j in range(len (a_min[0])):
             if j == 0:
                 for i in range(0, len (a_min) - 1):  # iterate on places
-                    print '%12s | ' % afnames[i],
-            print
-            print "-----------------------------------------------------------------------------"
+                    print('%12s | ' % afnames[i], end=' ')
+            print()
+            print("-----------------------------------------------------------------------------")
             for i in range(0, len (a_min) - 1):  # iterate on places
-                print "%12.4f | " % (v[i][j]),
+                print("%12.4f | " % (v[i][j]), end=' ')
 
         # end for
-        print
-        print "-----------------------------------------------------------------------------"
+        print()
+        print("-----------------------------------------------------------------------------")
 
     def plot_filtered_data(self, dateTimeArr, tempArr, fnames, k, filt, ylim):
 
@@ -488,7 +488,7 @@ class Upwelling(object):
 
             for j in range(0, no_of_interv):
                 snap_temp[i][j] = temp_i[j * idx_increment]
-                print "name= %s temp=%f  idx = %i" % (name[i], snap_temp[i][j], j * idx_increment)
+                print("name= %s temp=%f  idx = %i" % (name[i], snap_temp[i][j], j * idx_increment))
             # end for j
         # end for i
         return [X, Y, name, snap_temp]
@@ -511,7 +511,7 @@ class Upwelling(object):
 
         maxidx = len(results)
         for i in range(0, len(results)):
-            print "fname %s, len:%d" % (fnames[i], len(results[i]))
+            print("fname %s, len:%d" % (fnames[i], len(results[i])))
             maxidx = min(maxidx, len(temp[i]))
 
         mean_temp = np.zeros(maxidx)
@@ -539,8 +539,8 @@ class Upwelling(object):
             max_grad[i] = np.percentile(grad[i][1:], 95, axis = 0)
 
         for i in range(0, maxidx):
-            print "Stn %s : mean_temp:%2.2f  max_temp:%2.2f  min_temp:%2.2f  max_grad:%2.2f" \
-                % (fnames[i], mean_temp[i], max_temp[i], min_temp[i], max_grad[i])
+            print("Stn %s : mean_temp:%2.2f  max_temp:%2.2f  min_temp:%2.2f  max_grad:%2.2f" \
+                % (fnames[i], mean_temp[i], max_temp[i], min_temp[i], max_grad[i]))
 
 
     def correlate_N2_with_upwelling_velocity(self):
@@ -597,11 +597,11 @@ class Upwelling(object):
         
         if name == "Lake Ontario":
             time = dateTimeArr
-            z = range(3, len(time)+3,1)
+            z = list(range(3, len(time)+3,1))
             t = resultsArr
         elif name == "Toronto Harbour":
             time = TH_dateTimeArr
-            z = range(1, len(time)+1, 1) 
+            z = list(range(1, len(time)+1, 1)) 
             t = TH_resultsArr
         
         g = 9.81
@@ -674,13 +674,13 @@ class Upwelling(object):
         temp = np.array([4., 21.])  # Celsius
         pres = np.array([10., 20.])
         rho = gsw.rho(sal, temp, pres)
-        print "density", rho
+        print("density", rho)
 
         lat = [43.2, 43.2]
         CT = gsw.CT_from_t(sal, temp, pres)
         N2, p_mid = gsw.Nsquared(sal, CT, pres, lat = lat)
-        print "N2", N2
-        print "p_mid", p_mid
+        print("N2", N2)
+        print("p_mid", p_mid)
 
 if __name__ == '__main__':
 
@@ -727,8 +727,8 @@ if __name__ == '__main__':
             end_num = dates.date2num(dt)
             path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/ClimateMap'
             timeavg = Upwelling.window_hour
-            print "Start date %s:" % date[0]
-            print "==================================="
+            print("Start date %s:" % date[0])
+            print("===================================")
             upw.calculate_avg_maxgrd_max_min(path, [start_num, end_num], timeavg, upw.windows[1])
 
     if weather_data:
@@ -780,7 +780,7 @@ if __name__ == '__main__':
         end_num = dates.date2num(dt)
 
         [X, Y, name, snap_temp] = upw.get_temp_snapshots(path, [start_num, end_num], no_of_interv, timeavg, upw.windows[1])
-        ofile = open('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/' + 'TempSnapshots_1H.csv', "wb")
+        ofile = open('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/' + 'TempSnapshots_1H.csv', "wt")
         writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
         locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
         for i in range(0, len(name)):
@@ -795,7 +795,7 @@ if __name__ == '__main__':
                 row.append(snap_temp[i][j])
             writer.writerow(row)
         ofile.close()
-        print "Done Upwelling animation!"
+        print("Done Upwelling animation!")
 
     if slide_timestamp:
         # try to get attributes from the shapefiles
@@ -809,7 +809,7 @@ if __name__ == '__main__':
 
         # dates teken drom csv file
         csv_name = "/home/bogdan/Documents/UofT/PhD/Data_Files/TorontoHarbour-bathymetry/tor_harb_instr_snap_dates.csv"
-        ifile = open(csv_name, 'rb')
+        ifile = open(csv_name, 'rt')
         reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
         ts = []
         for row in reader:
@@ -837,7 +837,7 @@ if __name__ == '__main__':
             cmd = "convert " + arg
             os.popen(cmd)
 
-        print "Done Upwelling animation TIMESTAMP!"
+        print("Done Upwelling animation TIMESTAMP!")
 
     if rate:
         # Plot histogram of hourly rates
@@ -890,10 +890,10 @@ if __name__ == '__main__':
 
         if timeavg == Upwelling.window_3days or timeavg == Upwelling.window_6hour or timeavg == Upwelling.window_day:
             for i in range(0, len(a_max)):
-                print "max : %s, len=%d" % (afnames[i], len(a_max[i]))
+                print("max : %s, len=%d" % (afnames[i], len(a_max[i])))
 
             for i in range(0, len(a_min)):
-                print "min i: %s, len=%d" % (afnames[i], len(a_min[i]))
+                print("min i: %s, len=%d" % (afnames[i], len(a_min[i])))
 
             [locations, lat, lon] = upw.get_lat_lon(location)
             upw.determine_velocity(a_max, a_min, afnames, locations, lat, lon, exclude_min)
@@ -1022,7 +1022,7 @@ if __name__ == '__main__':
         log = 'log'
         log='linear'
         withci = True
-        base, dirs, files = iter(os.walk(path)).next()
+        base, dirs, files = next(iter(os.walk(path)))
         sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
         upw.spectral_analysis(path, sorted_files, names, log, withci)
@@ -1084,13 +1084,13 @@ if __name__ == '__main__':
         lag = 13
 
         r = utools.timeseries_correlation.LimnologyTimesSeries.cross_corr_func(nvel_ts, temp_ts, 150)
-        print "cross corr func (lag) = %f" % r
+        print("cross corr func (lag) = %f" % r)
 
         r = utools.timeseries_correlation.LimnologyTimesSeries.pearson_corr_coeff(nvel_ts, temp_ts, lag)
-        print "pearson corr coef r=%f" % r
+        print("pearson corr coef r=%f" % r)
 
         r = utools.timeseries_correlation.LimnologyTimesSeries.normalized_cross_corr_coeff(nvel_ts, temp_ts, 150)
-        print "normalized cross corr f(lag) = %f" % r
+        print("normalized cross corr f(lag) = %f" % r)
 
         average_interval = 'hour'
         # average_interval = 'second'
@@ -1098,10 +1098,10 @@ if __name__ == '__main__':
         # average_interval = 'day'
         # average_interval = None
         r = utools.timeseries_correlation.LimnologyTimesSeries.corr(nvel_ts, temp_ts, method, lag, average_interval)
-        print "Pandas r=%f" % r
+        print("Pandas r=%f" % r)
 
         cv = utools.timeseries_correlation.LimnologyTimesSeries.cov(nvel_ts, temp_ts, lag)
-        print "Pandas cov=%f" % cv
+        print("Pandas cov=%f" % cv)
 
 #===============================================================================
 #         r = np.correlate(nvel_ts.data, temp_ts.data, mode = 'valid', old_behavior = False)
@@ -1115,4 +1115,4 @@ if __name__ == '__main__':
 #===============================================================================
 
         r = np.corrcoef(temp_ts.data[:-1], nvel_ts.data)
-        print "numpy xcorr coef = ", r
+        print("numpy xcorr coef = ", r)

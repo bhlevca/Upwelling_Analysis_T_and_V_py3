@@ -17,9 +17,9 @@ from matplotlib import rcParams
 
 
 import ufft.spectral_analysis
-import tor_harb_windrose
-import upwelling
-import fish_detection
+from . import tor_harb_windrose
+from . import upwelling
+from . import fish_detection
 
 import utools.hdf_tools as hdf
 import ufft.filters as filters
@@ -48,12 +48,12 @@ from utools import smooth
 def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = None, bfilter = False, bkelvin = False):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    print "Start read_LOntario_files()"
+    print("Start read_LOntario_files()")
 
     if chain == "all" or chain == "hobo":
         # get hobo file
         hobofilename = fnames[0]  # '18_2393005.csv'
-        print "Reading file %s" % hobofilename
+        print("Reading file %s" % hobofilename)
         dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], dateinterval, paths[0])
         HOBOdateTimeArr = dateTime
         HOBOresultsArr = results
@@ -62,7 +62,7 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
     if chain == "all" or chain == "rbr":
         # get RBR file
         RBRfilename = fnames[1]  # '019513.dat'
-        print "Reading file %s" % RBRfilename
+        print("Reading file %s" % RBRfilename)
         dateTime, temp, results = utools.read_RBR.get_data_from_file(RBRfilename, window_hour, windows[1], [start_num, end_num], paths[1])
         # index is specific to the files read and needs to be modified for other readings
         RBRdateTimeArr = dateTime
@@ -70,7 +70,7 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
         RBRtempArr = temp
 
     k = [[0, 0], [0, 1]]
-    print "Start display"
+    print("Start display")
     if zNames == None:
         zNames = ["Hobo ", "RBR "]
     if chain == "all":
@@ -242,7 +242,7 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
 def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period, filter = None):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    print "Start read_Tor_Harbour_files()"
+    print("Start read_Tor_Harbour_files()")
 
     startdate = period[0]
     senddate = period[1]
@@ -300,7 +300,7 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
 
         # get L. Ontario hobo file
         # hobofilename = '18_2393005.csv'
-        print "Reading file %s" % lo_file
+        print("Reading file %s" % lo_file)
         dateTime2, temp2, results2 = utools.readTempHoboFiles.get_data_from_file(lo_file, moving_avg, windows[1], [start_num, end_num], lo_path)
 
         HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
@@ -326,7 +326,7 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
             else :
                 HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = HOBOdateTimeArr[len(HOBOresultsArr) - 1]
 
-        print "Start display"
+        print("Start display")
         # display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = locnames, yday = yday, delay = delay)
         utils.display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = locnames, difflines = True, custom = "Temperature Timseries - Toronto Harbour")
         # superimposed filtered data for 1-3 days oscillation freq
@@ -345,7 +345,7 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
 def read_TRCA_files(paths):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    print "Start read_TRCA_files()"
+    print("Start read_TRCA_files()")
     # startdate = '12/05/29 00:00:00'
     # enddate = '12/10/04 00:00:00'
     startdate = '13/05/29 00:00:00'
@@ -400,7 +400,7 @@ def read_TRCA_files(paths):
         # get hobo file
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
         hobofilename = '18_2393005.csv'
-        print "Reading file %s" % hobofilename
+        print("Reading file %s" % hobofilename)
         dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
 
         HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
@@ -424,7 +424,7 @@ def read_TRCA_files(paths):
         else :
             HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = HOBOdateTimeArr[len(HOBOresultsArr) - 1]
 
-        print "Start display"
+        print("Start display")
         if len(HOBOdateTimeArr) <= 9:
             utils.display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday, delay = delay)
         # superimposed filtered data for 1-3 days oscillation freq
@@ -436,7 +436,7 @@ def read_TRCA_files(paths):
 def wind_airpress_airtemp_water_temp():
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    print "Start wind_airpress_airtemp_water_temp()"
+    print("Start wind_airpress_airtemp_water_temp()")
     startdate = '12/07/19 00:00:00'
     enddate = '12/10/24 00:00:00'
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
@@ -448,7 +448,7 @@ def wind_airpress_airtemp_water_temp():
     # get hobo file
     path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
     hobofilename = '18_2393005.csv'
-    print "Reading file %s" % hobofilename
+    print("Reading file %s" % hobofilename)
     dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
     HOBOdateTimeArr = dateTime
     HOBOresultsArr = results
@@ -541,16 +541,16 @@ def wind_airpress_airtemp_water_temp():
     # rcParams['text.usetex'] = True
     custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', 'Wind spd(m/s)', 'Air p(hPa)', 'Water T($^\circ$C)'])
     # ToDO: Add short and long radiation
-    print "Start display wind_airpress_airtemp_water_temp subplots "
+    print("Start display wind_airpress_airtemp_water_temp subplots ")
     utils.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
 
     # superimposed filtered data for 1-3 days oscillation freq
     difflines = True
-    print "Start display wind_airpress_airtemp_water_temp plot "
+    print("Start display wind_airpress_airtemp_water_temp plot ")
     utils.display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
 
 
-    print "Start display  Atmospheric radiation "
+    print("Start display  Atmospheric radiation ")
     path = "/home/bogdan/Documents/UofT/PhD/Data_Files/CloudData/Toronto-Jan-Dec-2012/HDF"
     startdate = '12/07/19 00:00:00'
     enddate = '12/10/24 00:00:00'
@@ -622,8 +622,8 @@ def find_depthoftemp(isotemp, waterdepth, top_log_depth, delta_L, dateTimeArr, t
                         depthArr[i] = waterdepth - ((j - 1) * delta_L + y)  # j-i is the correct verified formula when first looger is at bottom
 
             except Exception as e:
-                print "Error i=%d, j=%d" % (i, j)
-                print "Error %s" % e
+                print("Error i=%d, j=%d" % (i, j))
+                print("Error %s" % e)
 
         # end for j
 
@@ -633,7 +633,7 @@ def find_depthoftemp(isotemp, waterdepth, top_log_depth, delta_L, dateTimeArr, t
             depthArr[i] = depthArr[i - 1]
 
         if debug:
-            print "i=%d, j=%d, y=%f,  depth[%d]=%f" % (i, j, y, i, depthArr[i])
+            print("i=%d, j=%d, y=%f,  depth[%d]=%f" % (i, j, y, i, depthArr[i]))
             writer.writerow([i, j, y, depthArr[i]])
     # end for i
     if debug:
@@ -650,10 +650,10 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
     '''
     start_num, end_num = dateinterval
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    print "Start isoterm_oscillation()"
+    print("Start isoterm_oscillation()")
 
     # get hobo files
-    print "Reading path %s" % paths[0]
+    print("Reading path %s" % paths[0])
 
     dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(window_hour, windows[1], dateinterval, paths[0])
     HOBOdateTimeArr = dateTime
@@ -667,7 +667,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
 
     # get RBR files
 
-    print "Reading path %s" % paths[1]
+    print("Reading path %s" % paths[1])
     dateTime, temp, results, k , fnames = utools.read_RBR.read_files(window_hour, windows[1], dateinterval, paths[1])
     # index is specific to the files read and needs to be modified for other readings
     RBRdateTimeArr = dateTime
@@ -680,13 +680,13 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
 
 
     k = [[0, 0], [0, 1]]
-    print "Start : isoterm_oscillation"
+    print("Start : isoterm_oscillation")
     fname1 = "Hobo-%d ($^\circ$C)" % isotemp
     fname2 = "RBR-%d ($^\circ$C)" % isotemp
     fnames = [fname1, fname2]
 
     if filter != None:
-        print "Start filtering: isoterm_oscillation"
+        print("Start filtering: isoterm_oscillation")
 
         tunits = 'day'
 
@@ -732,7 +732,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
             RBRdateTimeArr_res = RBRdateTimeArr[0]
 
 
-        print "End filtering: isoterm_oscillation"
+        print("End filtering: isoterm_oscillation")
      # end filter
 
     else:
@@ -761,7 +761,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
     revert = True
     yday = True
 
-    print "Start display: isoterm_oscillation"
+    print("Start display: isoterm_oscillation")
 
     utils.display_data.display_depths_subplot([HOBOdateTimeArr_res[1:], RBRdateTimeArr_res[1:]], [HOBODepthArr[1:], RBRDepthArr[1:]], maxdepth = wdepths, \
                                        fnames = fnames, yday = yday, revert = revert, tick = tick, custom = custom, firstlog = None)
@@ -788,7 +788,7 @@ def isoterm_oscillation(isotemp, paths, wdepths, top_log_depths, delta_Ls, datei
 def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isotemp):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    print "Start poincare_wave_in_lontario()"
+    print("Start poincare_wave_in_lontario()")
     HOBOdateTimeArr = data[0][0]
     HOBODepthArr = data[0][1]
     RBRdateTimeArr = data[1][0]
@@ -834,7 +834,7 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
         RBRdateTimeArr_res = RBRdateTimeArr
 
 
-    print "Start display: poincare_wave_in_lontario"
+    print("Start display: poincare_wave_in_lontario")
 
     # superimposed filtered data for he period oscillation freq
     custom1 = "Poincare signature in Lake Ontario"  # % isotemp
@@ -866,7 +866,7 @@ def poincare_wave_in_lontario(period, dateinterval, data, fnames, wdepths, isote
 def kelvin_wave_in_lontario(data, fnames):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    print "Start kelvin_wave_in_lontario()"
+    print("Start kelvin_wave_in_lontario()")
     HOBOdateTimeArr = data[0][0]
     HOBODepthArr = data[0][1]
     RBRdateTimeArr = data[1][0]
@@ -912,7 +912,7 @@ def kelvin_wave_in_lontario(data, fnames):
         RBRdateTimeArr_res = RBRdateTimeArr
 
 
-    print "Start display: poincare_wave_in_lontario"
+    print("Start display: poincare_wave_in_lontario")
 
     # superimposed filtered data for he period oscillation freq
     custom1 = "Hobo Kelvin signature in Lake Ontario"  # % isotemp
@@ -943,7 +943,7 @@ def kelvin_wave_in_lontario(data, fnames):
 def poincare_wave_in_harbour(period, dateinterval, paths):
 
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
-    print "Start poincare_wave_in_harbour()"
+    print("Start poincare_wave_in_harbour()")
     for path in paths:
         dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(window_hour, windows[1], dateinterval, path)
         HOBOdateTimeArr = dateTime
@@ -982,7 +982,7 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
         # get hobo file from the lake
         path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
         hobofilename = '18_2393005.csv'  # 10m deep sensor
-        print "Reading file %s" % hobofilename
+        print("Reading file %s" % hobofilename)
         dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(hobofilename, window_hour, windows[1], [start_num, end_num], path)
 
         HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
@@ -1000,7 +1000,7 @@ def poincare_wave_in_harbour(period, dateinterval, paths):
         Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay = filters.butterworth(temp, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = recurse, debug = debug)
 
 
-        print "Start display ####### SHOULD BE display_depths??????? "
+        print("Start display ####### SHOULD BE display_depths??????? ")
         # SHOULD BE display_depths ?????
         utils.display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames, yday = yday)
 
@@ -1063,7 +1063,7 @@ def calculate_harbour_statistics(path, path_out, timeinterv, all = False, NOVAPR
             daytemps = []
 
             station = fnames[i]
-            print "Stats for %s" % station
+            print("Stats for %s" % station)
             ofile = open(path_out + '/' + station, "wb")
             writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
             write_statistics(writer, "Station", "Date", "Timestamp", "Avg Temp", "Max Temp", "Min Temp")
@@ -1114,7 +1114,7 @@ def calculate_harbour_statistics(path, path_out, timeinterv, all = False, NOVAPR
                 # this is expected as not all recoreds have the same length
                 continue
             except Exception:
-                print "This is not expected error"
+                print("This is not expected error")
 
             dayOfTheYear = datet.timetuple().tm_yday
 
@@ -1147,7 +1147,7 @@ def calculate_harbour_statistics(path, path_out, timeinterv, all = False, NOVAPR
                         if HOBOtempArr[i][j] > 13 and (dayOfTheYear > 270 or dayOfTheYear < 150):
                             day = num2date(HOBOdateTimeArr[i][j])
                             daystr = day.strftime("%d %B %Y")
-                            print "* Faulty station : %s: temp:%f, date:%s" % (station, HOBOtempArr[i][j], daystr)
+                            print("* Faulty station : %s: temp:%f, date:%s" % (station, HOBOtempArr[i][j], daystr))
                         else:  # add data
                             gdaytemps[dayOfTheYear].append(HOBOtempArr[i][j])
                     else:
@@ -1189,7 +1189,7 @@ def draw_harbour_statistics(path, timeinterv, selector, all = False):
             HOBOdateTimeArr = dateTime
             HOBOtempArr = temp
             HOBOresultsArr = result
-            print "Start display %s" % type
+            print("Start display %s" % type)
 
             # display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = fnames)
 
@@ -1234,7 +1234,7 @@ def harbour_statistics(all = False):
     # draw some graphs
     #-------------------------------------------------------------------
     draw_harbour_statistics(path_out, [start_num, end_num], ['max', 'avg', 'min'], all = all)
-    print "Done!"
+    print("Done!")
 
 
 
@@ -1255,7 +1255,7 @@ if __name__ == '__main__':
     if harbour_stats:
         all = True
         harbour_statistics(all)
-        print "Done!harbour_stats "
+        print("Done!harbour_stats ")
         if exit_if[0]:
             "Exit!"
             os.abort()
@@ -1293,7 +1293,7 @@ if __name__ == '__main__':
         read_LOntario_files(paths, fnames, [start_num, end_num], chain = "hobo" , zNames = zNames, bfilter = True, bkelvin = True)
 
         if exit_if[1]:
-            print "Done! LO_hobot_rbrt_10m"
+            print("Done! LO_hobot_rbrt_10m")
             os.abort()
 
     if LO_isotherm:
@@ -1323,9 +1323,9 @@ if __name__ == '__main__':
         # kelvin_wave_in_lontario(period_hours, [hobo, rbr], fnames, waterdepths, temp)
         kelvin_wave_in_lontario([hobo, rbr], fnames)
 
-        print "Done! LO_isotherm"
+        print("Done! LO_isotherm")
         if exit_if[2]:
-            print "Exit! "
+            print("Exit! ")
             os.abort()
 
     if Toronto_harbour:
@@ -1399,9 +1399,9 @@ if __name__ == '__main__':
         moving_avg = window_hour  # for regular study
 
         read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period, filter = None)  # this can filter too and  exhibit poincare waves
-        print "Done! Toronto harbour"
+        print("Done! Toronto harbour")
         if exit_if[3]:
-            print "Exit! "
+            print("Exit! ")
             os.abort()
 
     if atm_correlation:
@@ -1409,9 +1409,9 @@ if __name__ == '__main__':
         # Correlate with meteorologic data
         #---------------------------------------------------
         wind_airpress_airtemp_water_temp()
-        print "Done! atm_correlation"
+        print("Done! atm_correlation")
         if exit_if[4]:
-            print "Exit! "
+            print("Exit! ")
             os.abort()
 
     if Toronto_harb_filter:
@@ -1428,15 +1428,15 @@ if __name__ == '__main__':
         end_num = date2num(dt)
         poincare_wave_in_harbour(period_hours, [start_num, end_num], paths)
 
-        print "Done! Toronto_harb_filter"
+        print("Done! Toronto_harb_filter")
         if exit_if[5]:
-            print "Exit!"
+            print("Exit!")
             os.abort()
     if TRCA_data:
         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo-TRCA/2012/csv_processed/selected']
         read_TRCA_files(paths)
         if exit_if[6]:
-            print "Exit!"
+            print("Exit!")
             os.abort()
 
     if Upwelling_zone:
@@ -1499,7 +1499,7 @@ if __name__ == '__main__':
             upwelling.plot_buterworth_filtered_data(dateTime, temp, filter, stats = True,)
 
         if exit_if[7]:
-            print "Exit Upwelling!"
+            print("Exit Upwelling!")
             os.abort()
 
     if Fish_detection:
@@ -1526,7 +1526,7 @@ if __name__ == '__main__':
             # NO cells file is not good.
             # upwelling.draw_upwelling_fish_correlation_all('/home/bogdan/Documents/UofT/PhD/Data_Files/UpwellingZones/AllZonesNoCells.csv')
         if exit_if[8]:
-            print "Exit!"
+            print("Exit!")
             os.abort()
-    print "Done! Script"
+    print("Done! Script")
 

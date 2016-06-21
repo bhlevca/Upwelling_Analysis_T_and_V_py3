@@ -66,7 +66,7 @@ w0=wth[node]
 wmin=w0-dw ; wmax=w0+dw
 ind = N.where(w >= wmin, 1, 0)*N.where(w <= wmax, 1, 0)
 ind = N.asarray(N.nonzero(ind))[0, :]
-print 'Zoom in wth', w[ind]
+print('Zoom in wth', w[ind])
 f = w2[ind, :, kx]
 prof = f.mean(axis=0)
 

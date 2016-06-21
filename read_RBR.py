@@ -193,7 +193,7 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
 def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
 
 
-    base, dirs, files = iter(os.walk(path)).next()
+    base, dirs, files = next(iter(os.walk(path)))
 
     dirList = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -210,7 +210,7 @@ def read_files_and_display(span, window, dateinterval, idxinterv, rpath):
         #    dirNo += 1
         #    continue
         fNameArr[i] = fname
-        print "Reading file %s" % fname
+        print("Reading file %s" % fname)
         dateTime, temp, results = get_data_from_file(fname, span, window, dateinterval, rpath)
         # index is specific to the files read and needs to be modified for other readings
         minidx = idxinterv[0]
@@ -248,7 +248,7 @@ def read_files(span = None, window = windows[1], dateinterval = None, path = Non
 
     # dirs = numpy.array(os.listdir(path))
     # Separate directories from files
-    base, dirs, files = iter(os.walk(path)).next()
+    base, dirs, files = next(iter(os.walk(path)))
 
     fileList = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -261,7 +261,7 @@ def read_files(span = None, window = windows[1], dateinterval = None, path = Non
     dirNo = 0
     for fname in fileList:
         fNameArr[i] = fname
-        print "Reading file %s" % fname
+        print("Reading file %s" % fname)
         dateTime, temp, results = get_data_from_file(fname, span, window, dateinterval, path)
         # index is specific to the files read and needs to be modified for other readings
         dateTimeArr[i] = numpy.append(dateTimeArr[i], dateTime)
@@ -281,4 +281,4 @@ if __name__ == '__main__':
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     read_files_and_display(span = window_hour, window = windows[1], dateinterval = None, idxinterv = [50000, 2500000], rpath = path)
-    print "Done!"
+    print("Done!")

@@ -21,6 +21,6 @@ def theory(kk, cs, Lx):
   a=cs**2*(k2+0.25/haut**2)-cs*N.sqrt(cs**2*(k2+0.25/haut**2)**2-4*kx**2*bv2)
   wth=N.sqrt(0.5*a)
   for i in range(5):
-    print 'kk=%i  n=%i  wth=%8.5f'%(kk, nn[i], wth[i])
+    print('kk=%i  n=%i  wth=%8.5f'%(kk, nn[i], wth[i]))
 
   return wth, bv, haut

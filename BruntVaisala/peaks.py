@@ -26,9 +26,9 @@ fmax=fmax[1:] ; tt=tt[1:]
 tmin=10 ; tmax=tt[-1]
 i1=((N.where(tt>=tmin))[0])[0]
 i2=((N.where(tt>=tmax))[0])[0]
-print "tmin=%6.2f  tmax=%6.2f"%(tt[i1], tt[i2])
+print("tmin=%6.2f  tmax=%6.2f"%(tt[i1], tt[i2]))
 a, b=N.polyfit(tt[i1:i2], N.log(fmax[i1:i2]), 1)
-print 'slope=', a, b 
+print('slope=', a, b) 
 
 P.plot(t, ruzm, 'k')
 P.plot(tt, fmax)

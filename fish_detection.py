@@ -14,17 +14,17 @@ def fish_detection(filepath, timeint, year):
     dict = sort_detections(filepath, timeint, year)
 
     # detailed statistics
-    values = dict.values()
-    keys = dict.keys()
+    values = list(dict.values())
+    keys = list(dict.keys())
 
-    print "\n-------------------------------------------------------"
-    print " Number of total fish detections at each stations"
-    print "-------------------------------------------------------"
+    print("\n-------------------------------------------------------")
+    print(" Number of total fish detections at each stations")
+    print("-------------------------------------------------------")
 
     for i in range(0, len(keys)):
         value = values[i]
-        key = value.keys()
-        vals = value.values()
+        key = list(value.keys())
+        vals = list(value.values())
         # print "\n-------------------------------------------------------"
         # print " Number of individual fish detections at each stations"
         # print "-------------------------------------------------------"
@@ -34,7 +34,7 @@ def fish_detection(filepath, timeint, year):
             totaldet += vals[j]
 
         # print the number of total  fish # that roamed in the specifi receiver area
-        print "Station: %s,  Total detection = %d)" % (keys[i], totaldet)
+        print("Station: %s,  Total detection = %d)" % (keys[i], totaldet))
 
 
     # print the number of distinct fish that roamed in the receiver area
@@ -90,7 +90,7 @@ def sort_detections(filepath, timeint, year):
             locdict[StationName[i]][Tn] = locdict[StationName[i]][Tn] + 1
         except:
             locdict[StationName[i]][Tn] = 1
-            print "Added station : %s, Fish: %s" % (StationName[i], Tn)
+            print("Added station : %s, Fish: %s" % (StationName[i], Tn))
 
 
     return locdict

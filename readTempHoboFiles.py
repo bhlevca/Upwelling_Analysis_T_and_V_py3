@@ -1,15 +1,15 @@
 import csv
 import numpy
 import matplotlib.pyplot as plt
-from datetime import datetime
 from matplotlib.dates import date2num, num2date
 from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
-import time, os, datetime, sys
+import time, os, sys
 from scipy.interpolate import UnivariateSpline
 from utools import display_data
 import ufft.filters as filters
 import ufft.fft_utils as fft_utils
+from datetime import datetime
 
 # turn off warning in polyfit
 import warnings
@@ -52,11 +52,25 @@ filelist = {2:'1020769_Stn_02_03-11-11.csv', \
             1:'9678895_Stn_01_03-11-11.csv', \
             37:'1020754_Stn_37_13-12-11.csv', \
             28:'9674471_Stn_28_13-12-11.csv', \
-            44:'9674468_Stn_44_13-12-11.csv'
-
+            44:'9674468_Stn_44_13-12-11.csv', \
+            2: '1020769_Stn_02_03-11-11.csv', \
+            21:'9678892_Stn_21_03-11-11.csv'
             }
 
-
+filelist_avg_temp = {  
+                   "c1":"Cell_1_noserial.csv",\
+                   "c2":"Cell2_1020768.csv",\
+                   "c3":"Cell3_1157469.csv",\
+                   "ea":"EmbA_1020753.csv",\
+                   "eb":"EmbB_1020946.csv",\
+                   "ec":"EmbC_1020950.csv",\
+                   "lo10":"LO_10m_2393003.csv",\
+                   "oh21":"OH_21_9678892.csv",\
+                   "oh02":"OH_02_1020767.csv",\
+                   "ohtc2":"OH_TC2_10098838.csv",\
+                   "lo12":"LO_12m_2395420.csv",\
+                   "ohtc3":"OH_TC3_10298873.csv"
+                   }
 
 
 # groups
@@ -209,7 +223,7 @@ def write_datefile(station, depth, residual, determination):
         dn = date2num(dt)
 
         if prev > dn:
-            print "Next value lower!"
+            print("Next value lower!")
         writer.writerow([dn, row])
         prev = dn
         prevtxt = dateTime[idx]
@@ -217,14 +231,36 @@ def write_datefile(station, depth, residual, determination):
         numdat.append(dn)
     return numdat
 
+
+def calculate_mean_max_min_temperature(path, station_list, filelist, timeint):
+    #date = ['12/06/15 00:00:00', '12/09/30 00:00:00'] 
+    dt = datetime.strptime(timeint[0], "%y/%m/%d %H:%M:%S")
+    start_num = matplotlib.dates.date2num(dt)
+    dt = datetime.strptime(timeint[1], "%y/%m/%d %H:%M:%S")
+    end_num = matplotlib.dates.date2num(dt)
+    
+    temp_dict = {}
+    
+    for k, v in filelist.items():
+        if k in station_list:
+            ifile = open(path + '/' + v, 'rt')
+            reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
+            [dateTime, temp] = read_data(reader, [start_num, end_num])
+            meant = numpy.mean(temp)
+            maxt = numpy.max(temp)
+            mint = numpy.min(temp)
+            print("Station: %s,  mean: %f  max: %f min: %f" % (k, meant, maxt, mint))
+            temp_dict[k]=meant
+    return temp_dict
+
 #-----------------------------------------------------------
 def analyze_data(pair, name, id, writer):
 
 
-    for k, v in filelist.iteritems():
+    for k, v in filelist.items():
 
-        if k in pair.keys():
-            ifile = open(path + '/' + v, 'rb')
+        if k in list(pair.keys()):
+            ifile = open(path + '/' + v, 'rt')
             reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
             [dateTime, temp] = read_data(reader)
             # display(dateTime, temp, v, k)
@@ -253,13 +289,13 @@ def analyze_data(pair, name, id, writer):
 
             utils.display_data.display2(dateTime, temp, results['smoothed'], k)
 
-            print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
+            print("Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination']))
             writer.writerow([k, name, id, pair[k], results['residual'], results['determination']])
             ifile.close()
 
 
 def select_data():
-    ofile = open(path_out + '/' + "variance_results.csv", "wb")
+    ofile = open(path_out + '/' + "variance_results.csv", "wt")
     writer = csv.writer(ofile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
     writer.writerow(['Station', 'group', 'group id', 'depth', 'residual', 'determination'])
 
@@ -303,14 +339,14 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
             elif span == "window_7days":  # 7* 30 * 24 for a 2 minute sampling
                 nspan = 24. * 7 / (dt * 24)
             else:
-                print "Error, window span not defined"
+                print("Error, window span not defined")
                 return
             results = smooth.smoothfit(dateTime, temp, nspan, window)
         else:
             results = {}
             results['smoothed'] = temp
     except:
-        print "Date not available"
+        print("Date not available")
         ifile.close()
         return [None, None, None]
     # print "Station:%s group:%s depth: %d residuals:%f determination:%f " % (k, name, pair[k], results['residual'], results['determination'])
@@ -341,12 +377,12 @@ def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type, all =
     elif type == 'avg':
         temp = avgtemp
     else:
-        print "data type must be 'min', 'max' or 'avg'"
+        print("data type must be 'min', 'max' or 'avg'")
 
     if len(dateTime) != len(temp):
         pass
     else:
-        print "len temp %d" % len(temp)
+        print("len temp %d" % len(temp))
 
     # check if span is correct
 #===============================================================================
@@ -388,7 +424,7 @@ def read_files_and_display(rpath = None):
 
     # dirlist needs to be sorted in ascending order
     # Separate directories from files
-    base, dirs, files = iter(os.walk(ppath)).next()
+    base, dirs, files = next(iter(os.walk(ppath)))
 
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -432,7 +468,7 @@ def read_files(span = None, window = windows[1], timeinterv = None, rpath = None
     dirList = os.listdir(ppath)
 
     # Separate directories from files
-    base, dirs, files = iter(os.walk(ppath)).next()
+    base, dirs, files = next(iter(os.walk(ppath)))
 
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -443,7 +479,7 @@ def read_files(span = None, window = windows[1], timeinterv = None, rpath = None
     fnames = numpy.zeros(len(files), dtype = numpy.chararray)
     i = 0
     for fname in sorted_files:  # dirList:
-        print "Reading file %s" % fname
+        print("Reading file %s" % fname)
         if os.path.isdir(ppath + "/" + fname):
             continue
 
@@ -476,7 +512,7 @@ def read_stat_files(span, window, timeinterv, rpath, type, all = False):
     dirList = os.listdir(ppath)
 
     # Separate directories from files
-    base, dirs, files = iter(os.walk(ppath)).next()
+    base, dirs, files = next(iter(os.walk(ppath)))
 
 
     dateTimeArr = numpy.zeros(len(files), dtype = numpy.ndarray)
@@ -489,7 +525,7 @@ def read_stat_files(span, window, timeinterv, rpath, type, all = False):
         dateTime, temp, results, x05, x95 = get_data_from_stats_file('all_stations.csv', span, window, timeinterv, ppath, type, all = all)
     else:
         for fname in dirList:
-            print "Reading file %s" % fname
+            print("Reading file %s" % fname)
             if os.path.isdir(ppath + "/" + fname):
                 continue
 
@@ -541,8 +577,24 @@ def plot_upwelling_multiple_locations():
     utils.display_data.display_upwelling(dateTime, temp, results, k)
 
 
-
+def calculate_lake_dt_on_embayment_chains(chains, names):
+    i=0
+    for cn in chains:
+        name=names[i]
+        j=0
+        print ("Chain %d):" % i)
+        for bay in cn:
+            if j != 0: 
+                print ("   bay: %d,  dt(%s-lake): %f" % (j, name[j],  cn[j]-cn[0]))
+            else:    
+                pass
+            j+=1
+        i+=1
+        
+        
 if __name__ == '__main__':
+    def avg (list):
+        return sum(list)/len(list)
     # select_data()
     # plot_upwelling_multiple_locations()
     path = "/home/bogdan/Documents/UofT/PhD/Data_Files/Motivation"
@@ -550,6 +602,20 @@ if __name__ == '__main__':
     # plot the heat map of the thermistor chain
     # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed"
     path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
-    read_files_and_display(path)
-    print "Done!"
+    path= '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2011/csv_processed'
+    #read_files_and_display(path)
+    station_list=[ "c1","c2","c3","ea","eb","ec","lo12","oh21","oh02","ohtc3"]
+    timeint=['13/07/01 00:00:00', '13/07/31 00:00:00'] 
+    path="/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Average_Temperatures_Bays"
+    temp=calculate_mean_max_min_temperature(path, station_list,filelist_avg_temp, timeint)
+    chain1=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["ec"], temp["c3"], temp["c2"], temp["c1"]]
+    names1 = ["lo", "oh", "ec", "c3", "c2", "c1"]
+    chain2=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["eb"]]
+    names2 = ["lo", "oh", "eb"]
+    chain3=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["ea"]]
+    names3 = ["lo", "oh", "ea"]
+    chains=[chain1, chain2, chain3]
+    names=[names1, names2, names3]
+    calculate_lake_dt_on_embayment_chains(chains, names)
+    print("Done!")
 

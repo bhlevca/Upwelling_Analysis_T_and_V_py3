@@ -32,7 +32,7 @@ P.subplot(313)
 ssm=var.ss.mean(axis=1)
 rhom=var.rho.mean(axis=1)
 jump=rhom[0]/rhom[-1]
-print "density jump=rho_bot/rho_top=%6.2f"%jump
+print("density jump=rho_bot/rho_top=%6.2f"%jump)
 P.plot(grid.z, ssm, label='entropy')
 P.plot(grid.z, rhom, label='density')
 P.legend(loc='best')

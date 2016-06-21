@@ -19,7 +19,7 @@ import ufft.filters as filters
 import ufft.fft_utils as fft_utils
 import ufft.peakdetect as peakdetect
 import ufft.spectral_analysis
-import tor_harb_windrose
+from . import tor_harb_windrose
 import scipy.integrate
 import utools.interpolate as interpolate
 import utools
@@ -97,7 +97,7 @@ def calculate_cooling_rate(time, month_mean, maxpeaks, minpeaks, tunits):
                 ymax = ym[i]
                 ymin = yn[i]
         except:
-            print " Out of bounds nodes. Ignore!"
+            print(" Out of bounds nodes. Ignore!")
 
         mm_value = None
         # find month_mean value for
@@ -133,7 +133,7 @@ def calculate_Upwelling_indices(time, temp, fnames, tunits, zoneName):
         area_line = scipy.integrate.simps(month_mean[trim:-trim], time[i][trim:-trim])
         A = area_line - area_min
         Tm = numpy.mean(temp[i][trim:-trim])
-        print "name=%s UIA=%f mean SST=%f" % (fnames[i], A, Tm)
+        print("name=%s UIA=%f mean SST=%f" % (fnames[i], A, Tm))
         # calculate peaks
         _max, _min = peakdetect.peakdetect(temp[i][trim:-trim], time[i][trim:-trim], 100, 0.30)
 
@@ -150,7 +150,7 @@ def calculate_Upwelling_indices(time, temp, fnames, tunits, zoneName):
         #=======================================================================
 
         UCI_mean = uci.sum() / len(uci)
-        print "name=%s UCI=%f" % (fnames[i], UCI_mean)
+        print("name=%s UCI=%f" % (fnames[i], UCI_mean))
         utils.display_data.display_temperatures_and_peaks([time[i][trim:-trim], time[i][trim:-trim]], [month_mean[trim:-trim], temp[i][trim:-trim]],
                                                        [_max], [_min], [], fnames = ['30 day mean', fnames[i]], custom = zoneName, fill = True)
 
@@ -182,7 +182,7 @@ def draw_upwelling_correlation_IQR(filepath):
     temp = data[2]  # .astype(numpy.float)
     uia = data[1]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Bottom Temp. 75-25  IQR  ($^oC$)", title = "Bot Temp IQR vs. Upwelling Integrated Anomaly Index", \
@@ -195,7 +195,7 @@ def draw_upwelling_correlation_IQR(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Bottom Temp 75-25 IQR  ($^oC$)", title = "Bot Temp IQR vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -207,7 +207,7 @@ def draw_upwelling_correlation_IQR(filepath):
     temp = data[2]  # .astype(numpy.float)
     uia = data[1]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Surface Temp 75-25 IQR  ($^oC$)", title = "Surf Temp IQR vs. Upwelling Integrated Anomaly Index", \
@@ -220,7 +220,7 @@ def draw_upwelling_correlation_IQR(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Surface Temp 75-25 IQR ($^oC$)", title = "Surf Temp IQR vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -238,7 +238,7 @@ def draw_upwelling_correlation_IQR(filepath):
                          x_label = "Mean depth ($m$)", y_label = "Bot Temp 75-25 IQR  ($C^o$)", title = "Bottom Temp IQR vs. Mean depth", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
     #------------------------------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ def draw_upwelling_correlation_IQR(filepath):
                          x_label = "Mean depth ($m$)", y_label = "Surface Temp 75-25 IQR ($C^o$)", title = "Surface Temp IQR  vs. Mean depth", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
     ########################################################
@@ -266,7 +266,7 @@ def draw_upwelling_correlation_IQR(filepath):
     temp = data[2]  # .astype(numpy.float)
     uia = data[1]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Bottom Temp. 25% Quartile  ($^oC$)", title = "Bot Temp 25% Quartile Upwelling Integrated Anomaly Index", \
@@ -279,7 +279,7 @@ def draw_upwelling_correlation_IQR(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Bottom Temp 25% Quartile  ($^oC$)", title = "Bot Temp 25% Quartile vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -291,7 +291,7 @@ def draw_upwelling_correlation_IQR(filepath):
     temp = data[2]  # .astype(numpy.float)
     uia = data[1]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Surface Temp 25% Quartile ($^oC$)", title = "Surf Temp 25% Quartile vs. Upwelling Integrated Anomaly Index", \
@@ -304,7 +304,7 @@ def draw_upwelling_correlation_IQR(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Surface Temp 25% Quartile ($^oC$)", title = "Surf Temp 25% Quartile vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -322,7 +322,7 @@ def draw_upwelling_correlation_IQR(filepath):
                          x_label = "Mean depth ($m$)", y_label = "Bot Temp 25% Quartile($C^o$)", title = "Bottom Temp 25% Quartile vs. Mean depth", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
     #------------------------------------------------------------------------------------------------------
@@ -336,7 +336,7 @@ def draw_upwelling_correlation_IQR(filepath):
                          x_label = "Mean depth ($m$)", y_label = "Surface Temp 25% Quartile ($C^o$)", title = "Surface Temp 25% Quartile vs. Mean depth", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
 def draw_upwelling_correlation(filepath):
@@ -361,7 +361,7 @@ def draw_upwelling_correlation(filepath):
     temp = data[1]  # .astype(numpy.float)
     uia = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Bottom Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -374,7 +374,7 @@ def draw_upwelling_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Bootom Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -386,7 +386,7 @@ def draw_upwelling_correlation(filepath):
     temp = data[1]  # .astype(numpy.float)
     uia = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Surface Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -399,7 +399,7 @@ def draw_upwelling_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Surface Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -416,7 +416,7 @@ def draw_upwelling_correlation(filepath):
     temp = data[2]  # .astype(numpy.float)
     uia = data[1]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Bottom Min Temperature ($^oC$)", title = "Min Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -429,7 +429,7 @@ def draw_upwelling_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Bottom Min Temperature ($^oC$)", title = "Min Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -441,7 +441,7 @@ def draw_upwelling_correlation(filepath):
     temp = data[2]  # .astype(numpy.float)
     uia = data[1]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Surface Min Temperature ($^oC$)", title = "Min Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -454,7 +454,7 @@ def draw_upwelling_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Surface Min Temperature ($^oC$)", title = "Min Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -470,7 +470,7 @@ def draw_upwelling_correlation(filepath):
     temp = data[1]  # .astype(numpy.float)
     uia = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Bottom SD Temperature ($^oC$)", title = "SD Bottom Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -483,7 +483,7 @@ def draw_upwelling_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Bootom SD Temperature ($^oC$)", title = "SD Bottom Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -495,7 +495,7 @@ def draw_upwelling_correlation(filepath):
     temp = data[1]  # .astype(numpy.float)
     uia = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Surface SD Temperature ($^oC$)", title = "SD Surface Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -508,7 +508,7 @@ def draw_upwelling_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Surface SD Temperature ($^oC$)", title = "SD Surface Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -526,7 +526,7 @@ def draw_upwelling_correlation(filepath):
                          x_label = "Mean depth ($m$)", y_label = "Bottom SD Temperature ($^oC$)", title = "Bottom SD Temp vs. Mean depth", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
     #------------------------------------------------------------------------------------------------------
@@ -540,7 +540,7 @@ def draw_upwelling_correlation(filepath):
                          x_label = "Mean depth ($m$)", y_label = "Surface SD Temp ($C^o$)", title = "Surface SD Temp vs. Mean depth", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
 
@@ -570,7 +570,7 @@ def draw_upwelling_correlation(filepath):
                              x_label = "Mean depth ($m$)", y_label = "Mean Bottom Temp ($C^o$)", title = "Mean bottom Temp vs. Mean depth", \
                              r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
     #------------------------------------------------------------------------------------------------------
@@ -597,7 +597,7 @@ def draw_upwelling_correlation(filepath):
                              x_label = "Mean depth ($m$)", y_label = "Mean Surface Temp ($C^o$)", title = "Mean Surface Temp vs. Mean depth", \
                              r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
 def draw_upwelling_correlation_all(filepath):
@@ -618,7 +618,7 @@ def draw_upwelling_correlation_all(filepath):
     temp = data[1]  # .astype(numpy.float)
     uia = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Bottom Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -631,7 +631,7 @@ def draw_upwelling_correlation_all(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Bootom Mean Temperature ($^oC$)", title = "Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -644,7 +644,7 @@ def draw_upwelling_correlation_all(filepath):
     temp = data[1]  # .astype(numpy.float)
     uia = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, temp)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Bottom SD Temperature ($^oC$)", title = "SD Temperature vs. Upwelling Integrated Anomaly Index", \
@@ -657,7 +657,7 @@ def draw_upwelling_correlation_all(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, temp)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, temp, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Bootom SD Temperature ($^oC$)", title = "SD Temperature vs. Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -676,7 +676,7 @@ def draw_upwelling_fish_correlation(filepath):
     uia = data[1]  # .astype(numpy.float)
     det = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, det)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, det, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Fish detections", title = "Fish detections vs. Bottom Upwelling Integrated Anomaly Index", \
@@ -690,7 +690,7 @@ def draw_upwelling_fish_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(iqr, det)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(iqr, det, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "Bottom IQR ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Bottom Inter Quartile Range", \
                          r_value = r_value, p_value = p_value)
@@ -703,7 +703,7 @@ def draw_upwelling_fish_correlation(filepath):
     det = data[2]  # .astype(numpy.float)
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, det)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, det, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Fish detections", title = "Fish detections vs. Surface Upwelling Integrated Anomaly Index", \
@@ -717,7 +717,7 @@ def draw_upwelling_fish_correlation(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(iqr, det)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(iqr, det, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "Surface IQR ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Surface Inter Quartile Range", \
                          r_value = r_value, p_value = p_value)
@@ -737,7 +737,7 @@ def draw_upwelling_fish_correlation(filepath):
                          x_label = "Surface Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Surface Min Temperature", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 #===============================================================================
 #     ########################################################
@@ -770,7 +770,7 @@ def draw_upwelling_fish_correlation(filepath):
                          x_label = "Bottom Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Bottom Min Temperature", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 #===============================================================================
 #     ########################################################
@@ -818,7 +818,7 @@ def draw_upwelling_fish_correlation_all(filepath):
     uia = data[1]  # .astype(numpy.float)
     det = data[2]  # .astype(numpy.float)
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uia, det)
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     stat.plot_regression(uia, det, slope = slope, intercept = intercept, point_labels = data[0], \
                           x_label = "UIA ($^oC$ day)", y_label = "Fish detections", title = "Fish detections vs. Bottom Upwelling Integrated Anomaly Index", \
@@ -832,7 +832,7 @@ def draw_upwelling_fish_correlation_all(filepath):
 
     [r2, slope, intercept, r_value, p_value, std_err] = stat.rsquared(uci, det)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
     stat.plot_regression(uci, det, slope = slope, intercept = intercept, point_labels = data[0], \
                          x_label = "UCI ($^oC$/day)", y_label = "Fish detections", title = "Fish detections vs. Bottom Upwelling Cooling Intensity Index", \
                          r_value = r_value, p_value = p_value)
@@ -850,7 +850,7 @@ def draw_upwelling_fish_correlation_all(filepath):
                          x_label = "Mean Temp ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Mean temp", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
 
@@ -868,7 +868,7 @@ def draw_upwelling_fish_correlation_all(filepath):
                          x_label = "Temp Std Deviation ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Temp Std Deviation", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
     ########################################################
@@ -884,7 +884,7 @@ def draw_upwelling_fish_correlation_all(filepath):
                          x_label = "Max-Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Max - min Temperature", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
     ########################################################
@@ -900,7 +900,7 @@ def draw_upwelling_fish_correlation_all(filepath):
                          x_label = "Min Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Min Temperature", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
     ########################################################
     # Temp max
@@ -915,12 +915,12 @@ def draw_upwelling_fish_correlation_all(filepath):
                          x_label = "Max Temperature ($^oC$)", y_label = "Fish detections", title = "Fish detections vs. Max Temp", \
                          r_value = r_value, p_value = p_value)
 
-    print "R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err)
+    print("R squared = %f, r_value=%f, p_value =%f std_err=%f" % (r2, r_value, p_value, std_err))
 
 
 def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filter = None, peaks = False, minorgrid = 'mondays', \
                             datetype = 'date'):
-    print "plot_Upwelling_one_fig()"
+    print("plot_Upwelling_one_fig()")
 
     startdate = timeint[0]
     enddate = timeint[1]
@@ -935,7 +935,7 @@ def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filte
     tunits = "day"
 
     # Separate directories from files
-    base, dirs, files = iter(os.walk(ppath)).next()
+    base, dirs, files = next(iter(os.walk(ppath)))
 
     if timeavg == None:
         moving_avg = window_hour
@@ -1008,7 +1008,7 @@ def plot_Upwelling_one_fig(ppath, timeint, timeavg = None, subplot = None, filte
 def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = False):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    print "Start read_Upwelling_files()"
+    print("Start read_Upwelling_files()")
     startdate = timeint[0]
     enddate = timeint[1]
     dt = datetime.strptime(startdate, "%y/%m/%d %H:%M:%S")
@@ -1022,7 +1022,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = F
     tunits = "day"
 
     # Separate directories from files
-    base, dirs, files = iter(os.walk(ppath)).next()
+    base, dirs, files = next(iter(os.walk(ppath)))
 
     if timeavg == None:
 
@@ -1057,7 +1057,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = F
 
         for i in range(1, len(temp[0])):
             if temp[0][i] == 0.0:
-                print "i = %d, t=0, date = %f" % (i, dateTime[0][i])
+                print("i = %d, t=0, date = %f" % (i, dateTime[0][i]))
 
         t_sd = temp[0][1:].std()
         t_avg = temp[0][1:].mean()
@@ -1065,7 +1065,7 @@ def read_Upwelling_files(ppath, timeint, timeavg = None, subplot = None, fft = F
         t_max = temp[0][1:].max()
         t_iqr = stat.interquartile_range(temp[0][1:], 25, 75)
         # print "Zone: %s, SD=%2.2f, Min=%2.2f, Max=%2.2f, extreme=%2.2f" % (zoneName, t_sd, t_min, t_max, t_max - t_min)
-        print "Zone: %s, SD=%2.2f, Min=%2.2f, Max=%2.2f, IQR=%2.2f" % (zoneName, t_sd, t_min, t_max, t_iqr)
+        print("Zone: %s, SD=%2.2f, Min=%2.2f, Max=%2.2f, IQR=%2.2f" % (zoneName, t_sd, t_min, t_max, t_iqr))
 
         # Plot temperature time series time averages or not
         if not fft:
@@ -1116,7 +1116,7 @@ def plot_weather_data(date, weather_path, wfile, windrose):
         ########################################################
         #  multipy by 10 the degrees FROM which the wind blows
         ########################################################
-        windir = map(lambda x: x * 10, windDir[1:])
+        windir = [x * 10 for x in windDir[1:]]
         winspd = windSpd[1:]
         envir.display_twinx("Filtered water temperature, wind direction", "Filtered temperature ($^oC$)", 'wind dir ($^o$)', \
                             [wdateTime[1:]], [wtemp[1:]], [wdateTime[1:]], [windir], \
@@ -1130,11 +1130,11 @@ def plot_weather_data(date, weather_path, wfile, windrose):
 def read_lake_and_harbour_data(str_date, date, water_path, harbour_path):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    print "Start wind_airpress_airtemp_water_temp()"
+    print("Start wind_airpress_airtemp_water_temp()")
     start_num = date[0]
     end_num = date[1]
      # 1) read all lake data
-    base, dirs, files = iter(os.walk(water_path)).next()
+    base, dirs, files = next(iter(os.walk(water_path)))
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
     dateTimeArr = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
@@ -1152,7 +1152,7 @@ def read_lake_and_harbour_data(str_date, date, water_path, harbour_path):
         i += 1
     # end for
     # 1') read all harbour data (EG + Jarvis Dock
-    base, dirs, files = iter(os.walk(harbour_path)).next()
+    base, dirs, files = next(iter(os.walk(harbour_path)))
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
     TH_dateTimeArr = numpy.zeros(len(sorted_files), dtype = numpy.ndarray)
@@ -1175,7 +1175,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
                           filter = False, delta_T_subplot = False):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
-    print "Start wind_airpress_airtemp_water_temp()"
+    print("Start wind_airpress_airtemp_water_temp()")
     start_num = date[0]
     end_num = date[1]
 
@@ -1186,7 +1186,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         read_lake_and_harbour_data(str_date, date, water_path, harbour_path)
 
     # read one depth lake data
-    print "Reading file %s" % lake_file
+    print("Reading file %s" % lake_file)
     dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(lake_file, window_hour, windows[1], date, water_path)
     HOBOdateTimeArr = dateTime
     HOBOresultsArr = results
@@ -1194,7 +1194,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
 
     # 1'') read temperature diff at TC4
     diffpath = water_path + "/../../TC-OuterHarbour/colormap"
-    base, dirs, files = iter(os.walk(diffpath)).next()
+    base, dirs, files = next(iter(os.walk(diffpath)))
 
     sorted_files = sorted(files, key = lambda x: x.split('.')[0])
 
@@ -1205,7 +1205,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     j = i = 0
     nsorted_files = sorted_files[:]
     for fname in sorted_files:
-        print "Filename = %s" % fname
+        print("Filename = %s" % fname)
         dateTime, temp, results = utools.readTempHoboFiles.get_data_from_file(fname, window_6hour, windows[1], timeinterv = date, rpath = diffpath)
         cmdateTimeArr.append(dateTime)
         cmresultsArr.append(results)
@@ -1286,13 +1286,13 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
 
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
-        print "Start display wind_airpress_airtemp_water_temp plot "
+        print("Start display wind_airpress_airtemp_water_temp plot ")
         utools.display_data.display_temperatures(timeArray, Filtered_data, k, fnames = fnames, difflines = difflines, custom = "Weather variables and water temperature")
         # 7) Draw subplot
         # rcParams['text.usetex'] = True
         custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', 'Air p(hPa)', 'Water T($^\circ$C)'])
         # ToDO: Add short and long radiation
-        print "Start display wind_airpress_airtemp_water_temp subplots "
+        print("Start display wind_airpress_airtemp_water_temp subplots ")
         utools.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
     # end if filter
 
@@ -1300,7 +1300,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     # 8) Mixed water, air ,img data
     custom = numpy.array([r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', 'Air [T($^\circ$C]', 'Water T[$^\circ$C]', ])
     # ToDO: Add short and long radiation
-    print "Start display mixed subplots "
+    print("Start display mixed subplots ")
     if delta_T_subplot:
         dateTimes1 = [iwdateTime, ndateTimeArr[0]]
         data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day"), diffarr]
@@ -1361,7 +1361,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
                           cblabel = [None, None, None])
 
     # 9) Draw radiation data
-    print "Start display  Atmospheric radiation "
+    print("Start display  Atmospheric radiation ")
     var1 = 'swgnt'
     var2 = 'lwgnt'
     var3 = 'cldtot'
@@ -1377,7 +1377,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
                                       fnames = [var1, var2, var3], difflines = False, custom = "Radiation data (W/m$^2$)")
 
     # 10) Temperature profiles in lake and harbour
-    print "Temperature profiles in lake and harbour"
+    print("Temperature profiles in lake and harbour")
 
     dt = datetime.strptime('13/09/03 00:00:00', "%y/%m/%d %H:%M:%S")
     dtnum1 = matplotlib.dates.date2num(dt)
@@ -1431,7 +1431,7 @@ def plot_buterworth_filtered_data(HOBOdateTimeArr, HOBOtempArr, fnames, k, filte
             i += 1
         # end for data
 
-        print "Start display filtered data"
+        print("Start display filtered data")
         for i in range(0, len(HOBOdateTimeArr_res)):
 
             # superimposed filtered data for 1-3 days oscillation freq
@@ -1456,7 +1456,7 @@ def plot_buterworth_filtered_data(HOBOdateTimeArr, HOBOtempArr, fnames, k, filte
             f_min = Filtered_data[0][300:-100].min()
             f_max = Filtered_data[0][300:-100].max()
             # print "SD=%f Avg=%f Min=%f Max=%f" % (f_sd, f_avg, f_min, f_max)
-            print "Filtered data SD=%f" % (f_sd)
+            print("Filtered data SD=%f" % (f_sd))
 
 
 # end plot_buterworth_filtered_data
