@@ -14,12 +14,12 @@ from utools import readTempHoboFiles
 # import scikits.bootstrap as bootstrap
 from utools import env_can_weather_data_processing as envir
 from matplotlib import rcParams
-
+import utools
 
 import ufft.spectral_analysis
-from . import tor_harb_windrose
-from . import upwelling
-from . import fish_detection
+import tor_harb_windrose
+import upwelling
+import fish_detection
 
 import utools.hdf_tools as hdf
 import ufft.filters as filters
@@ -239,7 +239,8 @@ def read_LOntario_files(paths, fnames, dateinterval, chain = "all" , zNames = No
 
     # end bfilter
 
-def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period, filter = None):
+
+def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period, filter=None):
     locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     print("Start read_Tor_Harbour_files()")
@@ -257,13 +258,24 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
     # get hobo file
     for path in paths:
         dateTime, temp, results, k , fnames = utools.readTempHoboFiles.read_files(moving_avg, windows[1], [start_num, end_num], path)
-        HOBOdateTimeArr = dateTime
-        HOBOresultsArr = results
-        HOBOtempArr = temp
+
+
+        lmin = len(temp[0])
+        HOBOdateTimeArr  = numpy.zeros(len(temp), dtype = numpy.ndarray)
+        HOBOresultsArr = numpy.zeros(len(temp), dtype = numpy.ndarray)
+        HOBOtempArr = numpy.zeros(len(temp), dtype = numpy.ndarray)
+
+        for i in range(1, len(temp)):
+            lmin = min(lmin, len(temp[i]))
+
+        for i in range(0, len(temp)):
+            HOBOdateTimeArr[i] = dateTime[i][0:lmin-1]
+            HOBOresultsArr[i] = results[i][0:lmin-1]
+            HOBOtempArr[i] = temp[i][0:lmin-1]
 
         locnames = []
         for name in fnames:
-            locnames.append(filemap[name][0] + "_" + str(filemap[name][1]))
+            locnames.append(filemap[name][0]) # + "_" + str(filemap[name][1]))
 
         tunits = 'day'
         if tunits == 'day':
@@ -290,18 +302,24 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
             btype = 'band'
             for data in HOBOdateTimeArr:
                 fs = 1.0 / ((HOBOdateTimeArr[i][2] - HOBOdateTimeArr[i][1]) * factor)
-                Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
+                Filtered_data[i], w, h, N, delay[i] = filters.butterworth(HOBOtempArr[i], btype, lowcut, highcut, fs,
+                                                                          output='zpk', passatten=gpass,
+                                                                          stopatten=astop, order=order,
+                                                                          recurse=True, debug=debug)
                 if len(Filtered_data[i]) != len(HOBOdateTimeArr[i]):
                     HOBOdateTimeArr_res[i] = scipy.signal.resample(HOBOdateTimeArr[i], len(Filtered_data[i]))
+                    print('** Resampled %d', i)
                 else :
                     HOBOdateTimeArr_res[i] = HOBOdateTimeArr[i]
+                    print('* Not Resampled %d', i)
 
                 i += 1
 
         # get L. Ontario hobo file
         # hobofilename = '18_2393005.csv'
         print("Reading file %s" % lo_file)
-        dateTime2, temp2, results2 = utools.readTempHoboFiles.get_data_from_file(lo_file, moving_avg, windows[1], [start_num, end_num], lo_path)
+        dateTime2, temp2, results2 = utools.readTempHoboFiles.get_data_from_file(lo_file, moving_avg, windows[1],
+                                                                                 [start_num, end_num], lo_path)
 
         HOBOdateTimeArr = numpy.resize(HOBOdateTimeArr, len(HOBOdateTimeArr) + 1)
         HOBOresultsArr = numpy.resize(HOBOresultsArr, len(HOBOresultsArr) + 1)
@@ -312,23 +330,28 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
         HOBOtempArr[len(HOBOtempArr) - 1] = temp2
 
 
-        locnames = numpy.append(locnames, 'Lake Ontario')
+        locnames = numpy.append(locnames, 'L. Ont.')
 
-
-
-        if filter != None:
-            btype = 'band'
-            fs = 1.0 / ((dateTime2[2] - dateTime2[1]) * factor)
-            # Filtered_data[len(HOBOresultsArr) - 1] = filters.fft_bandpassfilter(temp, fs, lowcut, highcut)
-            Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay[len(HOBOresultsArr) - 1] = filters.butterworth(temp, btype, lowcut, highcut, fs, output = 'zpk', passatten = gpass, stopatten = astop, order = order, recurse = True, debug = debug)
-            if len(Filtered_data[len(HOBOresultsArr) - 1]) != len(HOBOdateTimeArr[len(HOBOdateTimeArr) - 1]):
-                HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = scipy.signal.resample(HOBOdateTimeArr[len(HOBOresultsArr) - 1], len(Filtered_data[len(HOBOresultsArr) - 1]))
-            else :
-                HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = HOBOdateTimeArr[len(HOBOresultsArr) - 1]
+        # if filter != None:
+        #     btype = 'band'
+        #     fs = 1.0 / ((dateTime2[2] - dateTime2[1]) * factor)
+        #     # Filtered_data[len(HOBOresultsArr) - 1] = filters.fft_bandpassfilter(temp, fs, lowcut, highcut)
+        #
+        #     Filtered_data[len(HOBOresultsArr) - 1], w, h, N, delay[len(HOBOresultsArr) - 1] = \
+        #         filters.butterworth(HOBOtempArr, btype, lowcut, highcut, fs, output='zpk', passatten=gpass,
+        #                             stopatten=astop, order=order, recurse=True, debug=debug)
+        #     if len(Filtered_data[len(HOBOresultsArr) - 1]) != len(HOBOdateTimeArr[len(HOBOdateTimeArr) - 1]):
+        #         HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = \
+        #             scipy.signal.resample(HOBOdateTimeArr[len(HOBOresultsArr) - 1],
+        #                                   len(Filtered_data[len(HOBOresultsArr) - 1]))
+        #     else :
+        #         HOBOdateTimeArr_res[len(HOBOresultsArr) - 1] = HOBOdateTimeArr[len(HOBOresultsArr) - 1]
 
         print("Start display")
         # display_data.display_temperatures_subplot(HOBOdateTimeArr, HOBOtempArr, HOBOresultsArr, k, fnames = locnames, yday = yday, delay = delay)
-        utils.display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames = locnames, difflines = True, custom = "Temperature Timseries - Toronto Harbour")
+        utools.display_data.display_temperatures(HOBOdateTimeArr, HOBOresultsArr, k, fnames=locnames, difflines=True,
+                                                 datetype='dayofyear', custom="Temperature [$\circ$C]",
+                                                 legendloc='upper left')
         # superimposed filtered data for 1-3 days oscillation freq
         difflines = True
         # cut the 1/10 atc each end with bad filtered data
@@ -339,7 +362,10 @@ def read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period,
                 Filtered_data[i] = Filtered_data[i][trim:-trim];
                 HOBOdateTimeArr_res[i] = HOBOdateTimeArr_res[i][trim:-trim]
 
-            utils.display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = locnames, difflines = difflines, custom = "Filtered Temperature Timeseries - Toronto Harbour")
+            utils.display_data.display_temperatures(HOBOdateTimeArr_res, Filtered_data, k, fnames = locnames,
+                                                    difflines=difflines, datetype='dayofyear',
+                                                    custom = "Temperature [$\circ$C]",
+                                                    legendloc='upper left')
     # end for path
 
 def read_TRCA_files(paths):
@@ -1243,12 +1269,12 @@ if __name__ == '__main__':
     harbour_stats = False  # 0
     LO_hobot_rbrt_10m = False  # 1
     LO_isotherm = False  # 2
-    Toronto_harbour = False  # 3
+    Toronto_harbour = True  # 3
     atm_correlation = False  # 4
     Toronto_harb_filter = False  # 5
     TRCA_data = False  # 6
     Upwelling_zone = False  # 7
-    Fish_detection = True  # 8
+    Fish_detection = False  # 8
 
     exit_if = [False, False, False, False, False, False, False, False, False]
 
@@ -1378,14 +1404,22 @@ if __name__ == '__main__':
                    'Station21November.csv':  ["St 21", 9, 10],
                    }
 
+        filemapShort = {
+            '1_1020769.csv': ['St 2', 8.2, 11.2],
+            '2_10098827.csv': ['TC1', 7, 8],
+            '3_10098839.csv': ['TC2', 9, 10.2],
+            '4_10298873.csv': ['TC3', 9.7, 10.7],
+            '5_Station21November.csv': ["St 21", 9, 10],
+            '6_10226021.csv': ['TC4', 6.5, 6.5],
+        }
+
         paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed']
+        paths = ['/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-OuterHarbour/csv_processed/justOne']
         # path = '/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed'
         lo_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
         lo_file = '/24_10298867.csv'  # '/11_2395420.csv'  # '/07_2393002.csv'
         startdate = '13/05/01 00:00:00'
         enddate = '13/10/30 00:00:00'
-
-
 
         period = [startdate, enddate]
 
@@ -1398,7 +1432,8 @@ if __name__ == '__main__':
         filter = None
         moving_avg = window_hour  # for regular study
 
-        read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemap, period, filter = None)  # this can filter too and  exhibit poincare waves
+        # this can filter too and  exhibit poincare waves
+        read_Tor_Harbour_files(paths, lo_path, lo_file, moving_avg, filemapShort, period, filter=filter)
         print("Done! Toronto harbour")
         if exit_if[3]:
             print("Exit! ")

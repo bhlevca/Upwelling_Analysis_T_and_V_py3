@@ -6,6 +6,7 @@ from datetime import datetime
 from matplotlib.dates import date2num, num2date
 from matplotlib.dates import MONDAY, SATURDAY
 import matplotlib.dates
+import matplotlib.mathtext
 import time, os, sys, inspect, locale, math
 from scipy.interpolate import UnivariateSpline
 from utools import display_data
@@ -19,7 +20,7 @@ import ufft.filters as filters
 import ufft.fft_utils as fft_utils
 import ufft.peakdetect as peakdetect
 import ufft.spectral_analysis
-from . import tor_harb_windrose
+import tor_harb_windrose
 import scipy.integrate
 import utools.interpolate as interpolate
 import utools
@@ -1101,7 +1102,7 @@ def plot_weather_data(date, weather_path, wfile, windrose):
         # Plot weather related variables if required
         start_num = date[0]
         end_num = date[1]
-        ifile = open(weather_path + '/' + wfile, 'rb')
+        ifile = open(weather_path + '/' + wfile, 'r')
         wreader = csv.reader(ifile, delimiter = ',', quotechar = '"')
         [temp, dateTime, windDir, windSpd, press] = envir.read_stringdatefile(wreader)
         ifile.close()
@@ -1230,7 +1231,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
 
 
     # 2) read weather data
-    wfile = open(weather_path + '/' + weather_file, 'rb')
+    wfile = open(weather_path + '/' + weather_file, 'r')
     wreader = csv.reader(wfile, delimiter = ',', quotechar = '"')
     [temp, dateTime, windDir, windSpd, press] = envir.read_stringdatefile(wreader)
     wfile.close()
@@ -1293,11 +1294,13 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         custom = numpy.array(['Air T($^\circ$C)', 'Wind dir', r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', 'Air p(hPa)', 'Water T($^\circ$C)'])
         # ToDO: Add short and long radiation
         print("Start display wind_airpress_airtemp_water_temp subplots ")
-        utools.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom)
+        utools.display_data.display_temperatures_subplot(timeArray, dataArray, dataArray, k, fnames = fnames, custom = custom, labels=None)
     # end if filter
 
 
     # 8) Mixed water, air ,img data
+    matplotlib.mathtext.SHRINK_FACTOR = 0.9
+
     custom = numpy.array([r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', 'Air [T($^\circ$C]', 'Water T[$^\circ$C]', ])
     # ToDO: Add short and long radiation
     print("Start display mixed subplots ")
@@ -1305,7 +1308,8 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         dateTimes1 = [iwdateTime, ndateTimeArr[0]]
         data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day"), diffarr]
         varnames = ["Wind speed", "$\Delta$T ($\Delta$H=1m)"]
-        ylabels1 = [r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', "Temp [$^\circ$C]"]
+        #ylabels1 = [r'Wind spd [$\mathsf{km\cdot h^{-1}}$]', "Temp [$^\circ$C]"]
+        ylabels1 = [r'Wind spd [$\mathsf{km h^{-1}}$]', "Temp [$^\circ$C]"]
     else :
         ro_air = 1.2 # kg/m^3
         Cd = 0.0013
@@ -1319,17 +1323,21 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         
         
         varnames = ["Wind speed", "Wind direction", "Wind stress along"]
-        ylabels1 = [r'W. spd [$\mathsf{km\cdot h^{-1}}$]', r'W. dir [$^\circ$]', r'$\mathbf{\tau_{al}}$ [Pa]']
+        #ylabels1 = [r'$\mathsf{W_{spd}}$ [$\mathsf{km\cdot h^{-1}}$]', r'$\mathsf{W_{dir}}$ [$^\circ$]',
+        #            r'$\mathbf{\tau_{alg}}$ [Pa]']
+        ylabels1 = [r'$\mathsf{W_{spd}}$ [$\mathsf{km\ h^{-1}}$]', r'$\mathsf{W_{dir}}$ [$^\circ$]',
+                    r'$\mathsf{\tau_{alg}}$ [Pa]']
 
     dateTimes2 = [iwdateTime, HOBOdateTimeArr]
-    ylabels2 = ["Temp. [$^\circ$C]"]
+    ylabels2 = [r'$\mathsf{T_{air, wat.}}$ [$^\circ$C]']
     groups = [iwtemp, HOBOresultsArr]
     groupnames = ['Air Temp', 'Water Temp']
     #dateTimes3 = [TH_dateTimeArr, dateTimeArr] #Harbour first
     dateTimes3 = [dateTimeArr,TH_dateTimeArr]
-    ylabels3 = ["Depth [m]", "Depth [m]"] 
-    #imgs = [TH_resultsArr, resultsArr] #Harbour first
-    imgs = [ resultsArr,TH_resultsArr]
+    ylabels3 = ["Depth [m]", "Depth [m]"]
+    cblabel = [r'$\mathsf{T_{water}}$ [$^\circ$C]', r'$\mathsf{T_{water}}$ [$^\circ$C]']
+
+    imgs = [resultsArr,TH_resultsArr]
     t11 = ['0', '4', '9', '13', '18', '22', '27']
     t12 = [27, 22.5, 18, 13.5, 9, 4.5, 0]
     t11 = ['0', '6', '13', '20', '27']
@@ -1357,8 +1365,8 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
                                        dateTimes3 = dateTimes3, imgs = imgs, ylabels3 = ylabels3, ticks = tick, maxdepths = maxdepth, \
                                         mindepths = mindepths, mintemps = mintemps, firstlogs = firstlogdepth, maxtemps = maxtemp, \
                           fnames = None, revert = False, custom = None, maxdepth = None, tick = None, firstlog = None, yday = True, \
-                          title = False, grid = False, limits = limits, sharex = True, fontsize = 18, group_first = delta_T_subplot,
-                          cblabel = [None, None, None])
+                          title = False, grid = False, limits = limits, sharex = True, fontsize = 20, group_first = delta_T_subplot,
+                          cblabel = cblabel)
 
     # 9) Draw radiation data
     print("Start display  Atmospheric radiation ")

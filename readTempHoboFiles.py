@@ -314,7 +314,7 @@ def get_data_from_file(filename, span, window, timeinterv = None, rpath = None):
     else:
         ppath = path
     if os.path.isdir(ppath + "/" + filename) == False:
-        ifile = open(ppath + '/' + filename, 'rb')
+        ifile = open(ppath + '/' + filename, 'r')
     else:
         return
     reader = csv.reader(ifile, delimiter = ',', quotechar = '"')
@@ -414,7 +414,7 @@ def get_data_from_stats_file(fname, span, window, timeinterv, rpath, type, all =
     return [dateTime, temp, temp]
 
 
-def read_files_and_display(rpath = None):
+def read_files_and_display(rpath=None):
     if rpath != None:
         ppath = rpath
     else:
@@ -590,7 +590,18 @@ def calculate_lake_dt_on_embayment_chains(chains, names):
                 pass
             j+=1
         i+=1
-        
+
+
+def read_tempfile_and_display(path, filename):
+    if filename == None:
+        print("error: No filename was given")
+
+    dateTime, temp, results = get_data_from_file(filename, window_hour, windows[1], rpath=path)
+
+    # plot the temperature not the smoothed ones
+    display_data.display_one_temperature(dateTime, temp, doy=True)
+
+
         
 if __name__ == '__main__':
     def avg (list):
@@ -603,19 +614,20 @@ if __name__ == '__main__':
     # path = "/home/bogdan/Documents/UofT/PhD/Data_Files/MOE-Apr-May_2012-Thermistor_chain/csv_processed"
     path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
     path= '/home/bogdan/Documents/UofT/PhD/Data_Files/Hobo_Files-Nick_Lapointe/Hobo_Files-Nov2011/csv_processed'
-    #read_files_and_display(path)
-    station_list=[ "c1","c2","c3","ea","eb","ec","lo12","oh21","oh02","ohtc3"]
-    timeint=['13/07/01 00:00:00', '13/07/31 00:00:00'] 
-    path="/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Average_Temperatures_Bays"
-    temp=calculate_mean_max_min_temperature(path, station_list,filelist_avg_temp, timeint)
-    chain1=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["ec"], temp["c3"], temp["c2"], temp["c1"]]
-    names1 = ["lo", "oh", "ec", "c3", "c2", "c1"]
-    chain2=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["eb"]]
-    names2 = ["lo", "oh", "eb"]
-    chain3=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["ea"]]
-    names3 = ["lo", "oh", "ea"]
-    chains=[chain1, chain2, chain3]
-    names=[names1, names2, names3]
-    calculate_lake_dt_on_embayment_chains(chains, names)
+    path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2014/year-around/csv_processed'
+    read_tempfile_and_display(path, "IH-2014-reorder.csv")
+    # station_list=[ "c1","c2","c3","ea","eb","ec","lo12","oh21","oh02","ohtc3"]
+    # timeint=['13/07/01 00:00:00', '13/07/31 00:00:00']
+    # path="/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Average_Temperatures_Bays"
+    # temp=calculate_mean_max_min_temperature(path, station_list,filelist_avg_temp, timeint)
+    # chain1=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["ec"], temp["c3"], temp["c2"], temp["c1"]]
+    # names1 = ["lo", "oh", "ec", "c3", "c2", "c1"]
+    # chain2=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["eb"]]
+    # names2 = ["lo", "oh", "eb"]
+    # chain3=[temp["lo12"], avg([temp["oh21"], temp["oh02"], temp["ohtc3"]]), temp["ea"]]
+    # names3 = ["lo", "oh", "ea"]
+    # chains=[chain1, chain2, chain3]
+    # names=[names1, names2, names3]
+    # calculate_lake_dt_on_embayment_chains(chains, names)
     print("Done!")
 

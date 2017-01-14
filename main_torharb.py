@@ -12,6 +12,7 @@ from rdradcp.plot_ADCP_vel_FFT import plot_cross_spectogram_w_T
 from rdradcp.plot_ADCP_vel_FFT import plot_FFT_twinx_W_T
 from rdradcp.plot_ADCP_vel_FFT import plot_fft_analysis
 import rdradcp.Timer
+from rdradcp.writeAdcpTxtData import RdiDataWriter
 import csv, sys, os
 import utools.windows
 
@@ -85,12 +86,44 @@ try:
         #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/RDADCP/TRCA/2009/east_gap-DS09_000.000' , 1, [100, 5726], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes');
         
         
-        [adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/1200mhz-EMBC_004.000', 1, [1, 262500], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
+        #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/1200mhz-EMBC_004.000', 1, [1, 262500], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
+
+        #2016 data
         name = "Emb-C 1200 MHz"
-        
-        
+        adcpPath2016 = "/home/bogdan/Documents/UofT/PhD/Data_Files/2016/ADCP2016_Data/ADCP-files/"
+
+        fname = "EC01_000.000"
+        ensno = 19911
+
+        fname = "EG01_000.000"
+        ensno = 68894
+
+        #fname = "OH01_002.000"
+        #ensno = 54578
+
+        #fname = "TI01_000.000"
+        #ensno = 68920
+
+        #fname = "WG01_000.000"
+        #ensno = 10448
+
+        [adcp, cfg, ens, hdr] = readRawBinADCP(
+            adcpPath2016 + '/' + fname, 1, [1, ensno], 'info',
+            'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
+
+        adcpTxt = RdiDataWriter(adcpPath2016, adcp)
+        adcpTxt.writeAdcp(fname, adcp)
 finally:
     print(('Read took %.03f sec.' % t.interval))
+
+try:
+    with rdradcp.Timer.Timer() as t:
+        #verify
+        adcpTxt2 = RdiDataWriter(adcpPath2016, None, n=ensno, fname=fname)
+        adcp2 = adcpTxt2.readAdcp(fname)
+finally:
+    print(('Text read took %.03f sec.' % t.interval))
+
 
 print('ADCP configuration')
 print('----------------------')
@@ -100,13 +133,15 @@ print('no of beams :%d' % adcp.config.n_beams)
 print('system of coordinates :%s' % adcp.config.coord_sys)
 print('time between pings :%f' % adcp.config.time_between_ping_groups)
 print('no of pings per ensamble :%d' % adcp.config.pings_per_ensemble)
-adcp.goodbins = numpy.int(adcp.depth[0][1000] - adcp.config.bin1_dist)
+
+# This is done now in the main method
+# adcp1.goodbins = numpy.round((adcp1.depth[0][1000] - adcp.config.bin1_dist)/adcp.config.cell_size)
 print('no of bins that have full water:%d' % adcp.goodbins)
 # IMPORTANT to know for depth bin calculations adcp.config.ranges
 print('----------------------')
 
 path_out = "/software/SAGEwork/rdrADCP"
-
+exit(0)
 
 
 
@@ -124,9 +159,11 @@ if traditional:
         data_args1 = [adcp.east_vel, ylabel]
         subplot = True
         bins = [0, 3, 5, 7]
-        rdradcp.plot_ADCP_velocity.plot_ADCP_velocity(adcp, data_args1, 'Lake Ontario - East velocity profiles', subplot, bins, doy = True)
-        rdradcp.plot_ADCP_velocity.plot_ADCP_velocity_img(adcp, data_args1, 'Lake Ontario - East velocity profiles', \
-                                                   interp = interp, echo = echo, doy = True)
+        bins = [0, 1, 2, 3, 4]
+        rdradcp.plot_ADCP_velocity.plot_ADCP_velocity(adcp, data_args1, 'Lake Ontario - East velocity profiles',
+                                                      subplot, bins, doy = True)
+        rdradcp.plot_ADCP_velocity.plot_ADCP_velocity_img(adcp, data_args1, 'Lake Ontario - East velocity profiles',
+                                                          interp = interp, echo = echo, doy = True)
         writeBins(adcp.mtime, adcp.east_vel, path_out, "eastVel.csv")
         print("start FFT analysis ...East")
         bin = 1
@@ -139,7 +176,6 @@ if traditional:
         plot_depth_averaged_analysis(adcp, data_args1, strg, bin = bin, avg = False)
 
         #-------------------------------------------------------------------
-
         data_args2 = [adcp.north_vel, 'N velocity [m/s]']
         print("North vel")
         subplot = True

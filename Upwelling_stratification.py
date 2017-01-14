@@ -9,20 +9,19 @@ This Script calulated adn draws figures for JGLR paper:
 # libraries
 import numpy as np
 import scipy as sp
-from . import gsw
 import csv
 import os, locale
 import datetime
 import matplotlib.dates as dates
 
 # local
-from . import upwelling
+import upwelling
 from utools import readTempHoboFiles
 from utools import display_data
 import ufft.spectral_analysis
 import utools.timeseries_correlation
 import utools.custom_csv_readers
-from . import gsw
+import gsw
 
 
 class Upwelling(object):
