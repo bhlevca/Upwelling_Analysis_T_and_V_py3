@@ -693,10 +693,10 @@ if __name__ == '__main__':
     CB_heatmap = False
     EG_heatmap = False
     WG_heatmap = False
-    OutHarb_heatmap = True
+    OutHarb_heatmap = False
     JarvDock_heatmap = False
     filter_data = False
-    weather_data = False
+    weather_data = True
     spectral_harbour = False
     spectral_PE = False
     correlation_curr_temp = False
@@ -746,12 +746,15 @@ if __name__ == '__main__':
         dt = datetime.datetime.strptime(date[1], "%y/%m/%d %H:%M:%S")
         end_num = dates.date2num(dt)
 
-        water_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
-        harbour_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap-JarvisDock'
-        weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ClimateData/Weather'
-        # weather_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2012/MOE deployment 18-07-2012/Data/ClimateData/all'  # 2012
-        cloud_path = '/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ClimateData/Radiation/HDF'
-        # cloud_path = "/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ClimateData/Radiation/2012HDF"
+        rootd='/home/bogdan/Documents/UofT/PhD'
+        rootd='M:\MIKE_PROJECTS\SAGEWork'
+
+        water_path = rootd + '/Data_Files/2013/Hobo-Apr-Nov-2013/TC-LakeOntario/csv_processed'
+        harbour_path = rootd + '/Data_Files/2013/Hobo-Apr-Nov-2013/AllHarbour/csv_processed/EGap-JarvisDock'
+        weather_path = rootd + '/Data_Files/2013/ClimateData/Weather'
+        # weather_path = rootd + '/Data_Files/2012/MOE deployment 18-07-2012/Data/ClimateData/all'  # 2012
+        cloud_path = rootd + '/Data_Files/2013/ClimateData/Radiation/HDF'
+        # cloud_path = rootd + "/Data_Files/2013/ClimateData/Radiation/2012HDF"
         wfile = 'eng-hourly-04012013-11302013.csv'
         # wfile = 'eng-hourly-04012012-11302012-all.csv'  # 2012
         lake_file = '10_2393006.csv'

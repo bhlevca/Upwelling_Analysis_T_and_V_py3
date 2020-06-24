@@ -1123,13 +1123,18 @@ def plot_weather_data(date, weather_path, wfile, windrose):
                             [wdateTime[1:]], [wtemp[1:]], [wdateTime[1:]], [windir], \
                             ['r'], ['b', 'g'], [" Temp", "Wind dir"], linewidth1 = [1.8], linewidth2 = [0.6])
         if windrose:
-            tor_harb_windrose.draw_windrose(windir, winspd, 'bar', loc = (1, 0.05), fontsize = 20, unit = r'[$\mathsf{km\cdot h^{-1}}$]')
+            #in [m/s]
+            tor_harb_windrose.draw_windrose(windir, numpy.array(winspd)/3.6, 'bar', loc=(1, 0.05), fontsize=20,
+                                            unit=r'[$\mathsf{m\cdot s^{-1}}$]')
+            #in [km/h]
+            tor_harb_windrose.draw_windrose(windir, winspd, 'bar', loc = (1, 0.05), fontsize = 20,
+                                            unit = r'[$\mathsf{km\cdot h^{-1}}$]')
             plt.show()
         # end if
 
 
 def read_lake_and_harbour_data(str_date, date, water_path, harbour_path):
-    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+    #locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     print("Start wind_airpress_airtemp_water_temp()")
     start_num = date[0]
@@ -1174,7 +1179,7 @@ def read_lake_and_harbour_data(str_date, date, water_path, harbour_path):
 
 def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path, cloud_path, lake_file, weather_file, \
                           filter = False, delta_T_subplot = False):
-    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+    #locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 
     print("Start wind_airpress_airtemp_water_temp()")
     start_num = date[0]
@@ -1316,17 +1321,21 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
         #tau = ro_air * Cd * (iwindSpd/1.36)*(iwindSpd/1.36) * numpy.sin((iwindDir*10-61)*2*math.pi/360)
         tau = ro_air * Cd * (iwindSpd/1.36)*(iwindSpd/1.36) * numpy.cos((iwindDir*10-61)*2*math.pi/360)
         
-        dateTimes1 = [iwdateTime, iwdateTime, iwdateTime]
+        #dateTimes1 = [iwdateTime, iwdateTime, iwdateTime]
+        dateTimes1 = [iwdateTime, iwdateTime]
+        #data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day"), \
+        #        smooth.smoothed_by_window(iwdateTime, iwindDir*10, "window_half_day"),\
+        #        smooth.smoothed_by_window(iwdateTime, tau, "window_half_day")]
         data = [smooth.smoothed_by_window(iwdateTime, iwindSpd, "window_half_day"), \
-                smooth.smoothed_by_window(iwdateTime, iwindDir*10, "window_half_day"),\
-                smooth.smoothed_by_window(iwdateTime, tau, "window_half_day")]
+                smooth.smoothed_by_window(iwdateTime, iwindDir*10, "window_half_day")]
         
         
-        varnames = ["Wind speed", "Wind direction", "Wind stress along"]
+        #varnames = ["Wind speed", "Wind direction", "Wind stress along"]
+        varnames = ["Wind speed", "Wind direction"]
+
         #ylabels1 = [r'$\mathsf{W_{spd}}$ [$\mathsf{km\cdot h^{-1}}$]', r'$\mathsf{W_{dir}}$ [$^\circ$]',
         #            r'$\mathbf{\tau_{alg}}$ [Pa]']
-        ylabels1 = [r'$\mathsf{W_{spd}}$ [$\mathsf{km\ h^{-1}}$]', r'$\mathsf{W_{dir}}$ [$^\circ$]',
-                    r'$\mathsf{\tau_{alg}}$ [Pa]']
+        ylabels1 = [r'$\mathsf{W_{spd}}$ [$\mathsf{km\cdot h^{-1}}$]', r'$\mathsf{W_{dir}}$ [$^\circ$]']
 
     dateTimes2 = [iwdateTime, HOBOdateTimeArr]
     ylabels2 = [r'$\mathsf{T_{air, wat.}}$ [$^\circ$C]']
@@ -1348,7 +1357,8 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
     tick = [[t11, t12], [t21, t22]]
     
     #limits = [None, None, [-1, 10], None, None ] <= this screws up the tickers 
-    limits = [None, [0,360], [-0.8, 0.8], None, None, None, None] 
+    #limits = [None, [0,360], [-0.8, 0.8], None, None, None, None]
+    limits = [None, [0, 360], None, None, None, None]
     
         
     #maxdepth = [9, 27] # Harbour first
@@ -1365,7 +1375,7 @@ def subplot_weather_data(str_date, date, water_path, harbour_path, weather_path,
                                        dateTimes3 = dateTimes3, imgs = imgs, ylabels3 = ylabels3, ticks = tick, maxdepths = maxdepth, \
                                         mindepths = mindepths, mintemps = mintemps, firstlogs = firstlogdepth, maxtemps = maxtemp, \
                           fnames = None, revert = False, custom = None, maxdepth = None, tick = None, firstlog = None, yday = True, \
-                          title = False, grid = False, limits = limits, sharex = True, fontsize = 20, group_first = delta_T_subplot,
+                          title = False, grid = False, limits = limits, sharex = True, fontsize = 16, group_first = delta_T_subplot,
                           cblabel = cblabel)
 
     # 9) Draw radiation data

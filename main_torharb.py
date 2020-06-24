@@ -19,7 +19,7 @@ import utools.windows
 from utools import readTempHoboFiles
 from utools import smooth
 
-print('--> Default read 2011 data File:2011_west_gap_DPLWG000.000) \n')
+print('--> Default read ADCP data\n')
 print('\n\n')
 
 
@@ -84,35 +84,25 @@ try:
 
         #name = "E-Gap"
         #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/RDADCP/TRCA/2009/east_gap-DS09_000.000' , 1, [100, 5726], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes');
-        
-        
+
+        #name = "Emb-C 1200 MHz"
         #[adcp, cfg, ens, hdr] = readRawBinADCP('/home/bogdan/Documents/UofT/PhD/Data_Files/2013/ADCP-TorHarb/1200mhz-EMBC_004.000', 1, [1, 262500], 'info', 'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
 
         #2016 data
-        name = "Emb-C 1200 MHz"
         adcpPath2016 = "/home/bogdan/Documents/UofT/PhD/Data_Files/2016/ADCP2016_Data/ADCP-files/"
 
-        fname = "EC01_000.000"
-        ensno = 19911
+        fname_ensno = {"EC01_000.000":19911, "EG01_000.000":68894, "OH01_002.000":54578,
+                       "TI01_000.000":68920, "WG01_000.000":10448}
 
-        fname = "EG01_000.000"
-        ensno = 68894
+        for fname in fname_ensno:
+            ensno = fname_ensno[fname]
+            [adcp, cfg, ens, hdr] = readRawBinADCP(
+                adcpPath2016 + '/' + fname, 1, [1, ensno], 'info',
+                'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
 
-        #fname = "OH01_002.000"
-        #ensno = 54578
+            adcpTxt = RdiDataWriter(adcpPath2016, adcp)
+            adcpTxt.writeAdcp(fname, adcp)
 
-        #fname = "TI01_000.000"
-        #ensno = 68920
-
-        #fname = "WG01_000.000"
-        #ensno = 10448
-
-        [adcp, cfg, ens, hdr] = readRawBinADCP(
-            adcpPath2016 + '/' + fname, 1, [1, ensno], 'info',
-            'yes', 'baseyear', 2000, 'despike', 'yes', 'debug', 'no')
-
-        adcpTxt = RdiDataWriter(adcpPath2016, adcp)
-        adcpTxt.writeAdcp(fname, adcp)
 finally:
     print(('Read took %.03f sec.' % t.interval))
 

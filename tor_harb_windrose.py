@@ -9,7 +9,7 @@ from utools.windrose import WindroseAxes
 def new_axes():
     fig = plt.figure(figsize = (8, 8), dpi = 80, facecolor = 'w', edgecolor = 'w')
     rect = [0.1, 0.1, 0.8, 0.8]
-    wax = WindroseAxes(fig, rect, axisbg = 'w')
+    wax = WindroseAxes(fig, rect)#, axisbg = 'w')
     fig.add_axes(wax)
     return wax
 
